@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide du Jeu ALKAMO — Règles & Réglementation</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--v:#534AB7;--vl:#7F77DD;--vd:#2E2575;--g:#C8A020;--gl:#FAD060;--gr:#1D9E75;--grl:#4DC99A;--dk:#0A0818;--wh:#FFFFFF;--gy:#888;--lg:#CCC;--bg:#F5F3FF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--dk);color:var(--wh);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(83,74,183,.15) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 50% at 80% 80%,rgba(29,158,117,.1) 0%,transparent 60%);pointer-events:none}
+body::after{content:'';position:fixed;inset:0;z-index:0;
+  background:repeating-linear-gradient(90deg,transparent 0px,transparent 58px,rgba(255,255,255,.015) 58px,rgba(255,255,255,.015) 70px);pointer-events:none}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5%;
+  border-bottom:1px solid rgba(200,160,32,.12);backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:100;background:rgba(10,8,24,.9)}
+.nav-logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;
+  font-weight:800;font-size:1.2rem;color:var(--gl);letter-spacing:3px;text-decoration:none}
+.nav-tile{width:22px;height:26px;border-radius:4px;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:.75rem;color:#fff}
+.nav-links{display:flex;gap:24px;list-style:none}
+.nav-links a{color:rgba(255,255,255,.6);text-decoration:none;font-size:.88rem;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--gl)}
+.nav-cta{background:linear-gradient(135deg,var(--v),#2E2575);color:#fff;padding:8px 18px;
+  border-radius:50px;text-decoration:none;font-weight:500;font-size:.88rem;
+  border:1px solid rgba(127,119,221,.4);transition:all .2s}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(83,74,183,.4)}
+
+.hero{padding:50px 5% 30px;text-align:center;position:relative;z-index:1}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,3rem);margin-bottom:10px}
+.hero h1 span{color:var(--gl)}
+.hero p{color:rgba(255,255,255,.5);font-size:.95rem;margin-bottom:28px}
+.dl-btn{display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--g),var(--vd));
+  color:#fff;padding:14px 28px;border-radius:50px;text-decoration:none;
+  font-weight:600;font-size:.95rem;border:1px solid rgba(200,160,32,.4);
+  box-shadow:0 8px 30px rgba(200,160,32,.25);transition:all .25s;margin-bottom:40px}
+.dl-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(200,160,32,.4)}
+
+.guide-wrap{max-width:780px;margin:0 auto;padding:0 5% 80px;position:relative;z-index:1}
+
+/* Sections du guide */
+.g-section{margin-bottom:40px}
+.g-head{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:12px;
+  border-bottom:2px solid rgba(200,160,32,.2)}
+.g-num{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;
+  color:#fff;flex-shrink:0}
+.g-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.3rem}
+
+.g-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:20px 24px;margin-bottom:12px}
+.g-card.gold{background:rgba(200,160,32,.07);border-color:rgba(200,160,32,.2);
+  border-left:4px solid var(--g)}
+.g-card.violet{background:rgba(83,74,183,.08);border-color:rgba(83,74,183,.2);
+  border-left:4px solid var(--v)}
+.g-card.green{background:rgba(29,158,117,.07);border-color:rgba(29,158,117,.2);
+  border-left:4px solid var(--gr)}
+
+.g-card h3{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;
+  margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.g-card p{font-size:.9rem;color:rgba(255,255,255,.7);line-height:1.8;margin-bottom:8px}
+.g-card p:last-child{margin-bottom:0}
+.g-card strong{color:var(--gl)}
+.g-card em{color:var(--grl);font-style:normal}
+
+/* Articles règlement */
+.art-list{display:flex;flex-direction:column;gap:8px}
+.art-item{display:flex;gap:12px;padding:10px 16px;
+  background:rgba(255,255,255,.03);border-radius:10px;
+  border-bottom:1px solid rgba(255,255,255,.05)}
+.art-num{min-width:56px;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.8rem;color:var(--gl);padding-top:2px}
+.art-txt{font-size:.88rem;color:rgba(255,255,255,.75);line-height:1.7}
+
+/* Tableau lettres */
+.letters-table{width:100%;border-collapse:collapse;margin-top:16px}
+.letters-table th{background:var(--v);color:#fff;padding:10px 14px;
+  text-align:left;font-size:.85rem;font-weight:700}
+.letters-table th:last-child{text-align:right}
+.letters-table td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:.85rem;color:rgba(255,255,255,.8)}
+.letters-table tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+.letters-table td:first-child{color:var(--vl);font-weight:700}
+.letters-table td:last-child{text-align:right;color:var(--grl);font-weight:600}
+
+/* Exemple champ lexical */
+.champ-ex{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.champ-row{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 14px}
+.champ-key{font-size:.75rem;font-weight:700;margin-bottom:4px}
+.champ-val{font-size:.85rem;color:rgba(255,255,255,.65)}
+
+/* Cagnottes */
+.cagnotte-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.cagnotte-card{border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,.1)}
+
+@media(max-width:640px){
+  .nav-links{display:none}
+  .champ-ex{grid-template-columns:1fr}
+  .cagnotte-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo"><img src="data:image/png;base64,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" alt="ALKAMO" style="height:34px;width:auto;filter:drop-shadow(0 2px 6px rgba(200,160,32,.4))"> ALKAMO</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="dictionnaire.html">Dictionnaire</a></li>
+    <li><a href="guide.html" class="active">Guide du Jeu</a></li>
+    <li><a href="index.html#contact">Contact</a></li>
+  </ul>
+  <a href="jeu.html" class="nav-cta">🎮 Jouer</a>
+</nav>
+
+<div class="hero">
+  <h1>Guide du Jeu <span>ALKAMO</span></h1>
+  <p>Règles complètes, réglementation officielle et valeur des lettres</p>
+  <a href="guide.docx" download="ALKAMO_Guide_Jeu.docx" class="dl-btn">
+    📥 Télécharger le guide (Word A5 — imprimable)
+  </a>
+</div>
+
+<div class="guide-wrap">
+
+  <!-- SECTION 1 — PRINCIPE -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#534AB7">1</div>
+      <div class="g-title">Principe du Jeu</div>
+    </div>
+
+    <div class="g-card">
+      <p><strong>ALKAMO</strong> est un jeu de lettres qui se joue à 2, 3 ou 4 personnes. C'est aussi un jeu de vocabulaire mettant en pratique la connaissance de la langue française.</p>
+      <p>Le jeu consiste à former des mots à partir de lettres tirées de la <strong>cagnotte L</strong>. Le mot à former est relatif au champ lexical du thème inscrit sur une case du tapis central. La plaque thème est tirée de la <strong>cagnotte T</strong>.</p>
+    </div>
+
+    <div class="g-card gold">
+      <h3>🌾 Bonus Labourage</h3>
+      <p>Si le joueur forme le mot <strong>exact</strong> inscrit sur la case du tapis central, il a <em>labouré</em> — il bénéficie du <strong>double de la valeur de ses lettres !</strong></p>
+      <p>S'il ne peut pas, il cherche dans le champ lexical du thème un mot ayant un lien sémantique ou lexical.</p>
+    </div>
+
+    <div class="g-card">
+      <p>Le thème inscrit sur le tapis est au singulier, cependant le mot formé peut être au pluriel.</p>
+    </div>
+  </div>
+
+
+    <!-- SLOGAN -->
+    <div style="margin-top:16px;padding:28px 32px;border-radius:16px;
+      background:linear-gradient(135deg,rgba(83,74,183,.15),rgba(29,158,117,.08));
+      border:1px solid rgba(200,160,32,.3);position:relative;overflow:hidden;text-align:center">
+      <!-- Barreaux décoratifs -->
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(
+        90deg,transparent 0,transparent 28px,rgba(255,255,255,.018) 28px,rgba(255,255,255,.018) 34px);
+        pointer-events:none;border-radius:16px"></div>
+      <!-- Trait doré haut -->
+      <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,#C8A020,transparent);
+        margin:0 auto 18px"></div>
+      <!-- Guillemets décoratifs -->
+      <div style="font-size:3rem;line-height:1;color:rgba(200,160,32,.2);
+        font-family:'Syne',sans-serif;margin-bottom:4px">"</div>
+      <!-- Slogan -->
+      <p style="font-family:'Syne',sans-serif;font-size:clamp(1rem,2.5vw,1.3rem);
+        font-weight:700;line-height:1.5;color:#FAD060;position:relative;z-index:1;
+        margin-bottom:4px">
+        Là où les murs enferment,<br>naît le jeu du mot qu'il faut
+      </p>
+      <!-- Guillemets fermants -->
+      <div style="font-size:3rem;line-height:1;color:rgba(200,160,32,.2);
+        font-family:'Syne',sans-serif;transform:rotate(180deg);display:inline-block;
+        margin-bottom:12px">"</div>
+      <!-- Trait doré bas -->
+      <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,#C8A020,transparent);
+        margin:0 auto 16px"></div>
+      <!-- Attribution -->
+      <p style="font-size:.8rem;color:rgba(255,255,255,.35);font-style:italic;
+        letter-spacing:2px;position:relative;z-index:1">✦  ALKAMO — Devise officielle  ✦</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2 — CHAMPS LEXICAUX -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#1D9E75">2</div>
+      <div class="g-title">Les Champs Lexicaux</div>
+    </div>
+
+    <div class="g-card">
+      <p>Le champ lexical est un réseau vaste de mots liés à un thème commun. Il ne se compose pas seulement de synonymes mais aussi de mots de même famille, de même domaine et de même notion.</p>
+    </div>
+
+    <div class="champ-ex">
+      <div class="champ-row">
+        <div class="champ-key" style="color:#534AB7">Synonymes</div>
+        <div class="champ-val">Mots à sémantiques similaires<br><em>"demeure" → "maison"</em></div>
+      </div>
+      <div class="champ-row">
+        <div class="champ-key" style="color:#1D9E75">Même famille</div>
+        <div class="champ-val">Mots ayant la même racine<br><em>caisse, caissette, caissière</em></div>
+      </div>
+      <div class="champ-row">
+        <div class="champ-key" style="color:#1565C0">Même domaine</div>
+        <div class="champ-val">Mots spécifiques au domaine<br><em>soldat, caserne, troupe</em></div>
+      </div>
+      <div class="champ-row">
+        <div class="champ-key" style="color:#8B2020">Même notion</div>
+        <div class="champ-val">Mots plus génériques<br><em>blessure, violence, hostilité</em></div>
+      </div>
+    </div>
+
+    <div class="g-card violet" style="margin-top:12px">
+      <h3>Exemple — Champ lexical du mot ARMÉE</h3>
+      <p><strong style="color:#7F77DD">Synonymes :</strong> guerre, conflit, combat</p>
+      <p><strong style="color:#1D9E75">Même famille :</strong> arme, armure, armistice</p>
+      <p><strong style="color:#1565C0">Même domaine :</strong> soldat, caserne, troupe</p>
+      <p><strong style="color:#8B2020">Même notion :</strong> blessure, violence, hostilité</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3 — SUPER MOT -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#C8A020">3</div>
+      <div class="g-title">Super Mot & Bonus Spéciaux</div>
+    </div>
+
+    <div class="g-card gold">
+      <h3>⭐ Le Super Mot</h3>
+      <p>Tout joueur qui parvient à composer un mot de <strong>10 lettres</strong> — la totalité des lettres en sa possession — bénéficie du <strong>double de la valeur des lettres.</strong></p>
+      <p>Un seul super mot est autorisé par joueur. Le joueur annonce « Super Mot » et pose ses lettres sans tirer de thème.</p>
+    </div>
+
+    <div class="g-card violet">
+      <h3>🎯 Bonus Cases Spéciales</h3>
+      <p><strong>Cases C1 et C5 :</strong> Bonus de <strong style="color:#FAD060">+10 points</strong> en plus de la valeur des lettres.</p>
+      <p><strong style="color:#1D9E75">Bonus Labourage :</strong> Mot exact inscrit sur la case = score × 2.</p>
+      <p><strong>Article 9a :</strong> Mot de 10 lettres en relation avec le thème = +20 points bonus.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 4 — RÈGLEMENT -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#534AB7">4</div>
+      <div class="g-title">Règlement Officiel</div>
+    </div>
+
+    <div class="art-list">
+      <div class="art-item"><div class="art-num">Art. 1</div><div class="art-txt">Le tapis principal est placé au milieu. Chaque joueur est identifié par la couleur de son chevalet.</div></div>
+      <div class="art-item"><div class="art-num">Art. 1a</div><div class="art-txt">L'arbitre (ou joueur élu) est gardien des cagnottes et du sablier. Sa décision est souveraine en cas de litige.</div></div>
+      <div class="art-item"><div class="art-num">Art. 2</div><div class="art-txt">Le joueur ayant tiré la lettre la plus proche de « A » commence. Le jeu tourne dans le sens contraire des aiguilles d'une montre.</div></div>
+      <div class="art-item"><div class="art-num">Art. 2a</div><div class="art-txt">En début de partie, chaque joueur tire 10 plaques de la cagnotte L. La plaque thème est tirée de la cagnotte T par le premier joueur.</div></div>
+      <div class="art-item"><div class="art-num">Art. 3</div><div class="art-txt">Le joueur ayant formé un mot dispose la plaque thème sur le tapis central. Le mot est placé horizontalement sur son tapis individuel.</div></div>
+      <div class="art-item"><div class="art-num">Art. 3a</div><div class="art-txt">Si un joueur passe, le suivant choisit de jouer le thème précédent ou d'en tirer un nouveau. Le thème non joué est replongé dans la cagnotte.</div></div>
+      <div class="art-item"><div class="art-num">Art. 3b</div><div class="art-txt">Le thème sur le tapis est au singulier. Le mot formé peut être au pluriel.</div></div>
+      <div class="art-item"><div class="art-num">Art. 4</div><div class="art-txt">Après avoir formé un mot, le joueur peut changer ou garder ses lettres restantes avant le tour suivant.</div></div>
+      <div class="art-item"><div class="art-num">Art. 5</div><div class="art-txt">Les jokers (03) remplacent n'importe quelle lettre. Leur valeur est nulle.</div></div>
+      <div class="art-item"><div class="art-num">Art. 7</div><div class="art-txt">Le joueur dans l'incapacité de former un mot peut remettre tout ou partie de ses lettres dans la cagnotte L et faire un nouveau tirage.</div></div>
+      <div class="art-item"><div class="art-num">Art. 8</div><div class="art-txt">Seuls les infinitifs sont autorisés pour les verbes. Les noms propres, mots composés et initiales sont interdits.</div></div>
+    </div>
+  </div>
+
+  <!-- SECTION 5 — TRANSACTIONS -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#1D9E75">5</div>
+      <div class="g-title">Transactions Achat-Vente-Échange</div>
+    </div>
+
+    <div class="g-card green">
+      <p>L'action Achat-Vente-Échange est autorisée <strong>3 fois par partie.</strong></p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px">
+      <div class="g-card" style="border-top:3px solid #534AB7">
+        <h3 style="color:#7F77DD">Achat</h3>
+        <p>L'acheteur reçoit une lettre. Le vendeur tire une lettre compensatrice dans la cagnotte L.</p>
+      </div>
+      <div class="g-card" style="border-top:3px solid #1D9E75">
+        <h3 style="color:#4DC99A">Vente</h3>
+        <p>Le vendeur cède une lettre. L'acheteur la reçoit sans compensation.</p>
+      </div>
+      <div class="g-card" style="border-top:3px solid #C8A020">
+        <h3 style="color:#FAD060">Échange</h3>
+        <p>Le nombre de lettres reste égal (10). La différence de valeur n'est pas prise en compte.</p>
+      </div>
+    </div>
+
+    <div class="g-card" style="margin-top:12px">
+      <p><strong>Important :</strong> Toute lettre acquise doit être utilisée dans le mot du thème en cours. En cas de pass sans mot, la transaction est annulée.</p>
+      <p>Prix de vente/achat : ne peut dépasser le double de la valeur initiale. Valeur d'un joker : <strong>10 pts.</strong></p>
+    </div>
+  </div>
+
+  <!-- SECTION 6 — FIN DE PARTIE -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#C8A020">6</div>
+      <div class="g-title">Fin de Partie & Décompte</div>
+    </div>
+
+    <div class="g-card">
+      <p><strong>La partie se termine quand :</strong></p>
+      <ul style="list-style:none;margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <li style="display:flex;gap:8px"><span style="color:#FAD060">◆</span><span>Il n'y a plus de plaques dans la cagnotte T</span></li>
+        <li style="display:flex;gap:8px"><span style="color:#FAD060">◆</span><span>Un joueur n'a plus de lettres après le tirage supplémentaire</span></li>
+        <li style="display:flex;gap:8px"><span style="color:#FAD060">◆</span><span>Il ne reste plus de lettres dans la cagnotte L</span></li>
+        <li style="display:flex;gap:8px"><span style="color:#FAD060">◆</span><span>Le jeu est bloqué : tous les joueurs déclarent ne plus pouvoir former de mot</span></li>
+      </ul>
+    </div>
+
+    <div class="g-card gold">
+      <h3>Phase finale</h3>
+      <p>Après épuisement de la cagnotte T, les joueurs forment des mots libres jusqu'à épuisement des lettres. La valeur des lettres restantes est <strong>déduite du score</strong> de chaque joueur.</p>
+    </div>
+
+    <div class="g-card green" style="margin-top:12px;text-align:center">
+      <p style="font-size:1.1rem"><strong style="color:#FAD060">🌾 Le joueur totalisant le plus de points est déclaré Laboureur de la saison !</strong></p>
+    </div>
+  </div>
+
+  <!-- SECTION 7 — RECOMMANDATIONS -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#534AB7">7</div>
+      <div class="g-title">Recommandations & Arbitrage</div>
+    </div>
+
+    <div class="g-card violet">
+      <p>Il est recommandé que le jeu se déroule en présence d'un dictionnaire.</p>
+      <p>L'arbitre peut accepter un mot absent du lexique présent s'il existe dans d'autres références. Il peut aussi refuser un mot s'il n'est pas convaincu — au joueur de convaincre par des exemples.</p>
+      <p>En l'absence d'arbitre, tout litige est résolu <strong>à l'unanimité des joueurs.</strong></p>
+    </div>
+
+    <div class="g-card gold">
+      <p><strong>✦ L'honnêteté des joueurs est recommandée. Un bien mal acquis ne profite jamais.</strong></p>
+    </div>
+  </div>
+
+  <!-- SECTION 8 — LETTRES -->
+  <div class="g-section">
+    <div class="g-head">
+      <div class="g-num" style="background:#1D9E75">8</div>
+      <div class="g-title">Lettres, Valeurs & Cagnottes</div>
+    </div>
+
+    <div class="cagnotte-grid">
+      <div class="cagnotte-card" style="background:rgba(83,74,183,.1);border-color:rgba(83,74,183,.2)">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1rem;color:#7F77DD;margin-bottom:8px">Cagnotte L — Lettres</h3>
+        <p style="font-size:.9rem;color:rgba(255,255,255,.7)">188 lettres + 3 jokers</p>
+      </div>
+      <div class="cagnotte-card" style="background:rgba(29,158,117,.1);border-color:rgba(29,158,117,.2)">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1rem;color:#4DC99A;margin-bottom:8px">Cagnotte T — Thèmes</h3>
+        <p style="font-size:.9rem;color:rgba(255,255,255,.7)">20 thèmes + 5 mots au choix</p>
+      </div>
+    </div>
+
+    <table class="letters-table">
+      <thead>
+        <tr><th>Lettre(s)</th><th>Exemplaires</th><th>Valeur</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A</td><td>20</td><td>2 pts</td></tr>
+        <tr><td>E</td><td>26</td><td>2 pts</td></tr>
+        <tr><td>S</td><td>16</td><td>2 pts</td></tr>
+        <tr><td>I</td><td>14</td><td>2 pts</td></tr>
+        <tr><td>O, U</td><td>12 chacune</td><td>2 pts</td></tr>
+        <tr><td>L, T, M, N, R</td><td>7 chacune</td><td>6 pts</td></tr>
+        <tr><td>C, B, D, F, G, H, P</td><td>5 chacune</td><td>6 pts</td></tr>
+        <tr><td>J, V</td><td>3 chacune</td><td>8 pts</td></tr>
+        <tr><td>K, Q, W, X, Y, Z</td><td>2 chacune</td><td>10 pts</td></tr>
+        <tr><td>Joker</td><td>3</td><td>0 pt (vente : 10 pts)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BOUTON FINAL -->
+  <div style="text-align:center;padding:40px 0">
+    <a href="guide.docx" download="ALKAMO_Guide_Jeu.docx" class="dl-btn">
+      📥 Télécharger le guide complet (Word A5)
+    </a>
+    <br><br>
+    <a href="jeu.html" style="display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(135deg,#534AB7,#2E2575);color:#fff;
+      padding:14px 28px;border-radius:50px;text-decoration:none;font-weight:600;
+      border:1px solid rgba(127,119,221,.4)">
+      🎮 Jouer à ALKAMO
+    </a>
+  </div>
+
+</div>
+
+<footer style="padding:28px 5%;text-align:center;border-top:1px solid rgba(255,255,255,.06);
+  color:rgba(255,255,255,.3);font-size:.82rem;position:relative;z-index:1">
+  <p>© 2025 <span style="color:#FAD060">ALKAMO</span> — Le Jeu des Mots — Tous droits réservés</p>
+  <p style="margin-top:4px;font-style:italic;font-size:.75rem">Là où les murs enferment, naît le jeu du mot qu'il faut</p>
+</footer>
+
+</body>
+</html>
