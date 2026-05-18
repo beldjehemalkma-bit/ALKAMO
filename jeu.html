@@ -1720,6 +1720,17 @@ function showDropIndicator(drop, pos) {
   }
 }
 
+
+// ─── Scroll molette horizontal ───
+function addWheelScroll(el) {
+  if (!el) return;
+  el.addEventListener('wheel', function(e) {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+}
 function setupDropZone() {
   const drop = document.getElementById('wdrop');
   if (!drop) return;
