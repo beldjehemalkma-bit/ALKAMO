@@ -1423,8 +1423,18 @@ function estFormeValide(mot) {
   return { ok: true };
 }
 
-// ─── Vérification Wiktionnaire ───
-async function verifierMotUniv() {
+// ─── Chargement dictionnaire universel (dictionnaire.json) ───
+let DICO_UNIV = null;
+fetch('dictionnaire.json')
+  .then(r => r.json())
+  .then(mots => {
+    DICO_UNIV = new Set(mots.map(m => m.toUpperCase()));
+    console.log('Dico universel chargé:', DICO_UNIV.size, 'mots');
+  })
+  .catch(e => console.warn('Dico universel non chargé:', e));
+
+// ─── Vérification via dictionnaire.json ───
+function verifierMotUniv() {
   const input = document.getElementById('search-univ');
   const res = document.getElementById('search-result-univ');
   const val = input.value.trim();
@@ -1440,29 +1450,24 @@ async function verifierMotUniv() {
     return;
   }
 
-  res.className = 'search-result';
-  res.style.display = 'block';
-  res.textContent = '🔍 Vérification en cours...';
+  if (!DICO_UNIV) {
+    res.className = 'search-result';
+    res.style.display = 'block';
+    res.textContent = '⏳ Dictionnaire en cours de chargement...';
+    return;
+  }
 
-  try {
-    const url = 'https://fr.wiktionary.org/api/rest_v1/page/summary/' + encodeURIComponent(val.toLowerCase());
-    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data.type !== 'disambiguation' && data.extract) {
-        res.className = 'search-result found-th';
-        res.textContent = '✅ "' + val.toUpperCase() + '" — Mot valide selon le Wiktionnaire';
-      } else {
-        res.className = 'search-result not-found';
-        res.textContent = '❌ "' + val.toUpperCase() + '" — Absent du dictionnaire universel';
-      }
-    } else {
-      res.className = 'search-result not-found';
-      res.textContent = '❌ "' + val.toUpperCase() + '" — Mot non trouvé';
-    }
-  } catch(e) {
+  const motNorm = val.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const trouve = DICO_UNIV.has(val.toUpperCase()) ||
+    [...DICO_UNIV].some(m => m.normalize('NFD').replace(/[\u0300-\u036f]/g,'') === motNorm);
+
+  res.style.display = 'block';
+  if (trouve) {
+    res.className = 'search-result found-th';
+    res.textContent = '✅ "' + val.toUpperCase() + '" — Mot valide dans le dictionnaire universel';
+  } else {
     res.className = 'search-result not-found';
-    res.textContent = '⚠️ Vérification impossible (connexion requise)';
+    res.textContent = '❌ "' + val.toUpperCase() + '" — Absent du dictionnaire universel';
   }
 }
 
@@ -1471,7 +1476,7 @@ function liveSearchUniv(val) {
     document.getElementById('search-result-univ').style.display = 'none';
     return;
   }
-  if (val.length >= 4) verifierMotUniv();
+  if (val.length >= 3) verifierMotUniv();
 }
 
 // Entrée clavier pour dico universel
