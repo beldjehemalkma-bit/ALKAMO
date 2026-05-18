@@ -1165,6 +1165,103 @@ const LC = {
   Y:{n:2,v:10},Z:{n:2,v:10},'*':{n:3,v:0}
 };
 
+const MAQUETTES = {
+  1: {
+    nom: "Maquette N°1", emoji: "🎯",
+    cases: [
+      {id:'A1',th:'VÊTEMENT',emoji:'👗'},        {id:'B1',th:'CHASSE ET PECHE',emoji:'🎣'},
+      {id:'C1',th:'MOT AU CHOIX',free:true,minL:7,maxL:9,bonus:10,emoji:'⭐'},
+      {id:'D1',th:'LANGUE',emoji:'💬'},           {id:'E1',th:'MAMMIFÈRE',emoji:'🦁'},
+      {id:'A2',th:'TRANSPORT',emoji:'🚗'},        {id:'B2',th:'ÉCONOMIE',emoji:'💰'},
+      {id:'C2',th:'SPORT',emoji:'⚽'},            {id:'D2',th:'RELIGION',emoji:'☪'},
+      {id:'E2',th:'ÉCOLE',emoji:'🏫'},
+      {id:'A3',th:'MOT AU CHOIX',free:true,minL:6,maxL:6,emoji:'⭐'},
+      {id:'B3',th:'OUTIL ET MÉTIER',emoji:'🔧'},
+      {id:'C3',th:'MOT AU CHOIX',free:true,minL:7,maxL:7,emoji:'⭐'},
+      {id:'D3',th:'POLITIQUE',emoji:'🏛'},
+      {id:'E3',th:'MOT AU CHOIX',free:true,minL:6,maxL:8,emoji:'⭐'},
+      {id:'A4',th:'MUSIQUE',emoji:'🎵'},          {id:'B4',th:'MINÉRAL',emoji:'💎'},
+      {id:'C4',th:'MESURE ET INSTRUMENT',emoji:'📏'}, {id:'D4',th:'ARTISANAT',emoji:'🏺'},
+      {id:'E4',th:'FRUIT',emoji:'🍎'},
+      {id:'A5',th:'ARBRE',emoji:'🌳'},            {id:'B5',th:'MÉDECINE',emoji:'⚕'},
+      {id:'C5',th:'MOT AU CHOIX',free:true,minL:8,maxL:8,bonus:10,emoji:'⭐'},
+      {id:'D5',th:'BÂTIMENT',emoji:'🏗'},         {id:'E5',th:'PHYSIQUE',emoji:'⚛'}
+    ]
+  },
+  2: {
+    nom: "Maquette N°2", emoji: "🌟",
+    cases: [
+      {id:'A1',th:'MARINE',emoji:'⚓'},           {id:'B1',th:'CHIMIE',emoji:'⚗'},
+      {id:'C1',th:'MOT AU CHOIX',free:true,minL:7,maxL:9,bonus:10,emoji:'⭐'},
+      {id:'D1',th:'COUTURE',emoji:'✂'},           {id:'E1',th:'GRAMMAIRE',emoji:'📝'},
+      {id:'A2',th:'FLEUR',emoji:'🌸'},            {id:'B2',th:'INDUSTRIE',emoji:'🏭'},
+      {id:'C2',th:'MÉTIER',emoji:'👷'},           {id:'D2',th:'ANIMAL',emoji:'🐾'},
+      {id:'E2',th:'CUISINE',emoji:'🍲'},
+      {id:'A3',th:'MOT AU CHOIX',free:true,minL:6,maxL:6,emoji:'⭐'},
+      {id:'B3',th:'INSTITUTION',emoji:'🏛'},
+      {id:'C3',th:'MOT AU CHOIX',free:true,minL:7,maxL:7,emoji:'⭐'},
+      {id:'D3',th:'OUTIL',emoji:'🔧'},
+      {id:'E3',th:'MOT AU CHOIX',free:true,minL:6,maxL:8,emoji:'⭐'},
+      {id:'A4',th:'PÉDAGOGIE',emoji:'👨‍👩‍👧'},      {id:'B4',th:'JEU',emoji:'♟'},
+      {id:'C4',th:'ART ET MUSIQUE',emoji:'🎵'},   {id:'D4',th:'ASTRONOMIE',emoji:'🌙'},
+      {id:'E4',th:'ALIMENT',emoji:'🥩'},
+      {id:'A5',th:'BOTANIQUE',emoji:'🌵'},        {id:'B5',th:'ÉNERGIE',emoji:'⚡'},
+      {id:'C5',th:'MOT AU CHOIX',free:true,minL:8,maxL:8,bonus:10,emoji:'⭐'},
+      {id:'D5',th:'PUISSANCE',emoji:'💪'},        {id:'E5',th:'ANATOMIE',emoji:'🦴'}
+    ]
+  },
+  3: {
+    nom: "Maquette N°3", emoji: "🏆",
+    cases: [
+      {id:'A1',th:'JEU ET SPORT',emoji:'⚽'},     {id:'B1',th:'TEMPS ET MÉTÉO',emoji:'🌦'},
+      {id:'C1',th:'MOT AU CHOIX',free:true,minL:7,maxL:9,bonus:10,emoji:'⭐'},
+      {id:'D1',th:'INFORMATIQUE',emoji:'💻'},     {id:'E1',th:'MATHÉMATIQUES',emoji:'📐'},
+      {id:'A2',th:'AGRICULTURE',emoji:'🌾'},      {id:'B2',th:'ART',emoji:'🎨'},
+      {id:'C2',th:'NAVIGATION',emoji:'⚓'},       {id:'D2',th:'FAUNE ET FLORE',emoji:'🌿'},
+      {id:'E2',th:'GUERRE',emoji:'⚔'},
+      {id:'A3',th:'MOT AU CHOIX',free:true,minL:6,maxL:6,emoji:'⭐'},
+      {id:'B3',th:'ADMINISTRATION',emoji:'🏢'},
+      {id:'C3',th:'MOT AU CHOIX',free:true,minL:7,maxL:7,emoji:'⭐'},
+      {id:'D3',th:'FAMILLE',emoji:'👨‍👩‍👧'},
+      {id:'E3',th:'MOT AU CHOIX',free:true,minL:6,maxL:8,emoji:'⭐'},
+      {id:'A4',th:'PHYSIQUE ET CHIMIE',emoji:'⚗'},{id:'B4',th:'PAYS ET CAPITALES',emoji:'🌍'},
+      {id:'C4',th:'MÉDECINE ET ANATOMIE',emoji:'🏥'},{id:'D4',th:'COMMERCE',emoji:'🛒'},
+      {id:'E4',th:'DROIT ET JUSTICE',emoji:'⚖'},
+      {id:'A5',th:'LITTÉRATURE',emoji:'📖'},      {id:'B5',th:'TOURISME',emoji:'✈'},
+      {id:'C5',th:'MOT AU CHOIX',free:true,minL:8,maxL:8,bonus:10,emoji:'⭐'},
+      {id:'D5',th:'URBANISME',emoji:'🏘'},        {id:'E5',th:'MER ET OCÉAN',emoji:'🌊'}
+    ]
+  },
+  4: {
+    nom: "Maquette N°4", emoji: "💫",
+    cases: [
+      {id:'A1',th:'GÉOGRAPHIE',emoji:'🌍'},       {id:'B1',th:'INFORMATIQUE ET IA',emoji:'💻'},
+      {id:'C1',th:'MOT AU CHOIX',free:true,minL:7,maxL:9,bonus:10,emoji:'⭐'},
+      {id:'D1',th:'COULEUR',emoji:'🎨'},          {id:'E1',th:'MYTHOLOGIE',emoji:'⚡'},
+      {id:'A2',th:'CUISINE ET GASTRO',emoji:'🍽'},{id:'B2',th:'CORPS HUMAIN',emoji:'🫀'},
+      {id:'C2',th:'DROIT ET JUSTICE',emoji:'⚖'}, {id:'D2',th:'PHILOSOPHIE',emoji:'🤔'},
+      {id:'E2',th:'INSECTE ET REPTILE',emoji:'🦎'},
+      {id:'A3',th:'MOT AU CHOIX',free:true,minL:6,maxL:6,emoji:'⭐'},
+      {id:'B3',th:'HISTOIRE',emoji:'📜'},
+      {id:'C3',th:'MOT AU CHOIX',free:true,minL:7,maxL:7,emoji:'⭐'},
+      {id:'D3',th:'ESPACE ET COSMOS',emoji:'🚀'},
+      {id:'E3',th:'MOT AU CHOIX',free:true,minL:6,maxL:8,emoji:'⭐'},
+      {id:'A4',th:'SPORT ET JEU',emoji:'🏆'},     {id:'B4',th:'FINANCE ET BANQUE',emoji:'🏦'},
+      {id:'C4',th:'TECHNOLOGIE',emoji:'⚙'},       {id:'D4',th:'MÉTÉO ET CLIMAT',emoji:'🌦'},
+      {id:'E4',th:'ARCHITECTURE',emoji:'🏗'},
+      {id:'A5',th:'LITTÉRATURE',emoji:'📚'},      {id:'B5',th:'MONTAGNE ET DÉSERT',emoji:'🏔'},
+      {id:'C5',th:'MOT AU CHOIX',free:true,minL:8,maxL:8,bonus:10,emoji:'⭐'},
+      {id:'D5',th:'POISSON ET MER',emoji:'🐟'},   {id:'E5',th:'CHIMIE ET MATIÈRE',emoji:'⚗'}
+    ]
+  }
+};
+
+// Maquette active (par défaut 1)
+let CASES = MAQUETTES[1].cases;
+// ═══════════════════════════════════════════
+// DICTIONNAIRE (chargé depuis Excel)
+// ═══════════════════════════════════════════
+
 const DICT = {
 "VÊTEMENT": ["ABACA", "ABACOST", "ACABIT", "ACCESSOIRE", "ACETATE", "ACRYLIQUE", "AGNELIN", "AIDA", "AJOURE", "AJUSTE", "AJUSTER", "ALAISE", "ALESE", "ALFA", "ALPAGA", "AMICT", "AMPLE", "ANGORA", "ANORAK", "APEX", "APPARAT", "ARAMIDE", "ARMET", "ARMILLE", "ARMOIRE", "ARMURE", "ATOUR", "ATTIFET", "AUBETTE", "BABOUCHE", "BACHE", "BADA", "BALLET", "BALOISE", "BAN", "BANDANA", "BANDEAU", "BANNETTE", "BAPTISTE", "BARBETTE", "BAREGE", "BARRE", "BARRETTE", "BAS", "BASIN", "BASKET", "BASQUE", "BASSINET", "BASTA", "BASTE", "BATAVIA", "BATIK", "BATISTE", "BAUGE", "BAUX", "BECHE", "BEGUIN", "BEIGE", "BERET", "BERMUDA", "BERNE", "BERNOISE", "BERTHE", "BEUGLE", "BIAUDE", "BIBI", "BICORNE", "BIFACE", "BIFFE", "BIJOU", "BIKINI", "BISET", "BISETTE", "BISONNE", "BISSE", "BLANC", "BLAUDE", "BLAZER", "BLEU", "BLIAUD", "BLIAUT", "BLOUSE", "BLOUSON", "BODY", "BOGE", "BOGOLAN", "BOITON", "BOLDUC", "BOLERO", "BOLIVAR", "BOMBE", "BONNET", "BOOT", "BORDAT", "BORE", "BORT", "BOSSUE", "BOT", "BOTTILLON", "BOTTINE", "BOUBOU", "BOUCHON", "BOUCLE", "BOUCLETTE", "BOUGE", "BOUGIE", "BOUGRINE", "BOUR", "BOURACAN", "BOURDE", "BOURRAT", "BOURRE", "BOUTIQUE", "BOUTON", "BOUTONNE", "BOXER", "BRAGUE", "BRAIE", "BRASSIERE", "BRETON", "BRIN", "BROCART", "BROCHE", "BRODERIE", "BROIGNE", "BRUN", "BRUNE", "BRÛLÉS", "BUGNE", "BURAT", "BURATIN", "BURE", "BURELE", "BURELLE", "BURKA", "BUSC", "BUSE", "BUSTIER", "BUT", "BUTANE", "CABAN", "CABOCHON", "CACHEMIRE", "CAFARD", "CAFETAN", "CAFTAN", "CAGOULE", "CALE", "CALECHE", "CALEÇON", "CALICOT", "CALINE", "CALLE", "CALMI", "CALOT", "CALOTTE", "CAMAIEU", "CAMAIL", "CAMBRAI", "CAMELINE", "CAMELOT", "CAMION", "CAMISOLE", "CAMPE", "CAMPO", "CANETTE", "CANEZOU", "CANGUE", "CANNETTE", "CANON", "CANOT", "CAP", "CAPE", "CAPELE", "CAPET", "CAPITE", "CAPITON", "CAPO", "CAPOT", "CAPOTE", "CAPPA", "CAPRON", "CAPUCE", "CAPUCHE", "CAPUCHON", "CAPULET", "CARACO", "CARDE", "CARDIGAN", "CARPETTE", "CARRE", "CARRELE", "CARRELET", "CASAQUE", "CASAQUIN", "CASHMERE", "CASIMIR", "CASOAR", "CASQUE", "CASSE", "CASTILLE", "CATISSE", "CEINTURE", "CESTE", "CHABIN", "CHABOT", "CHAMBRAI", "CHAMOISE", "CHANDAIL", "CHANGER", "CHANVRE", "CHAPE", "CHAPEAU", "CHAPELE", "CHAPERON", "CHAPKA", "CHAPSKA", "CHARIVARI", "CHARLOTTE", "CHASUBLE", "CHAT", "CHAUDRON", "CHAUDS", "CHAUSSE", "CHAUSSETTE", "CHAUSSON", "CHAUSSURE", "CHECHE", "CHECHIA", "CHEMISE", "CHEMISIER", "CHEVRON", "CHIC", "CHIFFON", "CHINTZ", "CHINURE", "CHIQUE", "CHITON", "CHLAMYDE", "CHOPE", "CHOPINE", "CHOQUE", "CHÂLE", "CILICE", "CINTRE", "CINTRER", "CIRE", "CLABAUD", "CLAIR", "CLAME", "CLAQUE", "CLAQUETTE", "CLOCHE", "CLOQUE", "COIFFE", "COIFFURE", "COIR", "COL", "COLLANT", "COLLET", "COLLETIN", "COLOBE", "COLTIN", "COMBINE", "COMETE", "COMMODE", "COMPERE", "COMPLET", "COMTAL", "CONFECTION", "COQUILLE", "CORDA", "CORDAT", "CORDE", "CORDELAT", "CORNETTE", "CORPS", "CORSAGE", "CORSAIRE", "CORSELET", "CORSET", "CORVETTE", "COSTUME", "COTE", "COTELE", "COTHURNE", "COTILLON", "COTON", "COTONNE", "COTTE", "COUDRE", "COULEUR", "COULISSE", "COUPE", "COUPON", "COUSE", "COUTE", "COUTIL", "COUTURE", "COUTURIER", "COYOTE", "CRAMOISI", "CRASH", "CRAVATE", "CREMONE", "CREPE", "CREPON", "CRETONNE", "CRIARDE", "CRIN", "CRISPIN", "CRISTAL", "CROISE", "CRU", "CUCULLE", "CUIR", "CUIRASSE", "CUIRETTE", "CUISSARD", "CULOTTE", "DABA", "DACRON", "DAMASSE", "DAUPHIN", "DEBARDEUR", "DECOLLETE", "DECOUPE", "DELAINE", "DELAVE", "DENIM", "DENTELLE", "DERBY", "DESHABILLE", "DIACRE", "DIPLOIDE", "DISTINCTIF", "DJELLABA", "DOLMAN", "DOMINICAL", "DOMINO", "DOUBLET", "DOUBLIER", "DOUBLURE", "DOUDOUNE", "DOUPION", "DRALON", "DRAP", "DRAPERIE", "DRAPÉ", "DRILL", "DRILLE", "DROIT", "DUVET", "DÉFROQUE", "ECARLATE", "ECHARPE", "ECLOT", "EFFILE", "EFFILOCHE", "ELBEUF", "ELITE", "EMANA", "EMBATE", "EMBOUTI", "ENCOLURE", "ENDOSSER", "ENFILER", "ENSEMBLE", "ENTREJAMBE", "EPHOD", "EPINE", "EPINGLE", "EPITOGE", "EPONGE", "ESCARPIN", "ESCOT", "ESKIMO", "ESPADRILLE", "ESQUIMAU", "ESTIVAL", "ETAIN", "ETAMINE", "ETOLE", "FAFIOT", "FAILLE", "FALOT", "FALUCHE", "FANCHON", "FANON", "FANTAISIE", "FEMME", "FEUTRE", "FEUTRINE", "FEZ", "FIBULE", "FICELLE", "FIL", "FILASSE", "FILET", "FILETE", "FILIBEG", "FILIN", "FILOCHE", "FINETTE", "FLAIRE", "FLAMANT", "FLAMME", "FLANELLE", "FLANEUR", "FLEURET", "FLEURON", "FLOQUE", "FOCALE", "FOLLETTE", "FOULARD", "FOULE", "FOURREAU", "FOURRURE", "FRAC", "FRAISE", "FRINGUE", "FRIPONNE", "FRISE", "FRISETTE", "FRISON", "FRIVOLITE", "FROC", "FUSEAU", "FUTAINE", "FÉMININ", "GABARDINE", "GAILLARD", "GAINE", "GALBE", "GALETTE", "GALLIQUE", "GALOCHE", "GALON", "GANACHE", "GANDOURA", "GANT", "GARAT", "GATEUSE", "GAUFRE", "GAZE", "GENET", "GILET", "GIN", "GISELLE", "GLORIA", "GOBELIN", "GODET", "GONE", "GONELLE", "GOURA", "GRIFFE", "GUEPIERE", "GUETRE", "GUETRON", "GUEUSE", "GUIMPE", "HABILLER", "HABIT", "HAIE", "HAIK", "HAILLON", "HAIRE", "HALETTE", "HENNIN", "HIDJAB", "HIJAB", "HISSE", "HOUSE", "HOUSEAU", "HOUSSE", "HUSKY", "HYACINTHE", "IKAT", "IMPERIAL", "INFULE", "JABOT", "JACK", "JACKET", "JACQUET", "JAMBART", "JAMBE", "JAMBIERE", "JAQUE", "JAQUET", "JAQUETTE", "JARRE", "JASERAN", "JASERON", "JASPE", "JEAN", "JERSEY", "JOCKEY", "JOGGER", "JOGGING", "JONC", "JOUETS", "JUBE", "JUDOGI", "JUMEL", "JUMPER", "JUPE", "JUPETTE", "JUPON", "JUSTE", "JUTE", "KABIC", "KABIG", "KAKI", "KALMOUK", "KAPOK", "KEFFIEH", "KEFIE", "KEPI", "KEVLAR", "KHAT", "KILT", "KIMONO", "KIPPA", "KNICKER", "KROUMIR", "LACET", "LAINAGE", "LAINE", "LAMA", "LAMBA", "LAME", "LAMPA", "LAMPE", "LAMPION", "LANCE", "LANGE", "LASTEX", "LASTING", "LAVER", "LAYETTE", "LEONAISE", "LESTE", "LEVITE", "LIGATURE", "LIGNEUL", "LIN", "LINETTE", "LINGE", "LINGERIE", "LINGETTE", "LINGUET", "LINON", "LION", "LIQUETTE", "LIRETTE", "LISEUSE", "LISÉRÉ", "LITERIE", "LITHAM", "LITSAM", "LODEN", "LONGOTTE", "LOOK", "LOQUET", "LORIOT", "LOUTRE", "LUREX", "LUSTRINE", "LUXE", "LYCRA", "LÉVITE", "MAILLE", "MAILLON", "MAILLOT", "MAIN", "MANCHE", "MANCHON", "MANILLE", "MANNEQUIN", "MANTA", "MANTE", "MANTEAU", "MANTELET", "MANTILLE", "MARINIERE", "MARQUE", "MASCULIN", "MATASSE", "MATELOT", "MELUSINE", "MESURE", "MICMAC", "MIGRAINE", "MIRLITON", "MITAINE", "MITASSE", "MITON", "MITRALE", "MITRE", "MITRON", "MOCASSIN", "MODAL", "MODE", "MOFLE", "MOHAIR", "MOIRE", "MOLE", "MOLETE", "MOLLETON", "MONOKINI", "MONTERA", "MOQUETTE", "MORE", "MORFIL", "MORILLON", "MORION", "MORTIER", "MOTIF", "MOUCHOIR", "MOUFLE", "MOUILLÉ", "MOULANT", "MOULINE", "MOURRE", "MOUSSE", "MOUTONNE", "MOZETTE", "MULE", "MULETA", "MULETTE", "MUSSAT", "MYLAR", "NAGE", "NAGEUR", "NANKIN", "NANSOUK", "NANZOUK", "NAPPE", "NATTE", "NEUF", "NIDANGE", "NIKE", "NOIR", "NUAGE", "NUDITÉ", "NUE", "NUISETTE", "NYLON", "OBJET", "ORIPEAU", "ORLON", "OUATE", "OUATINE", "OURSIN", "OURSON", "PAGNE", "PAGNON", "PAILLE", "PAILLOTE", "PAISSEAU", "PAL", "PALANCHE", "PALATINE", "PALE", "PALETOT", "PALI", "PALIE", "PALLE", "PALLIUM", "PALOTTE", "PAN", "PANE", "PANIER", "PANNE", "PANNEAU", "PANNICULE", "PANTACOURT", "PANTALON", "PANTE", "PANTOUFLE", "PANTY", "PAREO", "PARFUM", "PARKA", "PARLA", "PARQUE", "PARURE", "PASHMINA", "PATIN", "PAVANE", "PAVIE", "PAYA", "PEAU", "PEIGNE", "PEIGNOIR", "PELADE", "PELE", "PELISSE", "PELOTAGE", "PELUCHA"],
 "CHASSE ET PECHE": ["ABAIT", "ABATTIS", "ABATURE", "ABLIER", "ABOIEMENT", "ABOIS", "ABOYEUR", "ABRICOT", "ABRICOTIER", "ABÉCHER", "ACADIE", "ACASTE", "ACCIDENT", "ACCOUER", "ACCUL", "ACCUSATION", "ACHIGAN", "ACQUER", "ADONNER", "AFFÛT", "AGRAINAGE", "AGRENER", "AGRICULTURE", "AIM", "AIN", "ALAI", "ALAN", "ALBERGE", "ALEVIN", "ALOSE", "ALOSIER", "AMBLEUR", "AMIRAUTÉ", "AMORCAGE", "AMORCE", "ANCHOIS", "ANGON", "ANGUILLE", "ANIMAL", "ANTILOPE", "ANUER", "APLET", "APNÉE", "APPEAU", "APPÂT", "AQUACULTURE", "AQUATIQUE", "AQUE", "ARAIGNÉE", "ARBALÈTE", "ARC", "ARCHE", "ARCHER", "ARCTIQUE", "ARGENT", "ARMATEUR", "ARME", "ARMÉE", "ARQUEBUSE", "ARTISANALE", "ARTÉMIS", "ARÔME", "ASTICOT", "ATALANTE", "ATLANTIQUE", "ATTENTE", "AUMÉE", "AUROCHS", "AUTEL", "AVALOIR", "AVANO", "AVANÇON", "AVIATION", "AVION", "AVUER", "AÉRIEN", "BADAIL", "BAIE", "BAIGNADE", "BALEINE", "BALEINIER", "BALEINIÈRE", "BALVANE", "BARAU", "BARIGUE", "BARQUE", "BASSET", "BATEAU", "BATTRE", "BATTUE", "BATTURE", "BAUD", "BAUDE", "BENI", "BETTE", "BICHE", "BIGNON", "BIRE", "BISON", "BLANK", "BOMBARDIER", "BONDIR", "BORD", "BOUCANIER", "BRACONNAGE", "BRACONNIER", "BRAQUE", "BREDOUILLE", "BROCHET", "BROUSSE", "BRUIME", "BÉCASSE", "BÊTE", "CABANE", "CABILLAUD", "CABOTAGE", "CACHALOT", "CACHE", "CAISSE", "CALLEUR", "CAMPAGNARD", "CANARD", "CANARDIÈRE", "CANNE", "CANOT", "CAPITAINERIE", "CAPTURE", "CAPTURER", "CARABINE", "CARACTÈRE", "CARIBOU", "CARNASSIER", "CARNASSIÈRE", "CARNIER", "CARPE", "CARQUOIS", "CARTOUCHE", "CASIER", "CASSE", "CASSIS", "CASTOR", "CATEROLE", "CATHÉDRALE", "CATICHE", "CAVIAR", "CEINTURON", "CERF", "CERISES", "CERVIDÉ", "CHAIR", "CHALON", "CHALOUPE", "CHALUT", "CHALUTAGE", "CHALUTIER", "CHANDELIER", "CHANOINE", "CHARGE", "CHAROTE", "CHASSABLE", "CHASSAGE", "CHASSE", "CHASSEAU", "CHASSER", "CHASSEUR", "CHASSOIR", "CHASSOIRE", "CHEAU", "CHENIL", "CHEVAL", "CHEVREUIL", "CHEVROTINE", "CHIEN", "CHÂSSIS", "CINÉTIR", "CIVELLE", "CLIMAT", "CLOU", "COCKER", "COMMERCIAL", "CONGRE", "CONSERVE", "CONTENANT", "COQUILLAGE", "COR", "CORACLE", "CORET", "CORMORAN", "CORNURE", "COURAU", "COURRE", "COURSE", "CRABE", "CREVETTE", "CREVETTIER", "CRIÉE", "CROULE", "CRUSTACÉ", "CRYPTE", "CUEILLETTE", "CUEILLEUR", "CUEILLIR", "CULETIN", "CURÉE", "CÉRÉMONIE", "CÉTACÉ", "CÔTE", "CÔTIÈRE", "DAHU", "DAIM", "DEHAIT", "DENTÉE", "DESURE", "DEVON", "DIGOT", "DIGUET", "DOLIER", "DORADE", "DOUCE", "DRAGUE", "DREIGUEUR", "DRUPE", "DRÈGE", "DUIRE", "DUIT", "DÉROGATION", "EAU", "ECHER", "ECORAGE", "EIN", "EMBUSCADE", "ENGIN", "ENOCTER", "ESCADRE", "ESCADRILLE", "ESCADRON", "ESCAP", "ESCHE", "ESCHER", "ESPADON", "ESQUE", "ESTURGEON", "ESTURIE", "ETAVE", "ETENTE", "ETROPE", "EUPHORIE", "EXTINCTION", "FAISAN", "FANFARE", "FARAIS", "FAUCON", "FAUNE", "FAUQUE", "FAUVE", "FICHURE", "FIERTE", "FIGUE", "FILATURE", "FILET", "FILEYEUR", "FILIÈRE", "FITORA", "FLAIR", "FLOTTEUR", "FLOTTILLE", "FLUE", "FLUVIALE", "FLÉTAN", "FOKKER", "FOLLE", "FORCE", "FORESTIER", "FORHU", "FORÊT", "FOUENE", "FOULE", "FOURRURE", "FOUÉE", "FOËNE", "FRAISES", "FRAMBOISE", "FRAÎCHE", "FRETIN", "FRITE", "FRITURE", "FRUIT", "FURET", "FURETAGE", "FUSCINE", "FUSIL", "FUSTER", "FÉLIN", "FÛT", "GABARE", "GALOP", "GARBON", "GARDE", "GARDÉE", "GARENNE", "GARRON", "GIBIER", "GITE", "GLANÉE", "GLINE", "GODET", "GOLFE", "GORD", "GOUJON", "GOÉLETTE", "GRAISSE", "GRENAILLE", "GRIFFON", "GRIVIÈRE", "GUET", "GUIDEAU", "HACKLE", "HAHÉ", "HAIN", "HALIEUTIQUE", "HALIN", "HALLALI", "HAMEÇON", "HARDELLE", "HARDER", "HARE", "HARENG", "HARENGUIER", "HARLOU", "HARPEAU", "HARPER", "HARPON", "HART", "HARVIAU", "HAULÉE", "HOMARD", "HOMME", "HOUPER", "HOURVARI", "HOUSURE", "HOYÉ", "HUAU", "HUCHER", "HURONS", "HUTTE", "HUTTIER", "HUÎTRES", "HÉRON", "IDÉE", "IGLOO", "ILLÉGALE", "INTENSIVE", "INTERDITE", "INUIT", "IROQUOIS", "ISLANDE", "IXEUTIQUE", "JAGUDE", "JAMBE", "JAVELLE", "JET", "JEU", "JIG", "JIGGER", "JONCHE", "JONSSIÉE", "JUTEUSE", "KAYAK", "KELT", "KOL", "LABRADOR", "LAMPARO", "LANCÉ", "LANERET", "LANGOUSTE", "LANGOUSTIER", "LANIER", "LAPIN", "LAYLA", "LEURRE", "LEURRER", "LIGNE", "LIMIER", "LION", "LITCHI", "LITEAU", "LITTORAL", "LIÈVRE", "LOISIR", "LORIENT", "LOUP", "LOUTRE", "LULU", "LÉOPARD", "LÉVRIER", "MADRAGUE", "MAMMIFÈRE", "MAMMOUTH", "MANCHE", "MANGUE", "MAQUEREAU", "MAREYAGE", "MARIN", "MARINE", "MARITIME", "MARTYRE", "MARÉE", "MER", "MEUTE", "MIRE", "MOLLUSQUE", "MORUE", "MORUTIER", "MOULE", "MOULINET", "MOUÉE", "MUNITION", "MÉLÉAGRE", "MÛRES", "NAPPE", "NASSE", "NAUTIQUE", "NAVIRE", "NECTARINE", "NOMADE", "NOURRAIN", "NOURRIR", "NOYAU", "NUISIBLE", "OCÉAN", "ODORAT", "OISEAU", "OISELAGE", "OISELER", "OISELEUR", "OLIFANT", "ORQUE", "OSTENSOIR", "OTARIE", "OURS", "OURVARI", "OUVERTURE", "PACIFIQUE", "PAIRON", "PALANGRE", "PALOMBE", "PALOURDE", "PANTENNE", "PANTIÈRE", "PARC", "PARIADE", "PATIÈRE", "PAUMILLE", "PAVILLON", "PENTIÈRE", "PERCHE", "PERDRIX", "PERMIS", "PERSICA", "PHOQUE", "PIED", "PINASSE", "PIPEAU", "PIPUEUR", "PIPÉE", "PIROGUE", "PISCICOLE", "PISTAGE", "PISTE", "PISTER", "PIÈGE", "PIÉGEAGE", "PIÉGEUR", "PLAISANCE", "PLIETTE", "PLOMB", "PLOYETTE", "POINTER", "POIRE", "POIS", "POISSON", "PORT", "POSTE", "POURSUITE", "POURVOIRIE", "PRENDRE", "PROIE", "PRÉDATEUR", "PRÉDATION", "PÈLERIN", "PÉCHU", "PÉLÉE", "PÉTONCLE", "PÊCHE", "PÊCHER", "PÊCHERIE", "PÊCHEUR", "QUAI", "QUEUE", "QUOTA", "QUÊTE", "RAFLE", "RALLIE", "RAMURE", "RANDONNÉE", "RAPACE", "RECHERCHE", "RECLIN", "RELAIS", "RELIQUAIRE", "RELIQUE", "RENARD", "RENNE", "REPÊCHAGE", "REQUIN", "RESSOURCE", "RET", "REVOIRS", "RITUELLE", "RIVAGE", "RIVIÈRE", "ROCH", "ROGUE", "RÈGLEMENT", "RÉCRÉATIVE", "RÉDUIT", "RÉGRESSION", "RÉGULATION", "RÉSERVE", "SACRE", "SACRET", "SAFARI", "SAISON", "SALAISON", "SANDRE", "SANGLIER", "SANGUINOLE", "SARDINE", "SARDINIER", "SAUMON", "SAUVAGE", "SAVAU", "SILURE", "SINGE", "SORTE", "SPORT", "SQUADRON", "STOCK", "SUIVRE", "SURPÊCHE", "SÉBASTE", "TAIAUT", "TENDERIE", "TERRIER", "TERRITOIRE", "TETRAS", "THON", "THONIER", "TIERCELET", "TIGRE", "TIR", "TIRASSE", "TIRER", "TONNE", "TOUCHER", "TOURISME", "TRAILLER", "TRAPPE", "TRAPPEUR", "TRAQUE", "TRAQUER", "TROLER", "TROLLE", "TROMPE", "TROPHÉE", "TROUPEAU", "TRUITE", "TRÉSOR", "TURLUTTE", "VAGNOLI", "VAUTRAIT", "VAUTRER", "VENAISON", "VENER", "VENEUR", "VERMILLER", "VERVEUX", "VIANDIS", "VIVIER", "VLAAU", "VOILE", "VOLCELEST", "VOLERIE", "VOUGE", "VÉLAUT", "VÉNERIE", "ÉCHALON", "ÉCUREUIL", "ÉLEVAGE", "ÉMERILLON", "ÉPAGNEUL", "ÉPERVIER", "ÉPIEU", "ÉPONGE", "ÉPUISETTE", "ÉSAÜ", "ÉTANG", "RIVIERE", "LAC", "OCEAN", "FORET", "BOIS", "VIANDE", "PLUME", "POIL", "CORNE", "GRIFFE", "DENT", "SANG", "TRACE"],
