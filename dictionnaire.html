@@ -39,6 +39,36 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5
 
 /* HERO DICO */
 .dico-hero{padding:50px 5% 30px;text-align:center;position:relative;z-index:1}
+.dico-choix {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.dico-choix-btn {
+  padding: 12px 28px;
+  border-radius: 50px;
+  border: 2px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: .95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .3s;
+}
+.dico-choix-btn:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.5); }
+.dico-choix-btn.active {
+  background: linear-gradient(135deg,var(--purple),var(--gold));
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(83,74,183,.4);
+}
+.dico-univ-desc {
+  color: rgba(255,255,255,.7);
+  font-size: .9rem;
+  margin: 10px 0 16px;
+  text-align: center;
+}
 .dico-hero h1{font-family:'Syne',sans-serif;font-weight:800;
   font-size:clamp(1.8rem,4vw,3rem);margin-bottom:10px}
 .dico-hero h1 span{color:var(--gl)}
@@ -140,13 +170,38 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5
   <h1>Dictionnaire <span>ALKAMO</span></h1>
   <p>Consultez et vérifiez tous les mots acceptés dans chaque thème</p>
 
-  <div class="search-wrap">
-    <input class="search-input" id="search-input" type="text"
-      placeholder="🔍 Tapez un mot pour le vérifier..." autocomplete="off"
-      oninput="liveSearch(this.value)">
-    <button class="search-btn" onclick="verifierMot()">✓ Vérifier</button>
+  <!-- Choix du dictionnaire -->
+  <div class="dico-choix">
+    <button class="dico-choix-btn active" id="btn-lexical" onclick="switchDico('lexical')">
+      📋 Dictionnaire Lexical
+    </button>
+    <button class="dico-choix-btn" id="btn-universel" onclick="switchDico('universel')">
+      🌐 Dictionnaire Universel
+    </button>
   </div>
-  <div class="search-result" id="search-result"></div>
+
+  <!-- Recherche Dico Lexical -->
+  <div id="section-lexical">
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text"
+        placeholder="🔍 Tapez un mot pour le vérifier..." autocomplete="off"
+        oninput="liveSearch(this.value)">
+      <button class="search-btn" onclick="verifierMot()">✓ Vérifier</button>
+    </div>
+    <div class="search-result" id="search-result"></div>
+  </div>
+
+  <!-- Recherche Dico Universel -->
+  <div id="section-universel" style="display:none">
+    <p class="dico-univ-desc">Vérification via Wiktionnaire — noms (masc/fém/pluriel) et verbes à l'infinitif, 3 à 10 lettres.</p>
+    <div class="search-wrap">
+      <input class="search-input" id="search-univ" type="text"
+        placeholder="🔍 Tapez un mot à vérifier..." autocomplete="off"
+        oninput="liveSearchUniv(this.value)">
+      <button class="search-btn" onclick="verifierMotUniv()">✓ Vérifier</button>
+    </div>
+    <div class="search-result" id="search-result-univ"></div>
+  </div>
 
   <div class="dico-stats">
     <div class="dico-stat"><div class="dico-stat-n">4</div><div class="dico-stat-l">Maquettes</div></div>
@@ -1319,6 +1374,109 @@ document.getElementById('tab1').style.color = '#534AB7';
 // Entrée clavier pour vérifier
 document.getElementById('search-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') verifierMot();
+});
+
+// ─── Switch entre les deux dicos ───
+function switchDico(type) {
+  const lexical = document.getElementById('section-lexical');
+  const universel = document.getElementById('section-universel');
+  const btnLex = document.getElementById('btn-lexical');
+  const btnUniv = document.getElementById('btn-universel');
+  const maqTabs = document.querySelector('.maq-tabs');
+  const maqSections = document.querySelectorAll('.maq-section');
+
+  if (type === 'lexical') {
+    lexical.style.display = 'block';
+    universel.style.display = 'none';
+    btnLex.classList.add('active');
+    btnUniv.classList.remove('active');
+    if (maqTabs) maqTabs.style.display = 'flex';
+    maqSections.forEach(s => s.style.display = '');
+  } else {
+    lexical.style.display = 'none';
+    universel.style.display = 'block';
+    btnLex.classList.remove('active');
+    btnUniv.classList.add('active');
+    if (maqTabs) maqTabs.style.display = 'none';
+    maqSections.forEach(s => s.style.display = 'none');
+  }
+}
+
+// ─── Vérification forme du mot (noms/infinitifs uniquement) ───
+function estFormeValide(mot) {
+  const m = mot.toUpperCase();
+  const n = m.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const l = m.length;
+  if (l < 3 || l > 10) return { ok: false, raison: 'Le mot doit contenir entre 3 et 10 lettres.' };
+  if (n.endsWith('ER') || n.endsWith('IR') || n.endsWith('RE') || n.endsWith('OIR'))
+    return { ok: true };
+  if (n.endsWith('MENT') && l > 6) return { ok: false, raison: 'Les adverbes en -MENT ne sont pas acceptés.' };
+  if (n.endsWith('ANTES') || n.endsWith('ANTS')) return { ok: false, raison: 'Les participes présents fléchis ne sont pas acceptés.' };
+  if (n.endsWith('ANTE') && l > 6) return { ok: false, raison: 'Forme verbale non acceptée.' };
+  if (n.endsWith('ANT') && l > 7) return { ok: false, raison: 'Forme verbale non acceptée.' };
+  if (n.endsWith('EES')) return { ok: false, raison: 'Participe passé féminin non accepté.' };
+  if (n.endsWith('EE') && l > 4) return { ok: false, raison: 'Participe passé féminin non accepté.' };
+  if (n.endsWith('EMENT') || n.endsWith('EMENTS')) return { ok: false, raison: 'Nominalisation verbale non acceptée.' };
+  if (n.endsWith('ISSANT') || n.endsWith('ISSANTE')) return { ok: false, raison: 'Forme verbale non acceptée.' };
+  if (n.endsWith('EUSES')) return { ok: false, raison: 'Forme verbale non acceptée.' };
+  if (n.endsWith('EUSE') && l > 7) return { ok: false, raison: 'Forme verbale non acceptée.' };
+  return { ok: true };
+}
+
+// ─── Vérification Wiktionnaire ───
+async function verifierMotUniv() {
+  const input = document.getElementById('search-univ');
+  const res = document.getElementById('search-result-univ');
+  const val = input.value.trim();
+
+  if (!val) return;
+
+  // Vérifier la forme
+  const forme = estFormeValide(val);
+  if (!forme.ok) {
+    res.className = 'search-result not-found';
+    res.style.display = 'block';
+    res.textContent = '❌ "' + val.toUpperCase() + '" — ' + forme.raison;
+    return;
+  }
+
+  res.className = 'search-result';
+  res.style.display = 'block';
+  res.textContent = '🔍 Vérification en cours...';
+
+  try {
+    const url = 'https://fr.wiktionary.org/api/rest_v1/page/summary/' + encodeURIComponent(val.toLowerCase());
+    const resp = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.type !== 'disambiguation' && data.extract) {
+        res.className = 'search-result found-th';
+        res.textContent = '✅ "' + val.toUpperCase() + '" — Mot valide selon le Wiktionnaire';
+      } else {
+        res.className = 'search-result not-found';
+        res.textContent = '❌ "' + val.toUpperCase() + '" — Absent du dictionnaire universel';
+      }
+    } else {
+      res.className = 'search-result not-found';
+      res.textContent = '❌ "' + val.toUpperCase() + '" — Mot non trouvé';
+    }
+  } catch(e) {
+    res.className = 'search-result not-found';
+    res.textContent = '⚠️ Vérification impossible (connexion requise)';
+  }
+}
+
+function liveSearchUniv(val) {
+  if (val.length < 3) {
+    document.getElementById('search-result-univ').style.display = 'none';
+    return;
+  }
+  if (val.length >= 4) verifierMotUniv();
+}
+
+// Entrée clavier pour dico universel
+document.getElementById('search-univ').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') verifierMotUniv();
 });
 </script>
 
