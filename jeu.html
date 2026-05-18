@@ -265,6 +265,21 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .gtile.in-word { opacity: 0 !important; pointer-events: none !important; }
 
 /* ── Modal Dictionnaire ── */
+.dico-switch {
+  display: flex; gap: 8px; justify-content: center;
+  margin-bottom: 12px;
+}
+.dico-sw-btn {
+  padding: 8px 20px; border-radius: 50px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.06);
+  color: #fff; font-weight: 700; font-size: .82rem;
+  cursor: pointer; transition: all .2s;
+}
+.dico-sw-btn.active {
+  background: linear-gradient(135deg,var(--purple),var(--gold));
+  border-color: transparent;
+}
 .dico-modal { max-width: 620px; width: 96%; max-height: 88vh; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
 .dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: .9rem; margin-bottom: 10px; box-sizing: border-box; }
 .dico-search::placeholder { color: rgba(255,255,255,.3); }
@@ -297,6 +312,31 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 #s-maquette::-webkit-scrollbar-track { background: rgba(255,255,255,.05); border-radius: 4px; }
 #s-maquette::-webkit-scrollbar-thumb { background: rgba(200,160,32,.5); border-radius: 4px; }
 #s-maquette::-webkit-scrollbar-thumb:hover { background: rgba(200,160,32,.8); }
+.maq-cards-row {
+  display: flex; gap: 10px; justify-content: center;
+  flex-wrap: wrap; margin: 12px 0;
+}
+.maq-card-mini {
+  background: rgba(255,255,255,.07);
+  border: 2px solid rgba(255,255,255,.15);
+  border-radius: 14px; padding: 12px 16px;
+  cursor: pointer; transition: all .25s;
+  text-align: center; min-width: 110px; flex: 1; max-width: 150px;
+}
+.maq-card-mini:hover {
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.35);
+  transform: translateY(-3px);
+}
+.maq-card-mini.active {
+  border-color: var(--gold);
+  background: rgba(200,160,32,.15);
+  box-shadow: 0 4px 15px rgba(200,160,32,.25);
+}
+.maq-card-mini-emoji { font-size: 1.5rem; margin-bottom: 4px; }
+.maq-card-mini-nom { font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.85); }
+.maq-card-mini-themes { font-size: .62rem; color: rgba(255,255,255,.45); margin-top: 3px; line-height:1.4; }
+.maq-detail { margin-top: 8px; }
 .maq-wrap { width: 100%; max-width: 680px; margin: 0 auto; }
 .maq-title { font-size: 1.3rem; font-weight: 900; color: var(--gold-light); text-align: center; margin-bottom: 6px; letter-spacing: 2px; }
 .maq-sub { text-align: center; color: rgba(255,255,255,.5); font-size: .82rem; margin-bottom: 18px; }
@@ -597,17 +637,35 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 <!-- CHOIX MAQUETTE -->
 <div id="s-maquette" class="screen">
   <div class="maq-wrap">
-    <div class="maq-title">🎲 Choisir une Maquette</div>
-    <div class="maq-sub">Sélectionnez la maquette de jeu puis validez</div>
-    <div class="maq-tabs" id="maq-tabs"></div>
-    <div class="maq-nom" id="maq-nom"></div>
-    <div class="maq-cols">
-      <div class="maq-col-lbl">A</div><div class="maq-col-lbl">B</div>
-      <div class="maq-col-lbl">C</div><div class="maq-col-lbl">D</div>
-      <div class="maq-col-lbl">E</div>
+
+    <!-- Logo ALKAMO -->
+    <div class="logo-wrap" style="justify-content:center;margin-bottom:4px;">
+      <div class="ltile ltile-p">A<span class="tv">2</span></div>
+      <div class="ltile ltile-g">L<span class="tv">6</span></div>
+      <div class="ltile ltile-p">K<span class="tv">10</span></div>
+      <div class="ltile ltile-g">A<span class="tv">2</span></div>
+      <div class="ltile ltile-p">M<span class="tv">6</span></div>
+      <div class="ltile ltile-g">O<span class="tv">2</span></div>
     </div>
-    <div class="maq-grid" id="maq-grid"></div>
-    <button class="maq-btn-ok" onclick="validerMaquette()">✅ Jouer avec cette maquette →</button>
+
+    <div class="maq-title">🎲 Choisir une Maquette</div>
+    <div class="maq-sub">Cliquez sur une maquette pour voir ses thèmes</div>
+
+    <!-- Cartes miniatures -->
+    <div class="maq-cards-row" id="maq-cards-row"></div>
+
+    <!-- Détail de la maquette sélectionnée -->
+    <div class="maq-detail" id="maq-detail" style="display:none">
+      <div class="maq-nom" id="maq-nom"></div>
+      <div class="maq-cols">
+        <div class="maq-col-lbl">A</div><div class="maq-col-lbl">B</div>
+        <div class="maq-col-lbl">C</div><div class="maq-col-lbl">D</div>
+        <div class="maq-col-lbl">E</div>
+      </div>
+      <div class="maq-grid" id="maq-grid"></div>
+    </div>
+
+    <button class="maq-btn-ok" id="maq-btn-jouer" onclick="validerMaquette()" style="display:none">✅ Jouer avec cette maquette →</button>
     <button class="btn btn-out" style="width:100%;margin-top:8px" onclick="go('home')">← Retour</button>
   </div>
 </div>
@@ -2586,6 +2644,99 @@ function dicoChercher(val) {
   document.getElementById('dico-count').textContent = '';
 }
 
+// ─── Switch dico dans le jeu ───
+function switchDicoJeu(type) {
+  var lexical = document.getElementById('dico-section-lexical');
+  var universel = document.getElementById('dico-section-universel');
+  var btnLex = document.getElementById('dsw-lexical');
+  var btnUniv = document.getElementById('dsw-universel');
+  if (type === 'lexical') {
+    lexical.style.display = 'block';
+    universel.style.display = 'none';
+    btnLex.classList.add('active');
+    btnUniv.classList.remove('active');
+  } else {
+    lexical.style.display = 'none';
+    universel.style.display = 'block';
+    btnLex.classList.remove('active');
+    btnUniv.classList.add('active');
+  }
+}
+
+function estFormeValideJeu(mot) {
+  var m = mot.toUpperCase();
+  var n = m.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  var l = m.length;
+  if (l < 3 || l > 10) return { ok: false, raison: 'Le mot doit contenir entre 3 et 10 lettres.' };
+  if (n.endsWith('ER') || n.endsWith('IR') || n.endsWith('RE') || n.endsWith('OIR')) return { ok: true };
+  if (n.endsWith('MENT') && l > 6) return { ok: false, raison: 'Adverbe non accepté.' };
+  if (n.endsWith('ANTES') || n.endsWith('ANTS') || (n.endsWith('ANTE') && l > 6)) return { ok: false, raison: 'Participe présent non accepté.' };
+  if (n.endsWith('EES') || (n.endsWith('EE') && l > 4)) return { ok: false, raison: 'Participe passé féminin non accepté.' };
+  if (n.endsWith('EMENT') || n.endsWith('EMENTS')) return { ok: false, raison: 'Nominalisation verbale non acceptée.' };
+  return { ok: true };
+}
+
+function dicoUnivVerifier() {
+  var val = document.getElementById('dico-search-univ').value.trim();
+  var res = document.getElementById('dico-check-result-univ');
+  if (!val) return;
+  res.style.display = 'block';
+
+  var forme = estFormeValideJeu(val);
+  if (!forme.ok) {
+    res.className = 'dico-check-result';
+    res.style.color = '#ff6b6b';
+    res.textContent = '❌ "' + val.toUpperCase() + '" — ' + forme.raison;
+    return;
+  }
+
+  // Attendre si DICO_LIBRE pas encore chargé
+  if (DICO_LIBRE.size === 0) {
+    res.className = 'dico-check-result';
+    res.style.color = 'rgba(255,255,255,.6)';
+    res.textContent = '⏳ Dictionnaire en cours de chargement, réessayez dans 2 secondes...';
+    return;
+  }
+
+  var wUp = val.toUpperCase();
+  var wN = norm(val);
+  // Chercher avec et sans accents
+  var inLocal = DICO_LIBRE.has(wUp);
+  if (!inLocal) {
+    DICO_LIBRE.forEach(function(m) {
+      if (!inLocal && norm(m) === wN) inLocal = true;
+    });
+  }
+  // Chercher aussi dans DICT
+  if (!inLocal) {
+    Object.values(DICT).forEach(function(arr) {
+      if (!inLocal) arr.forEach(function(m) {
+        if (!inLocal && (m.toUpperCase() === wUp || norm(m) === wN)) inLocal = true;
+      });
+    });
+  }
+
+  res.style.color = '';
+  if (inLocal) {
+    res.className = 'dico-check-result found-libre';
+    res.textContent = '✅ "' + wUp + '" — Mot valide dans le dictionnaire universel';
+  } else {
+    res.className = 'dico-check-result';
+    res.style.color = '#ff6b6b';
+    res.textContent = '❌ "' + wUp + '" — Absent du dictionnaire universel';
+  }
+}
+
+function dicoUnivLive(val) {
+  if (val.length >= 3) dicoUnivVerifier();
+  else document.getElementById('dico-check-result-univ').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var inp = document.getElementById('dico-search-univ');
+  if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') dicoUnivVerifier(); });
+});
+
 function dicoVerifier() {
   var val = document.getElementById('dico-search').value.trim();
   if (!val) return;
@@ -2634,15 +2785,33 @@ function openMaquette() {
 }
 
 function renderMaquetteTabs() {
-  var tabs = document.getElementById('maq-tabs');
-  tabs.innerHTML = '';
+  // Afficher les cartes miniatures
+  var row = document.getElementById('maq-cards-row');
+  if (!row) return;
+  row.innerHTML = '';
   [1,2,3,4].forEach(function(n) {
-    var b = document.createElement('button');
-    b.className = 'maq-tab' + (n === _maqActive ? ' active' : '');
-    b.textContent = MAQUETTES[n].emoji + ' N°' + n;
-    b.onclick = function() { _maqActive = n; renderMaquetteTabs(); renderMaqGrille(n); };
-    tabs.appendChild(b);
+    var m = MAQUETTES[n];
+    var themes = m.cases.filter(c => !c.free).slice(0,4).map(c => c.emoji + ' ' + c.th.split(' ')[0]).join('<br>');
+    var card = document.createElement('div');
+    card.className = 'maq-card-mini' + (n === _maqActive ? ' active' : '');
+    card.innerHTML =
+      '<div class="maq-card-mini-emoji">' + (m.emoji||'🎲') + '</div>' +
+      '<div class="maq-card-mini-nom">' + m.nom + '</div>' +
+      '<div class="maq-card-mini-themes">' + themes + '...</div>';
+    card.onclick = function() {
+      _maqActive = n;
+      renderMaquetteTabs();
+      renderMaqGrille(n);
+      document.getElementById('maq-detail').style.display = 'block';
+      document.getElementById('maq-btn-jouer').style.display = 'block';
+    };
+    row.appendChild(card);
   });
+  // Afficher le détail si une maquette est déjà sélectionnée
+  if (_maqActive) {
+    document.getElementById('maq-detail').style.display = 'block';
+    document.getElementById('maq-btn-jouer').style.display = 'block';
+  }
 }
 
 function renderMaqGrille(n) {
@@ -2820,14 +2989,22 @@ function stopPartieTimer() {
   <div class="modal dico-modal">
     <h2>📚 Dictionnaire ALKAMO</h2>
     <!-- Vérificateur rapide -->
-    <div class="dico-check-box">
-      <input class="dico-search" id="dico-search" type="text" placeholder="🔍 Tapez un mot..." oninput="dicoChercher(this.value)" style="flex:1;margin:0">
-      <button class="dico-check-btn" onclick="dicoVerifier()">✓ Vérifier</button>
+    <!-- Choix dico -->
+    <div class="dico-switch">
+      <button class="dico-sw-btn active" id="dsw-lexical" onclick="switchDicoJeu('lexical')">📋 Lexical</button>
+      <button class="dico-sw-btn" id="dsw-universel" onclick="switchDicoJeu('universel')">🌐 Universel</button>
     </div>
-    <div class="dico-check-result" id="dico-check-result"></div>
-    <div class="dico-sep"></div>
-    <!-- Niveau 1 : choix maquette -->
-    <div id="dico-level1">
+
+    <!-- Section Lexical -->
+    <div id="dico-section-lexical">
+      <div class="dico-check-box">
+        <input class="dico-search" id="dico-search" type="text" placeholder="🔍 Tapez un mot..." oninput="dicoChercher(this.value)" style="flex:1;margin:0">
+        <button class="dico-check-btn" onclick="dicoVerifier()">✓ Vérifier</button>
+      </div>
+      <div class="dico-check-result" id="dico-check-result"></div>
+      <div class="dico-sep"></div>
+      <!-- Niveau 1 : choix maquette -->
+      <div id="dico-level1">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 72" width="32" height="38" style="flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(200,160,32,.4))">
           <defs><linearGradient id="bsg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2A2060"/><stop offset="100%" stop-color="#0D0B1A"/></linearGradient></defs>
@@ -2855,6 +3032,18 @@ function stopPartieTimer() {
     <div class="dico-title" id="dico-title" style="margin-top:8px"></div>
     <div class="dico-count" id="dico-count"></div>
     <div class="dico-words" id="dico-words"></div>
+    </div><!-- fin dico-section-lexical -->
+
+    <!-- Section Universel -->
+    <div id="dico-section-universel" style="display:none">
+      <p style="font-size:.8rem;color:rgba(255,255,255,.6);text-align:center;margin:8px 0 12px">Noms (masc/fém/pluriel) et infinitifs uniquement · 3 à 10 lettres</p>
+      <div class="dico-check-box">
+        <input class="dico-search" id="dico-search-univ" type="text" placeholder="🔍 Tapez un mot à vérifier..." style="flex:1;margin:0" oninput="dicoUnivLive(this.value)">
+        <button class="dico-check-btn" onclick="dicoUnivVerifier()">✓ Vérifier</button>
+      </div>
+      <div class="dico-check-result" id="dico-check-result-univ"></div>
+    </div>
+
     <button class="btn btn-out" style="margin-top:10px;width:100%" onclick="closeModal('m-dico')">✕ Fermer</button>
   </div>
 </div>
