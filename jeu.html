@@ -889,7 +889,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <div class="partie-timer" id="partie-timer" style="display:none">
       🕐 <span class="partie-tmr" id="partie-tmr">--:--</span>
     </div>
-    <button class="btn btn-sm" style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);color:#e74c3c;font-size:.75rem;padding:4px 10px;border-radius:8px;" onclick="if(confirm('Terminer la partie ?')) endGame()">⛳ Fin</button>
+    <button class="btn btn-sm" style="background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);color:#e74c3c;font-size:.75rem;padding:4px 10px;border-radius:8px;" onclick="quitterPartie()">⛳ Fin</button>
     <div class="theme-picker" title="Changer le thème">
         <div class="theme-dot dark active" onclick="setTheme('dark')" title="Sombre"></div>
         <div class="theme-dot light" onclick="setTheme('light')" title="Bleu"></div>
@@ -2283,12 +2283,57 @@ function _confirmerMotFinalize(word, pIdx) {
   nextTurn();
 }
 
+
+// ─── Quitter la partie ───
+function quitterPartie() {
+  const nbJoueurs = _modeEnLigne ? (window._nbJoueursEnLigne || 2) : G.players.length;
+  
+  if (_modeEnLigne && nbJoueurs > 2) {
+    // Partie en ligne avec 3+ joueurs : proposer de se retirer seulement
+    if (confirm('Voulez-vous vous retirer de la partie ?\nLes autres joueurs pourront continuer.')) {
+      // Marquer le joueur comme retiré dans Firebase
+      if (window._firebase_db && window._codePartie && window._idJoueur) {
+        const { ref, update } = window;
+        update(window._firebase_ref(window._firebase_db, 
+          'parties/' + window._codePartie + '/joueurs/' + window._idJoueur), 
+          { retire: true });
+      }
+      log('Vous avez quitté la partie.', 'bad');
+      setTimeout(() => go('home'), 2000);
+    }
+  } else {
+    // Partie à 2 joueurs ou mode local
+    if (confirm('Terminer la partie ?')) {
+      if (_modeEnLigne && window._firebase_db && window._codePartie) {
+        // Signaler la fin dans Firebase
+        const setFn = window._firebase_set;
+        if (setFn) setFn(window._firebase_ref(window._firebase_db, 
+          'parties/' + window._codePartie + '/etat'), 'terminee');
+      }
+      endGame();
+    }
+  }
+}
+
 function passerTour() {
   log(curP().name + ' passe son tour', '');
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
-  if (G.passCount >= G.players.length * 3) { log('🚫 Partie bloquée !', 'bad'); endGame(); return; }
-  drawCase(true); // nouveau thème (l'ancien non joué est replongé)
+  
+  // En mode en ligne : pas de limite de passes
+  if (_modeEnLigne) {
+    drawCase(true);
+    nextTurn();
+    return;
+  }
+  
+  // Mode local : règle des 3 passes par joueur
+  if (G.passCount >= G.players.length * 3) {
+    log('🚫 Partie bloquée — trop de passes !', 'bad');
+    endGame();
+    return;
+  }
+  drawCase(true);
   nextTurn();
 }
 
