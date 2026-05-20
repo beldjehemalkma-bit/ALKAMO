@@ -2952,7 +2952,43 @@ function renderMaqGrille(n) {
 
 function validerMaquette() {
   CASES = MAQUETTES[_maqActive].cases;
-  go('setup');
+  if (_modeEnLigne) {
+    // Mode en ligne : sauter la config et démarrer directement
+    startGameEnLigne();
+  } else {
+    go('setup');
+  }
+}
+
+function startGameEnLigne() {
+  const nom = window._nomJoueur || 'Joueur';
+  const code = window._codePartie || '';
+  // Configurer comme une partie solo/pvp avec le nom du joueur en ligne
+  setupCfg.n = 1;
+  setupCfg.mode = 'pvp';
+  setupCfg.dur = 0;
+  // Simuler les champs de saisie du nom
+  G = {
+    players: [{ name: nom, score: 0, letters: [], isBot: false }],
+    curP: 0,
+    letterBag: mkBag(),
+    caseBag: mkCaseBag(),
+    usedCaseIds: new Set(),
+    curCase: null,
+    word: [],
+    changeSel: [],
+    changeMode: false,
+    insertPos: null,
+    previousCaseId: null,
+    turnsPlayed: 0,
+    startTime: Date.now()
+  };
+  drawLetters(G.players[0], 10);
+  go('game');
+  renderAll();
+  drawCase();
+  showChatBtn();
+  if (window.ecouterChat && code) window.ecouterChat(code);
 }
 
 /* ── Touch drag (mobile) ── */
@@ -3176,6 +3212,8 @@ function onlineRejoindre() {
   const code = document.getElementById('online-code-input').value.trim().toUpperCase();
   if (!code || code.length < 4) { alert('Entrez un code valide !'); return; }
   if (window.rejoindrePatie) {
+    _modeEnLigne = true;
+    window._nomJoueur = nom;
     window.rejoindrePatie(code, nom);
     fermerOnline();
     showChatBtn();
@@ -3183,6 +3221,8 @@ function onlineRejoindre() {
   }
 }
 function onlineDemarrer() {
+  _modeEnLigne = true;
+  window._nomJoueur = document.getElementById('online-nom')?.value.trim() || 'Joueur';
   fermerOnline();
   showChatBtn();
   openMaquette();
