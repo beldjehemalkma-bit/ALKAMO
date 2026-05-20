@@ -2983,11 +2983,16 @@ function startGameEnLigne() {
     turnsPlayed: 0,
     startTime: Date.now()
   };
-  drawLetters(G.players[0], 10);
+  shuffle(G.letterBag);
+  G.players.forEach((p, pi) => { p.letters = drawL(10); });
+  drawCase(true);
   go('game');
-  renderAll();
-  drawCase();
   showChatBtn();
+  renderAll();
+  startTimer();
+  renderHistPanel();
+  startPartieTimer();
+  log('✦ Partie en ligne démarrée !', 'inf');
   if (window.ecouterChat && code) window.ecouterChat(code);
 }
 
