@@ -2963,11 +2963,13 @@ function validerMaquette() {
 function startGameEnLigne() {
   const nom = window._nomJoueur || 'Joueur';
   const code = window._codePartie || '';
-  // Configurer comme une partie solo/pvp avec le nom du joueur en ligne
-  setupCfg.n = 1;
-  setupCfg.mode = 'pvp';
-  setupCfg.dur = 0;
-  // Simuler les champs de saisie du nom
+  
+  // Si créateur : signaler à Firebase que la partie démarre avec la maquette choisie
+  if (window._estCreateur && window.demarrerPartieFirebase) {
+    window.demarrerPartieFirebase(code, _maqActive);
+    if (window.ecouterChat) window.ecouterChat(code);
+  }
+
   G = {
     players: [{ name: nom, score: 0, letters: [], isBot: false }],
     curP: 0,
@@ -2981,10 +2983,14 @@ function startGameEnLigne() {
     insertPos: null,
     previousCaseId: null,
     turnsPlayed: 0,
-    startTime: Date.now()
+    startTime: Date.now(),
+    timer: null, timeLeft: 180, timerExpired: false,
+    phase: 'normal', passCount: 0, round: 0,
+    themeChanged: false, themeHistory: []
   };
+  CASES = MAQUETTES[_maqActive].cases;
   shuffle(G.letterBag);
-  G.players.forEach((p, pi) => { p.letters = drawL(10); });
+  G.players[0].letters = drawL(10);
   drawCase(true);
   go('game');
   showChatBtn();
@@ -2992,8 +2998,7 @@ function startGameEnLigne() {
   startTimer();
   renderHistPanel();
   startPartieTimer();
-  log('✦ Partie en ligne démarrée !', 'inf');
-  if (window.ecouterChat && code) window.ecouterChat(code);
+  log('✦ Partie en ligne démarrée ! Bonne chance !', 'inf');
 }
 
 /* ── Touch drag (mobile) ── */
@@ -3346,7 +3351,7 @@ function onlineDemarrer() {
 <!-- ══ FIREBASE ══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
@@ -3361,67 +3366,97 @@ function onlineDemarrer() {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // ─── Générer un code de partie ───
   function genCode() {
     return Math.random().toString(36).substr(2,6).toUpperCase();
   }
 
-  // ─── Créer une nouvelle partie en ligne ───
+  // ─── Créer une partie ───
   window.creerPartieEnLigne = function(nomJoueur) {
     const code = genCode();
-    const partieRef = ref(db, 'parties/' + code);
-    set(partieRef, {
+    set(ref(db, 'parties/' + code), {
       code: code,
-      joueurs: { j1: { nom: nomJoueur, score: 0, pret: true } },
+      joueurs: { j1: { nom: nomJoueur, score: 0 } },
       etat: 'attente',
+      maquette: null,
       chat: {},
       createdAt: Date.now()
     });
     window._codePartie = code;
     window._idJoueur = 'j1';
+    window._estCreateur = true;
     return code;
   };
 
   // ─── Rejoindre une partie ───
   window.rejoindrePatie = function(code, nomJoueur) {
-    const joueursRef = ref(db, 'parties/' + code + '/joueurs');
-    const idJ = 'j' + (Date.now() % 1000);
-    update(joueursRef, { [idJ]: { nom: nomJoueur, score: 0, pret: true } });
+    const idJ = 'j' + Date.now().toString().slice(-4);
+    update(ref(db, 'parties/' + code + '/joueurs'), {
+      [idJ]: { nom: nomJoueur, score: 0 }
+    });
     window._codePartie = code;
     window._idJoueur = idJ;
-    // Écouter les mises à jour
-    ecouterPartie(code);
+    window._estCreateur = false;
+    // Écouter le démarrage de la partie
+    ecouterDemarrage(code);
   };
 
-  // ─── Envoyer un message chat ───
+  // ─── Écouter le démarrage (pour les joueurs qui rejoignent) ───
+  function ecouterDemarrage(code) {
+    onValue(ref(db, 'parties/' + code + '/etat'), (snap) => {
+      const etat = snap.val();
+      if (etat === 'en_cours' && !window._estCreateur) {
+        // Récupérer la maquette choisie
+        get(ref(db, 'parties/' + code + '/maquette')).then(mSnap => {
+          const maq = mSnap.val();
+          if (maq) {
+            window._maqActive = maq;
+            _maqActive = maq;
+            // Démarrer le jeu côté joueur B
+            if (typeof startGameEnLigne === 'function') {
+              startGameEnLigne();
+            }
+          }
+        });
+      }
+    });
+    window.ecouterChat(code);
+  }
+
+  // ─── Démarrer la partie (créateur) ───
+  window.demarrerPartieFirebase = function(code, maquette) {
+    update(ref(db, 'parties/' + code), {
+      etat: 'en_cours',
+      maquette: maquette
+    });
+  };
+
+  // ─── Envoyer message chat ───
   window.envoyerMsgFirebase = function(type, nomJoueur) {
     if (!window._codePartie) return;
-    const chatRef = ref(db, 'parties/' + window._codePartie + '/chat');
-    push(chatRef, {
+    push(ref(db, 'parties/' + window._codePartie + '/chat'), {
       type: type,
       joueur: nomJoueur,
       ts: Date.now()
     });
   };
 
-  // ─── Écouter les messages chat ───
+  // ─── Écouter le chat ───
   window.ecouterChat = function(code) {
-    const chatRef = ref(db, 'parties/' + code + '/chat');
-    onValue(chatRef, (snap) => {
+    onValue(ref(db, 'parties/' + code + '/chat'), (snap) => {
       const msgs = snap.val();
       if (!msgs) return;
       const log = document.getElementById('chat-log');
       if (!log) return;
       log.innerHTML = '';
-      Object.values(msgs).forEach(msg => {
-        const CHAT_MSGS = {
-          accept:  { label: "✅ Accepter",  cls: "accept"  },
-          refuse:  { label: "❌ Refuser",   cls: "refuse"  },
-          propose: { label: "🤝 Echanger",  cls: "propose" },
-          contest: { label: "⚠️ Contester", cls: "contest" },
-          bravo:   { label: "🎉 Bien joué !",cls: "bravo"  },
-        };
-        const m = CHAT_MSGS[msg.type];
+      const LABELS = {
+        accept: { label: '✅ Accepter', cls: 'accept' },
+        refuse: { label: '❌ Refuser', cls: 'refuse' },
+        propose: { label: '🤝 Echanger', cls: 'propose' },
+        contest: { label: '⚠️ Contester', cls: 'contest' },
+        bravo: { label: '🎉 Bien joué !', cls: 'bravo' },
+      };
+      Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
+        const m = LABELS[msg.type];
         if (!m) return;
         const div = document.createElement('div');
         div.className = 'chat-msg ' + m.cls;
@@ -3429,26 +3464,14 @@ function onlineDemarrer() {
         log.appendChild(div);
       });
       log.scrollTop = log.scrollHeight;
+      // Notif si fermé
+      if (!document.getElementById('chat-panel')?.classList.contains('open')) {
+        document.getElementById('chat-notif')?.classList.add('show');
+      }
     });
   };
 
-  // ─── Écouter la partie ───
-  function ecouterPartie(code) {
-    const partieRef = ref(db, 'parties/' + code);
-    onValue(partieRef, (snap) => {
-      const data = snap.val();
-      if (!data) return;
-      // Mettre à jour les scores des joueurs
-      if (data.joueurs) {
-        console.log('Joueurs en ligne:', Object.keys(data.joueurs).length);
-      }
-    });
-    window.ecouterChat(code);
-  }
-
   window._firebase_db = db;
-  window._firebase_ref = ref;
-  window._firebase_push = push;
   console.log('✅ Firebase connecté !');
 </script>
 
