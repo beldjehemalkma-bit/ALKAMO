@@ -624,7 +624,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 /* ══ CHAT PANEL ══ */
 .chat-panel {
   position: fixed;
-  bottom: 70px; right: 16px;
+  bottom: 70px; right: 80px;
   width: 280px;
   background: rgba(13,11,30,.95);
   border: 1px solid rgba(200,160,32,.3);
@@ -689,7 +689,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 /* Bouton flottant pour ouvrir le chat */
 .chat-fab {
   position: fixed;
-  bottom: 16px; right: 16px;
+  bottom: 16px; right: 80px;
   width: 48px; height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg,#534AB7,#C8A020);
@@ -712,6 +712,53 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 .chat-notif.show { display: flex; }
 
 @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+/* ══ PARTIE EN LIGNE ══ */
+.online-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+.online-modal.open { display: flex; }
+.online-card {
+  background: rgba(13,11,30,.97);
+  border: 1px solid rgba(200,160,32,.3);
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 90%; max-width: 360px;
+  text-align: center;
+}
+.online-title {
+  font-size: 1.2rem; font-weight: 900;
+  color: #FAD060; letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+.online-sub {
+  font-size: .75rem; color: rgba(255,255,255,.4);
+  margin-bottom: 20px;
+}
+.online-input {
+  width: 100%; padding: 10px 14px;
+  border-radius: 10px; border: 1px solid rgba(200,160,32,.3);
+  background: rgba(255,255,255,.05);
+  color: #fff; font-size: .95rem;
+  margin-bottom: 10px; text-align: center;
+  letter-spacing: 2px;
+}
+.online-code-display {
+  font-size: 2rem; font-weight: 900;
+  color: #FAD060; letter-spacing: 8px;
+  padding: 16px;
+  background: rgba(200,160,32,.1);
+  border-radius: 12px;
+  border: 2px dashed rgba(200,160,32,.4);
+  margin: 14px 0;
+}
+.online-sep { color: rgba(255,255,255,.2); margin: 14px 0; font-size: .8rem; }
 </style>
 </head>
 <body>
@@ -3056,11 +3103,11 @@ function stopPartieTimer() {
 // CHAT JOUEURS
 // ═══════════════════════════════════════
 const CHAT_MSGS = {
-  accept:  { label: '✅ J'accepte',    cls: 'accept'  },
-  refuse:  { label: '❌ Je refuse',     cls: 'refuse'  },
-  propose: { label: '🤝 Je propose un échange', cls: 'propose' },
-  contest: { label: '⚠️ Je conteste !', cls: 'contest' },
-  bravo:   { label: '🎉 Bien joué !',   cls: 'bravo'   },
+  accept:  { label: "✅ Accepter",    cls: "accept"  },
+  refuse:  { label: "❌ Refuser",     cls: "refuse"  },
+  propose: { label: "🤝 Echanger", cls: "propose" },
+  contest: { label: "⚠️ Contester", cls: "contest" },
+  bravo:   { label: "🎉 Bien joue !", cls: "bravo" },
 };
 
 function toggleChat() {
@@ -3079,23 +3126,65 @@ function sendChatMsg(type) {
   const msg = CHAT_MSGS[type];
   if (!msg) return;
   const who = G.players?.[G.curP]?.name || 'Joueur';
-  const log = document.getElementById('chat-log');
   
-  // Vider le message d'accueil si présent
+  // Envoyer via Firebase si connecté en ligne
+  if (window.envoyerMsgFirebase && window._codePartie) {
+    window.envoyerMsgFirebase(type, who);
+    return; // Firebase met à jour le log automatiquement
+  }
+  
+  // Mode local (sans Firebase)
+  const log = document.getElementById('chat-log');
   if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
     log.innerHTML = '';
   }
-  
   const div = document.createElement('div');
   div.className = 'chat-msg ' + msg.cls;
   div.innerHTML = '<div class="chat-who">' + who + '</div>' + msg.label;
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
-  
-  // Notification si panel fermé
   if (!document.getElementById('chat-panel').classList.contains('open')) {
     document.getElementById('chat-notif').classList.add('show');
   }
+}
+
+
+// ═══════════════════════════════════════
+// PARTIE EN LIGNE
+// ═══════════════════════════════════════
+function ouvrirOnline() {
+  document.getElementById('online-modal').classList.add('open');
+}
+function fermerOnline() {
+  document.getElementById('online-modal').classList.remove('open');
+}
+function onlineCreer() {
+  const nom = document.getElementById('online-nom').value.trim() || 'Joueur 1';
+  if (window.creerPartieEnLigne) {
+    const code = window.creerPartieEnLigne(nom);
+    document.getElementById('online-code-show').textContent = code;
+    document.getElementById('online-step1').style.display = 'none';
+    document.getElementById('online-step2').style.display = 'block';
+    if (window.ecouterChat) window.ecouterChat(code);
+  } else {
+    alert('Firebase non connecté — vérifiez votre connexion internet');
+  }
+}
+function onlineRejoindre() {
+  const nom = document.getElementById('online-nom').value.trim() || 'Joueur';
+  const code = document.getElementById('online-code-input').value.trim().toUpperCase();
+  if (!code || code.length < 4) { alert('Entrez un code valide !'); return; }
+  if (window.rejoindrePatie) {
+    window.rejoindrePatie(code, nom);
+    fermerOnline();
+    showChatBtn();
+    go('maquette');
+  }
+}
+function onlineDemarrer() {
+  fermerOnline();
+  showChatBtn();
+  go('maquette');
 }
 
 </script>
@@ -3193,9 +3282,9 @@ function sendChatMsg(type) {
     </div>
   </div>
   <div class="chat-btns">
-    <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ J'accepte</button>
+    <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
     <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Je refuse</button>
-    <button class="chat-btn p" onclick="sendChatMsg('propose')">🤝 J'échange</button>
+    <button class="chat-btn p" onclick="sendChatMsg('propose')">🤝 Echanger</button>
     <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Je conteste</button>
     <button class="chat-btn y" onclick="sendChatMsg('bravo')" style="grid-column:span 2">🎉 Bien joué !</button>
   </div>
@@ -3206,6 +3295,154 @@ function sendChatMsg(type) {
   💬
   <div class="chat-notif" id="chat-notif">!</div>
 </button>
+
+
+<!-- ══ FIREBASE ══ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
+    authDomain: "alkamo-3c76e.firebaseapp.com",
+    databaseURL: "https://alkamo-3c76e-default-rtdb.firebaseio.com",
+    projectId: "alkamo-3c76e",
+    storageBucket: "alkamo-3c76e.firebasestorage.app",
+    messagingSenderId: "101034335840",
+    appId: "1:101034335840:web:f433830959af109193ad05"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ─── Générer un code de partie ───
+  function genCode() {
+    return Math.random().toString(36).substr(2,6).toUpperCase();
+  }
+
+  // ─── Créer une nouvelle partie en ligne ───
+  window.creerPartieEnLigne = function(nomJoueur) {
+    const code = genCode();
+    const partieRef = ref(db, 'parties/' + code);
+    set(partieRef, {
+      code: code,
+      joueurs: { j1: { nom: nomJoueur, score: 0, pret: true } },
+      etat: 'attente',
+      chat: {},
+      createdAt: Date.now()
+    });
+    window._codePartie = code;
+    window._idJoueur = 'j1';
+    return code;
+  };
+
+  // ─── Rejoindre une partie ───
+  window.rejoindrePatie = function(code, nomJoueur) {
+    const joueursRef = ref(db, 'parties/' + code + '/joueurs');
+    const idJ = 'j' + (Date.now() % 1000);
+    update(joueursRef, { [idJ]: { nom: nomJoueur, score: 0, pret: true } });
+    window._codePartie = code;
+    window._idJoueur = idJ;
+    // Écouter les mises à jour
+    ecouterPartie(code);
+  };
+
+  // ─── Envoyer un message chat ───
+  window.envoyerMsgFirebase = function(type, nomJoueur) {
+    if (!window._codePartie) return;
+    const chatRef = ref(db, 'parties/' + window._codePartie + '/chat');
+    push(chatRef, {
+      type: type,
+      joueur: nomJoueur,
+      ts: Date.now()
+    });
+  };
+
+  // ─── Écouter les messages chat ───
+  window.ecouterChat = function(code) {
+    const chatRef = ref(db, 'parties/' + code + '/chat');
+    onValue(chatRef, (snap) => {
+      const msgs = snap.val();
+      if (!msgs) return;
+      const log = document.getElementById('chat-log');
+      if (!log) return;
+      log.innerHTML = '';
+      Object.values(msgs).forEach(msg => {
+        const CHAT_MSGS = {
+          accept:  { label: "✅ Accepter",  cls: "accept"  },
+          refuse:  { label: "❌ Refuser",   cls: "refuse"  },
+          propose: { label: "🤝 Echanger",  cls: "propose" },
+          contest: { label: "⚠️ Contester", cls: "contest" },
+          bravo:   { label: "🎉 Bien joué !",cls: "bravo"  },
+        };
+        const m = CHAT_MSGS[msg.type];
+        if (!m) return;
+        const div = document.createElement('div');
+        div.className = 'chat-msg ' + m.cls;
+        div.innerHTML = '<div class="chat-who">' + msg.joueur + '</div>' + m.label;
+        log.appendChild(div);
+      });
+      log.scrollTop = log.scrollHeight;
+    });
+  };
+
+  // ─── Écouter la partie ───
+  function ecouterPartie(code) {
+    const partieRef = ref(db, 'parties/' + code);
+    onValue(partieRef, (snap) => {
+      const data = snap.val();
+      if (!data) return;
+      // Mettre à jour les scores des joueurs
+      if (data.joueurs) {
+        console.log('Joueurs en ligne:', Object.keys(data.joueurs).length);
+      }
+    });
+    window.ecouterChat(code);
+  }
+
+  window._firebase_db = db;
+  window._firebase_ref = ref;
+  window._firebase_push = push;
+  console.log('✅ Firebase connecté !');
+</script>
+
+
+<!-- ══ MODAL PARTIE EN LIGNE ══ -->
+<div class="online-modal" id="online-modal">
+  <div class="online-card">
+    <div class="online-title">🌐 JOUER EN LIGNE</div>
+    <div class="online-sub">Jouez avec vos amis depuis n'importe où</div>
+
+    <div id="online-step1">
+      <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12">
+      <button class="btn btn-gold" style="width:100%;margin-bottom:8px" onclick="onlineCreer()">
+        🎮 Créer une partie
+      </button>
+      <div class="online-sep">— ou rejoindre —</div>
+      <input class="online-input" id="online-code-input" placeholder="CODE DE PARTIE" maxlength="6" style="text-transform:uppercase">
+      <button class="btn" style="width:100%;background:rgba(83,74,183,.2);border:1px solid rgba(83,74,183,.4)" onclick="onlineRejoindre()">
+        🔗 Rejoindre
+      </button>
+    </div>
+
+    <div id="online-step2" style="display:none">
+      <div style="color:rgba(255,255,255,.6);font-size:.8rem;margin-bottom:8px">
+        Partagez ce code avec vos amis :
+      </div>
+      <div class="online-code-display" id="online-code-show"></div>
+      <div style="color:rgba(255,255,255,.4);font-size:.75rem;margin-bottom:14px">
+        En attente des autres joueurs...
+      </div>
+      <button class="btn btn-gold" style="width:100%" onclick="onlineDemarrer()">
+        ▶ Démarrer la partie
+      </button>
+    </div>
+
+    <button class="btn btn-out" style="width:100%;margin-top:10px" onclick="fermerOnline()">
+      ✕ Annuler
+    </button>
+  </div>
+</div>
 
 </body>
 </html>
