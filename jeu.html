@@ -2939,8 +2939,10 @@ function dicoVerifier() {
 /* ── Sélection Maquette ── */
 var _maqActive = 1;
 
-function openMaquette() {
+function openMaquette(enLigne) {
   _maqActive = 1;
+  // Si appelé sans paramètre (mode normal), remettre _modeEnLigne à false
+  if (!enLigne) _modeEnLigne = false;
   go('maquette');
   renderMaquetteTabs();
   renderMaqGrille(_maqActive);
@@ -3272,7 +3274,7 @@ function onlineRejoindre() {
     window.rejoindrePatie(code, nom);
     fermerOnline();
     showChatBtn();
-    openMaquette();
+    openMaquette(true);
   }
 }
 function onlineDemarrer() {
@@ -3280,7 +3282,7 @@ function onlineDemarrer() {
   window._nomJoueur = document.getElementById('online-nom')?.value.trim() || 'Joueur';
   fermerOnline();
   showChatBtn();
-  openMaquette();
+  openMaquette(true);
 }
 
 </script>
