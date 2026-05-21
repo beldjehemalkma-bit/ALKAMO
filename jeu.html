@@ -759,6 +759,64 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   margin: 14px 0;
 }
 .online-sep { color: rgba(255,255,255,.2); margin: 14px 0; font-size: .8rem; }
+
+/* ══ TRANSACTION ══ */
+.chat-transaction {
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  display: none;
+}
+.chat-transaction.open { display: block; }
+.trans-title {
+  font-size: .72rem; font-weight: 900;
+  color: #FAD060; margin-bottom: 8px;
+  text-align: center; letter-spacing: 1px;
+}
+.trans-row {
+  display: flex; gap: 6px; align-items: center;
+  margin-bottom: 8px; justify-content: center;
+}
+.trans-select {
+  flex: 1; padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(200,160,32,.3);
+  background: rgba(255,255,255,.07);
+  color: #fff; font-size: .78rem;
+  text-align: center;
+}
+.trans-arrow {
+  font-size: 1rem; color: rgba(255,255,255,.4);
+}
+.trans-send {
+  width: 100%; padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,rgba(83,74,183,.4),rgba(200,160,32,.3));
+  border: 1px solid rgba(200,160,32,.3);
+  color: #fff; font-weight: 700; font-size: .78rem;
+  cursor: pointer;
+}
+.trans-send:hover { opacity: .85; }
+.trans-cancel {
+  width: 100%; padding: 6px;
+  border-radius: 8px; border: none;
+  background: none; color: rgba(255,255,255,.3);
+  font-size: .72rem; cursor: pointer; margin-top: 4px;
+}
+.chat-msg.transaction {
+  background: rgba(83,74,183,.2);
+  border: 1px solid rgba(83,74,183,.5);
+  color: #9B8FFF;
+}
+.chat-msg.transaction .trans-btns {
+  display: flex; gap: 6px; margin-top: 6px;
+}
+.chat-msg.transaction .trans-btns button {
+  flex: 1; padding: 5px 8px;
+  border-radius: 8px; font-size: .72rem; font-weight: 700;
+  cursor: pointer; border: none;
+}
+.trans-accept-btn { background: rgba(29,158,117,.3); color: #4DC99A; }
+.trans-refuse-btn { background: rgba(231,76,60,.2); color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -3198,6 +3256,7 @@ function stopPartieTimer() {
 // ═══════════════════════════════════════
 const CHAT_MSGS = {
   accept:  { label: "✅ Accepter",    cls: "accept"  },
+  transaction: { label: "🔄 Échange proposé", cls: "transaction" },
   refuse:  { label: "❌ Refuser",     cls: "refuse"  },
   propose: { label: "🤝 Echanger", cls: "propose" },
   contest: { label: "⚠️ Contester", cls: "contest" },
@@ -3381,10 +3440,26 @@ function onlineDemarrer() {
   </div>
   <div class="chat-btns">
     <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
-    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Je refuse</button>
-    <button class="chat-btn p" onclick="sendChatMsg('propose')">🤝 Echanger</button>
-    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Je conteste</button>
-    <button class="chat-btn y" onclick="sendChatMsg('bravo')" style="grid-column:span 2">🎉 Bien joué !</button>
+    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Refuser</button>
+    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Contester</button>
+    <button class="chat-btn y" onclick="sendChatMsg('bravo')">🎉 Bien joué !</button>
+    <button class="chat-btn p" onclick="ouvrirTransaction()" style="grid-column:span 2">🔄 Proposer un échange de lettre</button>
+  </div>
+
+  <!-- Section transaction -->
+  <div class="chat-transaction" id="chat-transaction">
+    <div class="trans-title">🔄 ÉCHANGE DE LETTRE</div>
+    <div class="trans-row">
+      <select class="trans-select" id="trans-ma-lettre">
+        <option value="">Ma lettre...</option>
+      </select>
+      <span class="trans-arrow">⇄</span>
+      <select class="trans-select" id="trans-sa-lettre">
+        <option value="">Lettre voulue...</option>
+      </select>
+    </div>
+    <button class="trans-send" onclick="envoyerProposition()">📨 Envoyer la proposition</button>
+    <button class="trans-cancel" onclick="fermerTransaction()">Annuler</button>
   </div>
 </div>
 
@@ -3503,6 +3578,14 @@ function onlineDemarrer() {
         bravo: { label: '🎉 Bien joué !', cls: 'bravo' },
       };
       Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
+        if (msg.type === 'transaction') {
+          // Message de transaction
+          const estMoi = msg.idJoueur === window._idJoueur;
+          if (typeof afficherMessageTransaction === 'function') {
+            afficherMessageTransaction(msg, estMoi);
+          }
+          return;
+        }
         const m = LABELS[msg.type];
         if (!m) return;
         const div = document.createElement('div');
@@ -3520,6 +3603,137 @@ function onlineDemarrer() {
 
   window._firebase_db = db;
   console.log('✅ Firebase connecté !');
+
+// ═══════════════════════════════════════
+// TRANSACTIONS (ÉCHANGE DE LETTRES)
+// ═══════════════════════════════════════
+function ouvrirTransaction() {
+  const zone = document.getElementById('chat-transaction');
+  zone.classList.add('open');
+  
+  // Remplir les options avec les lettres du joueur actuel
+  const select = document.getElementById('trans-ma-lettre');
+  select.innerHTML = '<option value="">Ma lettre...</option>';
+  if (G.players && G.players[G.curP]) {
+    G.players[G.curP].letters.forEach((l, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = l === '*' ? '🃏 Joker' : l;
+      select.appendChild(opt);
+    });
+  }
+  
+  // Lettres possibles A-Z pour demander
+  const select2 = document.getElementById('trans-sa-lettre');
+  select2.innerHTML = '<option value="">Lettre voulue...</option>';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l;
+    opt.textContent = l;
+    select2.appendChild(opt);
+  });
+}
+
+function fermerTransaction() {
+  document.getElementById('chat-transaction').classList.remove('open');
+}
+
+function envoyerProposition() {
+  const idxMaLettre = document.getElementById('trans-ma-lettre').value;
+  const saLettre = document.getElementById('trans-sa-lettre').value;
+  
+  if (idxMaLettre === '' || !saLettre) {
+    alert('Choisissez votre lettre et la lettre souhaitée !');
+    return;
+  }
+  
+  const joueur = G.players?.[G.curP];
+  if (!joueur) return;
+  const maLettre = joueur.letters[parseInt(idxMaLettre)];
+  
+  // Fermer la zone transaction
+  fermerTransaction();
+  
+  // Créer le message de proposition
+  const proposMsg = {
+    type: 'transaction',
+    joueur: joueur.name,
+    maLettre: maLettre === '*' ? 'JOKER' : maLettre,
+    saLettre: saLettre,
+    idxLettre: parseInt(idxMaLettre),
+    idJoueur: window._idJoueur || 'local',
+    ts: Date.now()
+  };
+  
+  // Envoyer via Firebase ou afficher localement
+  if (window._codePartie && window._firebase_db) {
+    window._firebase_push(
+      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
+      proposMsg
+    );
+  } else {
+    // Mode local : afficher directement
+    afficherMessageTransaction(proposMsg, true);
+  }
+}
+
+function afficherMessageTransaction(msg, estMoi) {
+  const log = document.getElementById('chat-log');
+  if (!log) return;
+  
+  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
+    log.innerHTML = '';
+  }
+  
+  const div = document.createElement('div');
+  div.className = 'chat-msg transaction';
+  div.innerHTML = `
+    <div class="chat-who">${msg.joueur}</div>
+    🔄 Propose <strong>${msg.maLettre}</strong> contre <strong>${msg.saLettre}</strong>
+    ${!estMoi ? `<div class="trans-btns">
+      <button class="trans-accept-btn" onclick="accepterEchange('${msg.idJoueur}', '${msg.maLettre}', '${msg.saLettre}', ${msg.idxLettre}, this)">✅ Accepter</button>
+      <button class="trans-refuse-btn" onclick="refuserEchange(this)">❌ Refuser</button>
+    </div>` : '<div style="font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px">En attente de réponse...</div>'}
+  `;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  
+  if (!document.getElementById('chat-panel')?.classList.contains('open')) {
+    document.getElementById('chat-notif')?.classList.add('show');
+  }
+}
+
+function accepterEchange(idJoueurProposeur, maLettre, saLettre, idxLettre, btn) {
+  // Vérifier si on a la lettre demandée
+  const joueurActuel = G.players[G.curP];
+  const idxSaLettre = joueurActuel.letters.indexOf(saLettre);
+  
+  if (idxSaLettre === -1) {
+    // Message : on n'a pas la lettre
+    sendChatMsg('refuse');
+    btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
+      '<div style="color:#e74c3c;font-size:.72rem">❌ Vous n\'avez pas cette lettre !</div>';
+    return;
+  }
+  
+  // Effectuer l'échange localement
+  // (En mode Firebase, on synchroniserait via la base)
+  joueurActuel.letters[idxSaLettre] = maLettre === 'JOKER' ? '*' : maLettre;
+  
+  btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
+    '<div style="color:#4DC99A;font-size:.72rem">✅ Échange effectué !</div>';
+  
+  sendChatMsg('accept');
+  renderChevalet();
+  log(`✅ Échange : ${saLettre} ↔ ${maLettre}`, 'good');
+}
+
+function refuserEchange(btn) {
+  btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
+    '<div style="color:#e74c3c;font-size:.72rem">❌ Échange refusé</div>';
+  sendChatMsg('refuse');
+}
+
 </script>
 
 
