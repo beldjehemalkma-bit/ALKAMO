@@ -3418,6 +3418,118 @@ function onlineDemarrer() {
   openMaquette(true);
 }
 
+
+
+// ══ CHAT ══
+let _transOn = false;
+
+function chatOuvrir() {
+  document.getElementById('chat-panel').classList.add('show');
+  document.getElementById('chat-notif').classList.remove('show');
+  if (window._estCreateur) document.getElementById('chat-trans-toggle').classList.add('show');
+}
+function chatFermer() {
+  document.getElementById('chat-panel').classList.remove('show');
+  echangeFermer();
+}
+function chatVider() {
+  document.getElementById('chat-log').innerHTML = '<div class="cmsg ci"><span class="cw"></span>Utilisez les boutons ci-dessous</div>';
+}
+function chatAjouter(cls, who, html) {
+  const log = document.getElementById('chat-log');
+  if (log.children.length === 1 && log.children[0].classList.contains('ci')) log.innerHTML = '';
+  while (log.children.length >= 10) log.removeChild(log.firstChild);
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + cls;
+  d.innerHTML = '<div class="cw">' + who + '</div>' + html;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  if (!document.getElementById('chat-panel').classList.contains('show'))
+    document.getElementById('chat-notif').classList.add('show');
+}
+function chatEnvoyer(type) {
+  const M = { accept:{c:'ca',t:'✅ Accepter'}, refuse:{c:'cr',t:'❌ Refuser'}, contest:{c:'co',t:'⚠️ Contester'}, bravo:{c:'cy',t:'🎉 Bien joué !'} };
+  const m = M[type]; if (!m) return;
+  const who = G.players?.[G.curP]?.name || 'Joueur';
+  if (window._codePartie && window.envoyerMsgFirebase) { window.envoyerMsgFirebase(type, who); return; }
+  chatAjouter(m.c, who, m.t);
+}
+function transToggle() {
+  _transOn = !_transOn;
+  const btn = document.getElementById('ctt-btn');
+  const be = document.getElementById('btn-echange');
+  btn.textContent = _transOn ? 'ON' : 'OFF';
+  btn.className = _transOn ? 'on' : 'off';
+  be.style.display = _transOn ? 'block' : 'none';
+  if (!_transOn) echangeFermer();
+  chatAjouter('ci', 'Système', _transOn ? '🔄 Transactions activées' : '🚫 Transactions désactivées');
+}
+function echangeOuvrir() {
+  const z = document.getElementById('chat-echange');
+  z.classList.add('show');
+  const s1 = document.getElementById('ce-ma');
+  s1.innerHTML = '<option value="">Ma lettre...</option>';
+  (G.players?.[G.curP]?.letters || []).forEach((l,i) => {
+    const o = document.createElement('option');
+    o.value = i+'|'+(l==='*'?'JOKER':l); o.textContent = l==='*'?'🃏 Joker':l;
+    s1.appendChild(o);
+  });
+  const s2 = document.getElementById('ce-sa');
+  s2.innerHTML = '<option value="">Je veux...</option>';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+    const o = document.createElement('option'); o.value = l; o.textContent = l; s2.appendChild(o);
+  });
+}
+function echangeFermer() { document.getElementById('chat-echange').classList.remove('show'); }
+function echangeEnvoyer() {
+  const v1 = document.getElementById('ce-ma').value;
+  const v2 = document.getElementById('ce-sa').value;
+  if (!v1 || !v2) { alert('Choisissez les deux lettres !'); return; }
+  const [idx, maL] = v1.split('|');
+  const who = G.players?.[G.curP]?.name || 'Joueur';
+  echangeFermer();
+  const msg = { type:'echange', joueur:who, maLettre:maL, saLettre:v2, idxLettre:parseInt(idx), idJoueur:window._idJoueur||'local', ts:Date.now() };
+  if (window._codePartie && window._firebase_push && window._firebase_ref && window._firebase_db)
+    window._firebase_push(window._firebase_ref(window._firebase_db,'parties/'+window._codePartie+'/chat'), msg);
+  else afficherEchange(msg, true);
+}
+function afficherEchange(msg, estMoi) {
+  var d = document.createElement('div');
+  d.className = 'cmsg cp';
+  var actions = estMoi
+    ? '<div style="font-size:.62rem;color:rgba(255,255,255,.2);margin-top:3px">En attente...</div>'
+    : '<div class="ce-actions">'
+      + '<button class="ce-ok" onclick="echangeAccepter(this,\'' + msg.maLettre + '\',\'' + msg.saLettre + '\',' + msg.idxLettre + ')">✅ Accepter</button>'
+      + '<button class="ce-non" onclick="echangeRefuser(this)">❌ Refuser</button>'
+      + '</div>';
+  d.innerHTML = '<div class="cw">' + msg.joueur + '</div>'
+    + '🔄 Propose <b>' + msg.maLettre + '</b> contre <b>' + msg.saLettre + '</b>'
+    + actions;
+  var log = document.getElementById('chat-log');
+  if (!log) return;
+  if (log.children.length === 1 && log.children[0].classList.contains('ci')) log.innerHTML = '';
+  while (log.children.length >= 10) log.removeChild(log.firstChild);
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+  if (!document.getElementById('chat-panel').classList.contains('show'))
+    document.getElementById('chat-notif').classList.add('show');
+}
+
+function echangeAccepter(btn, maL, saL, idx) {
+  const j = G.players?.[G.curP]; if (!j) return;
+  const i = j.letters.indexOf(saL);
+  if (i===-1) { btn.closest('.ce-actions').innerHTML='<span style="color:#ff6b6b;font-size:.7rem">❌ Lettre absente</span>'; chatEnvoyer('refuse'); return; }
+  j.letters[i] = maL==='JOKER'?'*':maL;
+  btn.closest('.ce-actions').innerHTML='<span style="color:#4DC99A;font-size:.7rem">✅ Échange fait !</span>';
+  chatEnvoyer('accept'); renderChevalet();
+  log('✅ Échange : '+saL+' ↔ '+maL, 'good');
+}
+function echangeRefuser(btn) {
+  btn.closest('.ce-actions').innerHTML='<span style="color:#ff6b6b;font-size:.7rem">❌ Refusé</span>';
+  chatEnvoyer('refuse');
+}
+
+
 </script>
 
 <!-- Modal Dictionnaire -->
@@ -3653,99 +3765,6 @@ function onlineDemarrer() {
 
   window._firebase_db = db;
   console.log('✅ Firebase connecté !');
-
-// ══ CHAT ══
-let _transOn = false;
-
-function chatOuvrir() {
-  document.getElementById('chat-panel').classList.add('show');
-  document.getElementById('chat-notif').classList.remove('show');
-  if (window._estCreateur) document.getElementById('chat-trans-toggle').classList.add('show');
-}
-function chatFermer() {
-  document.getElementById('chat-panel').classList.remove('show');
-  echangeFermer();
-}
-function chatVider() {
-  document.getElementById('chat-log').innerHTML = '<div class="cmsg ci"><span class="cw"></span>Utilisez les boutons ci-dessous</div>';
-}
-function chatAjouter(cls, who, html) {
-  const log = document.getElementById('chat-log');
-  if (log.children.length === 1 && log.children[0].classList.contains('ci')) log.innerHTML = '';
-  while (log.children.length >= 10) log.removeChild(log.firstChild);
-  const d = document.createElement('div');
-  d.className = 'cmsg ' + cls;
-  d.innerHTML = '<div class="cw">' + who + '</div>' + html;
-  log.appendChild(d);
-  log.scrollTop = log.scrollHeight;
-  if (!document.getElementById('chat-panel').classList.contains('show'))
-    document.getElementById('chat-notif').classList.add('show');
-}
-function chatEnvoyer(type) {
-  const M = { accept:{c:'ca',t:'✅ Accepter'}, refuse:{c:'cr',t:'❌ Refuser'}, contest:{c:'co',t:'⚠️ Contester'}, bravo:{c:'cy',t:'🎉 Bien joué !'} };
-  const m = M[type]; if (!m) return;
-  const who = G.players?.[G.curP]?.name || 'Joueur';
-  if (window._codePartie && window.envoyerMsgFirebase) { window.envoyerMsgFirebase(type, who); return; }
-  chatAjouter(m.c, who, m.t);
-}
-function transToggle() {
-  _transOn = !_transOn;
-  const btn = document.getElementById('ctt-btn');
-  const be = document.getElementById('btn-echange');
-  btn.textContent = _transOn ? 'ON' : 'OFF';
-  btn.className = _transOn ? 'on' : 'off';
-  be.style.display = _transOn ? 'block' : 'none';
-  if (!_transOn) echangeFermer();
-  chatAjouter('ci', 'Système', _transOn ? '🔄 Transactions activées' : '🚫 Transactions désactivées');
-}
-function echangeOuvrir() {
-  const z = document.getElementById('chat-echange');
-  z.classList.add('show');
-  const s1 = document.getElementById('ce-ma');
-  s1.innerHTML = '<option value="">Ma lettre...</option>';
-  (G.players?.[G.curP]?.letters || []).forEach((l,i) => {
-    const o = document.createElement('option');
-    o.value = i+'|'+(l==='*'?'JOKER':l); o.textContent = l==='*'?'🃏 Joker':l;
-    s1.appendChild(o);
-  });
-  const s2 = document.getElementById('ce-sa');
-  s2.innerHTML = '<option value="">Je veux...</option>';
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
-    const o = document.createElement('option'); o.value = l; o.textContent = l; s2.appendChild(o);
-  });
-}
-function echangeFermer() { document.getElementById('chat-echange').classList.remove('show'); }
-function echangeEnvoyer() {
-  const v1 = document.getElementById('ce-ma').value;
-  const v2 = document.getElementById('ce-sa').value;
-  if (!v1 || !v2) { alert('Choisissez les deux lettres !'); return; }
-  const [idx, maL] = v1.split('|');
-  const who = G.players?.[G.curP]?.name || 'Joueur';
-  echangeFermer();
-  const msg = { type:'echange', joueur:who, maLettre:maL, saLettre:v2, idxLettre:parseInt(idx), idJoueur:window._idJoueur||'local', ts:Date.now() };
-  if (window._codePartie && window._firebase_push && window._firebase_ref && window._firebase_db)
-    window._firebase_push(window._firebase_ref(window._firebase_db,'parties/'+window._codePartie+'/chat'), msg);
-  else afficherEchange(msg, true);
-}
-function afficherEchange(msg, estMoi) {
-  const html = '🔄 Propose <b>'+msg.maLettre+'</b> contre <b>'+msg.saLettre+'</b>' +
-    (!estMoi ? '<div class="ce-actions"><button class="ce-ok" onclick="echangeAccepter(this,''+msg.maLettre+'',''+msg.saLettre+'','+msg.idxLettre+')">✅ Accepter</button><button class="ce-non" onclick="echangeRefuser(this)">❌ Refuser</button></div>' :
-    '<div style="font-size:.62rem;color:rgba(255,255,255,.2);margin-top:3px">En attente...</div>');
-  chatAjouter('cp', msg.joueur, html);
-}
-function echangeAccepter(btn, maL, saL, idx) {
-  const j = G.players?.[G.curP]; if (!j) return;
-  const i = j.letters.indexOf(saL);
-  if (i===-1) { btn.closest('.ce-actions').innerHTML='<span style="color:#ff6b6b;font-size:.7rem">❌ Lettre absente</span>'; chatEnvoyer('refuse'); return; }
-  j.letters[i] = maL==='JOKER'?'*':maL;
-  btn.closest('.ce-actions').innerHTML='<span style="color:#4DC99A;font-size:.7rem">✅ Échange fait !</span>';
-  chatEnvoyer('accept'); renderChevalet();
-  log('✅ Échange : '+saL+' ↔ '+maL, 'good');
-}
-function echangeRefuser(btn) {
-  btn.closest('.ce-actions').innerHTML='<span style="color:#ff6b6b;font-size:.7rem">❌ Refusé</span>';
-  chatEnvoyer('refuse');
-}
 
 </script>
 
