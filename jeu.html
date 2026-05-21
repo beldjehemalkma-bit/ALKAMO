@@ -1663,12 +1663,19 @@ let setupCfg = { n: 2, mode: 'pvp' };
 // ═══════════════════════════════════════════
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('s-' + id).classList.add('active');
-  const fab = document.getElementById('chat-fab');
-  if (fab) {
-    if (id === 'game') fab.classList.add('show');
-    else { fab.classList.remove('show'); chatFermer(); }
-  }
+  const screen = document.getElementById('s-' + id);
+  if (screen) screen.classList.add('active');
+  try {
+    const fab = document.getElementById('chat-fab');
+    if (fab) {
+      if (id === 'game') fab.classList.add('show');
+      else {
+        fab.classList.remove('show');
+        const panel = document.getElementById('chat-panel');
+        if (panel) panel.classList.remove('show');
+      }
+    }
+  } catch(e) {}
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -3373,7 +3380,21 @@ function onlineCreer() {
     document.getElementById('online-step2').style.display = 'block';
     if (window.ecouterChat) window.ecouterChat(code);
   } else {
-    alert('Firebase non connecté — vérifiez votre connexion internet');
+    // Firebase pas encore chargé - réessayer après 2s
+    const btnC = document.getElementById('online-step1')?.querySelector('button');
+    if (btnC) btnC.textContent = '⏳ Connexion...';
+    setTimeout(function() {
+      if (btnC) btnC.textContent = '🎮 Créer une partie';
+      if (window.creerPartieEnLigne) {
+        const code2 = window.creerPartieEnLigne(nom);
+        document.getElementById('online-code-show').textContent = code2;
+        document.getElementById('online-step1').style.display = 'none';
+        document.getElementById('online-step2').style.display = 'block';
+        if (window.ecouterChat) window.ecouterChat(code2);
+      } else {
+        alert('Connexion impossible. Vérifiez votre connexion internet.');
+      }
+    }, 2500);
   }
 }
 function onlineRejoindre() {
