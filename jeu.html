@@ -621,97 +621,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   background-clip: text;
 }
 
-/* ══ CHAT PANEL ══ */
-.chat-panel {
-  position: fixed;
-  bottom: 70px; right: 80px;
-  width: 280px;
-  background: rgba(13,11,30,.95);
-  border: 1px solid rgba(200,160,32,.3);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.6);
-  display: none;
-  flex-direction: column;
-  z-index: 500;
-  overflow: visible;
-  backdrop-filter: blur(20px);
-}
-.chat-panel.open { display: flex; max-height: 85vh; overflow-y: auto; }
-.chat-hdr {
-  padding: 10px 14px;
-  background: linear-gradient(135deg,rgba(83,74,183,.3),rgba(200,160,32,.2));
-  border-bottom: 1px solid rgba(200,160,32,.2);
-  font-size: .8rem; font-weight: 900;
-  color: #FAD060; letter-spacing: 1px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.chat-close {
-  background: none; border: none; color: rgba(255,255,255,.5);
-  cursor: pointer; font-size: 1rem; padding: 0 4px;
-}
-.chat-close:hover { color: #fff; }
-.chat-log {
-  overflow-y: auto; padding: 10px;
-  max-height: 140px; min-height: 60px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.chat-msg {
-  padding: 6px 10px; border-radius: 10px;
-  font-size: .78rem; font-weight: 600;
-  animation: fadeIn .3s ease;
-}
-.chat-msg.accept { background: rgba(29,158,117,.2); border: 1px solid rgba(29,158,117,.4); color: #4DC99A; }
-.chat-msg.refuse { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: #e74c3c; }
-.chat-msg.propose { background: rgba(83,74,183,.2); border: 1px solid rgba(83,74,183,.4); color: #9B8FFF; }
-.chat-msg.contest { background: rgba(255,165,0,.15); border: 1px solid rgba(255,165,0,.3); color: #FFA500; }
-.chat-msg.bravo { background: rgba(200,160,32,.15); border: 1px solid rgba(200,160,32,.3); color: #FAD060; }
-.chat-msg .chat-who { font-size: .65rem; opacity: .7; margin-bottom: 2px; }
-.chat-btns {
-  padding: 10px;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  border-top: 1px solid rgba(255,255,255,.06);
-}
-.chat-btn {
-  padding: 7px 6px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.05);
-  color: #fff; font-size: .72rem; font-weight: 700;
-  cursor: pointer; transition: all .2s; text-align: center;
-}
-.chat-btn:hover { transform: translateY(-1px); }
-.chat-btn.g { border-color: rgba(29,158,117,.4); background: rgba(29,158,117,.1); color: #4DC99A; }
-.chat-btn.r { border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.1); color: #e74c3c; }
-.chat-btn.p { border-color: rgba(83,74,183,.4); background: rgba(83,74,183,.1); color: #9B8FFF; }
-.chat-btn.o { border-color: rgba(255,165,0,.4); background: rgba(255,165,0,.1); color: #FFA500; }
-.chat-btn.y { border-color: rgba(200,160,32,.4); background: rgba(200,160,32,.1); color: #FAD060; }
-
-/* Bouton flottant pour ouvrir le chat */
-.chat-fab {
-  position: fixed;
-  bottom: 16px; right: 80px;
-  width: 48px; height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg,#534AB7,#C8A020);
-  border: none; color: #fff; font-size: 1.3rem;
-  cursor: pointer; z-index: 500;
-  box-shadow: 0 4px 16px rgba(83,74,183,.5);
-  display: none;
-  align-items: center; justify-content: center;
-  transition: transform .2s;
-}
-.chat-fab:hover { transform: scale(1.1); }
-.chat-fab.visible { display: flex; }
-.chat-notif {
-  position: absolute; top: -2px; right: -2px;
-  width: 16px; height: 16px;
-  background: #e74c3c; border-radius: 50%;
-  font-size: .6rem; font-weight: 900;
-  display: none; align-items: center; justify-content: center;
-}
-.chat-notif.show { display: flex; }
-
-@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+ to { opacity:1; transform:none; } }
 
 /* ══ PARTIE EN LIGNE ══ */
 .online-modal {
@@ -817,6 +727,148 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 }
 .trans-accept-btn { background: rgba(29,158,117,.3); color: #4DC99A; }
 .trans-refuse-btn { background: rgba(231,76,60,.2); color: #e74c3c; }
+
+/* ══════ CHAT ALKAMO ══════ */
+#chat-fab {
+  position: fixed; bottom: 16px; right: 80px;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: linear-gradient(135deg, #534AB7, #C8A020);
+  border: none; color: #fff; font-size: 1.3rem;
+  cursor: pointer; z-index: 600;
+  box-shadow: 0 4px 16px rgba(83,74,183,.5);
+  display: none; align-items: center; justify-content: center;
+  transition: transform .2s;
+}
+#chat-fab:hover { transform: scale(1.1); }
+#chat-fab.show { display: flex; }
+#chat-notif {
+  position: absolute; top: -3px; right: -3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #e74c3c; font-size: .65rem; font-weight: 900;
+  color: #fff; display: none; align-items: center; justify-content: center;
+}
+#chat-notif.show { display: flex; }
+
+#chat-panel {
+  position: fixed; bottom: 76px; right: 80px;
+  width: 290px; max-height: 80vh;
+  background: rgba(10,8,25,.97);
+  border: 1px solid rgba(200,160,32,.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.7);
+  display: none; flex-direction: column;
+  z-index: 599;
+  backdrop-filter: blur(20px);
+  overflow-y: auto;
+}
+#chat-panel.show { display: flex; }
+
+#chat-hdr {
+  padding: 11px 14px;
+  background: linear-gradient(135deg, rgba(83,74,183,.3), rgba(200,160,32,.2));
+  border-bottom: 1px solid rgba(200,160,32,.2);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; border-radius: 16px 16px 0 0;
+}
+#chat-hdr-title {
+  font-size: .82rem; font-weight: 900;
+  color: #FAD060; letter-spacing: 1px;
+}
+.chat-hdr-btns { display: flex; gap: 6px; align-items: center; }
+.chat-hdr-btn {
+  background: none; border: none;
+  color: rgba(255,255,255,.4); cursor: pointer;
+  font-size: .85rem; padding: 2px 6px;
+  border-radius: 6px; transition: all .2s;
+}
+.chat-hdr-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
+
+#chat-log {
+  padding: 10px; max-height: 160px;
+  overflow-y: auto; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.chat-msg {
+  padding: 6px 10px; border-radius: 10px;
+  font-size: .78rem; font-weight: 600;
+}
+.chat-msg .who { font-size: .63rem; opacity: .6; margin-bottom: 2px; }
+.chat-msg.accept { background: rgba(29,158,117,.2); border: 1px solid rgba(29,158,117,.35); color: #4DC99A; }
+.chat-msg.refuse { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: #ff6b6b; }
+.chat-msg.contest { background: rgba(255,165,0,.15); border: 1px solid rgba(255,165,0,.3); color: #FFA500; }
+.chat-msg.bravo { background: rgba(200,160,32,.15); border: 1px solid rgba(200,160,32,.3); color: #FAD060; }
+.chat-msg.echange { background: rgba(83,74,183,.2); border: 1px solid rgba(83,74,183,.4); color: #9B8FFF; }
+.chat-msg.info { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.5); font-style: italic; }
+
+#chat-btns {
+  padding: 10px; display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px; flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.cbtn {
+  padding: 8px 6px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: #fff; font-size: .73rem; font-weight: 700;
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.cbtn:hover { transform: translateY(-1px); opacity: .85; }
+.cbtn.g { border-color: rgba(29,158,117,.4); background: rgba(29,158,117,.1); color: #4DC99A; }
+.cbtn.r { border-color: rgba(231,76,60,.35); background: rgba(231,76,60,.08); color: #ff6b6b; }
+.cbtn.o { border-color: rgba(255,165,0,.35); background: rgba(255,165,0,.08); color: #FFA500; }
+.cbtn.y { border-color: rgba(200,160,32,.4); background: rgba(200,160,32,.1); color: #FAD060; }
+.cbtn.p { border-color: rgba(83,74,183,.4); background: rgba(83,74,183,.15); color: #9B8FFF; }
+
+/* Zone échange */
+#chat-echange {
+  padding: 10px;
+  border-top: 1px solid rgba(83,74,183,.3);
+  background: rgba(83,74,183,.08);
+  flex-shrink: 0; display: none;
+}
+#chat-echange.show { display: block; }
+.echange-title { font-size: .72rem; font-weight: 900; color: #9B8FFF; margin-bottom: 8px; text-align: center; }
+.echange-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+.echange-sel {
+  flex: 1; padding: 7px 8px; border-radius: 8px;
+  border: 1px solid rgba(83,74,183,.4);
+  background: rgba(255,255,255,.06); color: #fff;
+  font-size: .78rem; text-align: center;
+}
+.echange-arrow { color: rgba(255,255,255,.3); font-size: 1rem; }
+.echange-send {
+  width: 100%; padding: 8px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(83,74,183,.5), rgba(200,160,32,.3));
+  border: 1px solid rgba(200,160,32,.3);
+  color: #fff; font-weight: 700; font-size: .78rem; cursor: pointer;
+  margin-bottom: 4px;
+}
+.echange-cancel {
+  width: 100%; padding: 5px; border-radius: 8px;
+  background: none; border: none;
+  color: rgba(255,255,255,.25); font-size: .7rem; cursor: pointer;
+}
+/* Boutons dans message échange */
+.echange-actions { display: flex; gap: 6px; margin-top: 6px; }
+.ea-btn { flex: 1; padding: 5px; border-radius: 7px; font-size: .72rem; font-weight: 700; cursor: pointer; border: none; }
+.ea-ok { background: rgba(29,158,117,.3); color: #4DC99A; }
+.ea-non { background: rgba(231,76,60,.2); color: #ff6b6b; }
+
+/* Toggle transactions */
+#chat-toggle-trans {
+  padding: 8px 10px; flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: space-between;
+}
+#chat-toggle-trans span { font-size: .68rem; color: rgba(255,255,255,.4); }
+#trans-toggle-btn {
+  padding: 4px 10px; border-radius: 20px; font-size: .68rem; font-weight: 700;
+  cursor: pointer; border: none; transition: all .2s;
+}
+#trans-toggle-btn.on { background: rgba(29,158,117,.3); color: #4DC99A; border: 1px solid rgba(29,158,117,.4); }
+#trans-toggle-btn.off { background: rgba(255,255,255,.06); color: rgba(255,255,255,.3); border: 1px solid rgba(255,255,255,.1); }
+
 </style>
 </head>
 <body>
@@ -1615,16 +1667,10 @@ let setupCfg = { n: 2, mode: 'pvp' };
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('s-' + id).classList.add('active');
-  // Montrer le chat seulement pendant le jeu
   const fab = document.getElementById('chat-fab');
-  const panel = document.getElementById('chat-panel');
   if (fab) {
-    if (id === 'game') {
-      fab.classList.add('visible');
-    } else {
-      fab.classList.remove('visible');
-      if (panel) panel.classList.remove('open');
-    }
+    if (id === 'game') { fab.classList.add('show'); }
+    else { fab.classList.remove('show'); fermerChat(); }
   }
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -3262,505 +3308,175 @@ function stopPartieTimer() {
   if (el) el.style.display = 'none';
 }
 
-// ═══════════════════════════════════════
-// CHAT JOUEURS
-// ═══════════════════════════════════════
-const CHAT_MSGS = {
-  accept:  { label: "✅ Accepter",    cls: "accept"  },
-  transaction: { label: "🔄 Échange proposé", cls: "transaction" },
-  refuse:  { label: "❌ Refuser",     cls: "refuse"  },
-  propose: { label: "🤝 Echanger", cls: "propose" },
-  contest: { label: "⚠️ Contester", cls: "contest" },
-  bravo:   { label: "🎉 Bien joue !", cls: "bravo" },
-};
 
-function toggleChat() {
-  const panel = document.getElementById('chat-panel');
-  const estOuvert = panel.classList.contains('open');
-  if (!estOuvert) {
-    const trans = document.getElementById('chat-transaction');
-    if (trans) { trans.classList.remove('open'); trans.style.display = 'none'; }
-    document.getElementById('chat-notif').classList.remove('show');
+
+// ══════════════════════════════════════
+// CHAT ALKAMO — SYSTÈME COMPLET
+// ══════════════════════════════════════
+let _chatTransactionsOn = false;
+
+// ─── Ouvrir/fermer ───
+function ouvrirChat() {
+  document.getElementById('chat-panel').classList.add('show');
+  document.getElementById('chat-notif').classList.remove('show');
+  // Montrer toggle transactions si créateur
+  if (window._estCreateur) {
+    document.getElementById('chat-toggle-trans').style.display = 'flex';
   }
-  panel.classList.toggle('open');
+}
+function fermerChat() {
+  document.getElementById('chat-panel').classList.remove('show');
+  fermerEchange();
 }
 
-function showChatBtn() {
-  // Géré automatiquement par go()
+// ─── Vider le log ───
+function viderChat() {
+  document.getElementById('chat-log').innerHTML = 
+    '<div class="chat-msg info"><span class="who"></span>Utilisez les boutons ci-dessous</div>';
 }
 
-function sendChatMsg(type) {
-  const msg = CHAT_MSGS[type];
-  if (!msg) return;
-  const who = G.players?.[G.curP]?.name || 'Joueur';
-  
-  // Envoyer via Firebase si connecté en ligne
-  if (window.envoyerMsgFirebase && window._codePartie) {
-    window.envoyerMsgFirebase(type, who);
-    return; // Firebase met à jour le log automatiquement
-  }
-  
-  // Mode local (sans Firebase)
+// ─── Ajouter un message dans le log ───
+function ajouterMsg(cls, who, texte, html) {
   const log = document.getElementById('chat-log');
   // Vider le message d'accueil
-  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
+  if (log.children.length === 1 && log.children[0].classList.contains('info')) {
     log.innerHTML = '';
   }
-  // Garder max 8 messages
-  while (log.children.length >= 8) log.removeChild(log.firstChild);
+  // Max 10 messages
+  while (log.children.length >= 10) log.removeChild(log.firstChild);
+  
   const div = document.createElement('div');
-  div.className = 'chat-msg ' + msg.cls;
-  div.innerHTML = '<div class="chat-who">' + who + '</div>' + msg.label;
+  div.className = 'chat-msg ' + cls;
+  div.innerHTML = '<div class="who">' + who + '</div>' + (html || texte);
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
-  if (!document.getElementById('chat-panel')?.classList.contains('open')) {
-    document.getElementById('chat-notif')?.classList.add('show');
+  
+  // Notif si panel fermé
+  if (!document.getElementById('chat-panel').classList.contains('show')) {
+    document.getElementById('chat-notif').classList.add('show');
   }
 }
 
-
-// ═══════════════════════════════════════
-// PARTIE EN LIGNE
-// ═══════════════════════════════════════
-function ouvrirOnline() {
-  document.getElementById('online-modal').classList.add('open');
-}
-function fermerOnline() {
-  document.getElementById('online-modal').classList.remove('open');
-}
-function onlineCreer() {
-  const nom = document.getElementById('online-nom').value.trim() || 'Joueur 1';
-  if (window.creerPartieEnLigne) {
-    const code = window.creerPartieEnLigne(nom);
-    document.getElementById('online-code-show').textContent = code;
-    document.getElementById('online-step1').style.display = 'none';
-    document.getElementById('online-step2').style.display = 'block';
-    if (window.ecouterChat) window.ecouterChat(code);
+// ─── Envoyer un message simple ───
+function chatMsg(type) {
+  const labels = {
+    accept:  { cls: 'accept',  txt: '✅ Accepter' },
+    refuse:  { cls: 'refuse',  txt: '❌ Refuser' },
+    contest: { cls: 'contest', txt: '⚠️ Contester' },
+    bravo:   { cls: 'bravo',   txt: '🎉 Bien joué !' },
+  };
+  const m = labels[type];
+  if (!m) return;
+  const who = G.players?.[G.curP]?.name || 'Joueur';
+  
+  // Firebase si en ligne
+  if (window._codePartie && window.envoyerMsgFirebase) {
+    window.envoyerMsgFirebase(type, who);
   } else {
-    alert('Firebase non connecté — vérifiez votre connexion internet');
+    ajouterMsg(m.cls, who, m.txt);
   }
 }
-function onlineRejoindre() {
-  const nom = document.getElementById('online-nom').value.trim() || 'Joueur';
-  const code = document.getElementById('online-code-input').value.trim().toUpperCase();
-  if (!code || code.length < 4) { alert('Entrez un code valide !'); return; }
-  if (window.rejoindrePatie) {
-    _modeEnLigne = true;
-    window._nomJoueur = nom;
-    window.rejoindrePatie(code, nom);
-    fermerOnline();
-    showChatBtn();
-    openMaquette(true);
+
+// ─── Toggle transactions ───
+function toggleTransactions() {
+  _chatTransactionsOn = !_chatTransactionsOn;
+  const btn = document.getElementById('trans-toggle-btn');
+  const btnEchange = document.getElementById('btn-echange');
+  if (_chatTransactionsOn) {
+    btn.textContent = 'ON'; btn.className = 'on';
+    btnEchange.style.display = 'block';
+    ajouterMsg('info', 'Système', '🔄 Transactions activées');
+  } else {
+    btn.textContent = 'OFF'; btn.className = 'off';
+    btnEchange.style.display = 'none';
+    fermerEchange();
+    ajouterMsg('info', 'Système', '🚫 Transactions désactivées');
   }
 }
-function onlineDemarrer() {
-  _modeEnLigne = true;
-  window._nomJoueur = document.getElementById('online-nom')?.value.trim() || 'Joueur';
-  fermerOnline();
-  showChatBtn();
-  openMaquette(true);
-}
 
-</script>
-
-<!-- Modal Dictionnaire -->
-<div class="ov" id="m-dico">
-  <div class="modal dico-modal">
-    <h2>📚 Dictionnaire ALKAMO</h2>
-    <!-- Vérificateur rapide -->
-    <!-- Choix dico -->
-    <div class="dico-switch">
-      <button class="dico-sw-btn active" id="dsw-lexical" onclick="switchDicoJeu('lexical')">📋 Lexical</button>
-      <button class="dico-sw-btn" id="dsw-universel" onclick="switchDicoJeu('universel')">🌐 Universel</button>
-    </div>
-
-    <!-- Section Lexical -->
-    <div id="dico-section-lexical">
-      <div class="dico-check-box">
-        <input class="dico-search" id="dico-search" type="text" placeholder="🔍 Tapez un mot..." oninput="dicoChercher(this.value)" style="flex:1;margin:0">
-        <button class="dico-check-btn" onclick="dicoVerifier()">✓ Vérifier</button>
-      </div>
-      <div class="dico-check-result" id="dico-check-result"></div>
-      <div class="dico-sep"></div>
-      <!-- Niveau 1 : choix maquette -->
-      <div id="dico-level1">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 72" width="32" height="38" style="flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(200,160,32,.4))">
-          <defs><linearGradient id="bsg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2A2060"/><stop offset="100%" stop-color="#0D0B1A"/></linearGradient></defs>
-          <path d="M30 2 L54 2 L57 44 L30 62 L3 44 L6 2 Z" fill="url(#bsg2)" stroke="#C8A020" stroke-width="2"/>
-          <path d="M30 6 L50 6 L53 44 L30 58 L7 44 L10 6 Z" fill="none" stroke="#C8A020" stroke-width="0.5" opacity="0.4"/>
-          <rect x="7" y="12" width="21" height="18" rx="3" fill="#534AB7"/>
-          <rect x="30" y="12" width="21" height="18" rx="3" fill="#1D9E75"/>
-          <text x="17" y="25" text-anchor="middle" font-family="Arial Black" font-size="13" font-weight="900" fill="white">A</text>
-          <text x="40" y="25" text-anchor="middle" font-family="Arial Black" font-size="13" font-weight="900" fill="white">L</text>
-          <text x="30" y="42" text-anchor="middle" font-family="Arial Black" font-size="7" letter-spacing="0.5" fill="#FAD060">ALKAMO</text>
-          <text x="30" y="54" text-anchor="middle" font-family="Arial" font-size="6" fill="#C8A020">✦ ✦</text>
-        </svg>
-        <div class="dico-title" style="margin:0">Choisissez une maquette :</div>
-      </div>
-      <div class="dico-themes" id="dico-maq-btns"></div>
-    </div>
-    <!-- Niveau 2 : thèmes de la maquette choisie -->
-    <div id="dico-level2" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <button class="dico-btn-th" onclick="dicoRetourMaq()">← Retour</button>
-        <span class="dico-title" id="dico-maq-nom" style="margin:0"></span>
-      </div>
-      <div class="dico-themes" id="dico-themes"></div>
-    </div>
-    <div class="dico-title" id="dico-title" style="margin-top:8px"></div>
-    <div class="dico-count" id="dico-count"></div>
-    <div class="dico-words" id="dico-words"></div>
-    </div><!-- fin dico-section-lexical -->
-
-    <!-- Section Universel -->
-    <div id="dico-section-universel" style="display:none">
-      <p style="font-size:.8rem;color:rgba(255,255,255,.6);text-align:center;margin:8px 0 12px">Noms (masc/fém/pluriel) et infinitifs uniquement · 3 à 10 lettres</p>
-      <div class="dico-check-box">
-        <input class="dico-search" id="dico-search-univ" type="text" placeholder="🔍 Tapez un mot à vérifier..." style="flex:1;margin:0" oninput="dicoUnivLive(this.value)">
-        <button class="dico-check-btn" onclick="dicoUnivVerifier()">✓ Vérifier</button>
-      </div>
-      <div class="dico-check-result" id="dico-check-result-univ"></div>
-    </div>
-
-    <button class="btn btn-out" style="margin-top:10px;width:100%" onclick="closeModal('m-dico')">✕ Fermer</button>
-  </div>
-</div>
-<div class="bouclier-corner" title="ALKAMO"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 72" width="40" height="48" class="bouclier-medal">
-  <defs>
-    <linearGradient id="bsg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2A2060"/>
-      <stop offset="100%" stop-color="#0D0B1A"/>
-    </linearGradient>
-  </defs>
-  <path d="M30 2 L54 2 L57 44 L30 62 L3 44 L6 2 Z" fill="url(#bsg)" stroke="#C8A020" stroke-width="2"/>
-  <path d="M30 6 L50 6 L53 44 L30 58 L7 44 L10 6 Z" fill="none" stroke="#C8A020" stroke-width="0.5" opacity="0.4"/>
-  <line x1="30" y1="6" x2="30" y2="56" stroke="#C8A020" stroke-width="0.4" opacity="0.3"/>
-  <rect x="7"  y="12" width="21" height="18" rx="3" fill="#534AB7"/>
-  <rect x="30" y="12" width="21" height="18" rx="3" fill="#1D9E75"/>
-  <text x="17" y="25" text-anchor="middle" font-family="Arial Black" font-size="13" font-weight="900" fill="white">A</text>
-  <text x="40" y="25" text-anchor="middle" font-family="Arial Black" font-size="13" font-weight="900" fill="white">L</text>
-  <text x="30" y="42" text-anchor="middle" font-family="Arial Black" font-size="7" letter-spacing="0.5" fill="#FAD060">ALKAMO</text>
-  <text x="30" y="54" text-anchor="middle" font-family="Arial" font-size="6" fill="#C8A020">✦ ✦</text>
-</svg></div>
-
-<!-- ══ CHAT PANEL ══ -->
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-hdr">
-    💬 MESSAGES JOUEURS
-    <div style="display:flex;gap:6px;align-items:center">
-      <button onclick="viderChatLog()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:.75rem;cursor:pointer;padding:2px 6px" title="Effacer">🗑</button>
-      <button class="chat-close" onclick="toggleChat()">✕</button>
-    </div>
-  </div>
-  <div class="chat-log" id="chat-log">
-    <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">
-      Utilisez les boutons ci-dessous
-    </div>
-  </div>
-  <div class="chat-btns">
-    <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
-    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Refuser</button>
-    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Contester</button>
-    <button class="chat-btn y" onclick="sendChatMsg('bravo')">🎉 Bien joué !</button>
-    <button class="chat-btn p" onclick="ouvrirTransaction()" style="grid-column:span 2">🔄 Proposer un échange de lettre</button>
-  </div>
-
-  <!-- Section transaction -->
-  <div class="chat-transaction" id="chat-transaction">
-    <div class="trans-title">🔄 ÉCHANGE DE LETTRE</div>
-    <div class="trans-row">
-      <select class="trans-select" id="trans-ma-lettre">
-        <option value="">Ma lettre...</option>
-      </select>
-      <span class="trans-arrow">⇄</span>
-      <select class="trans-select" id="trans-sa-lettre">
-        <option value="">Lettre voulue...</option>
-      </select>
-    </div>
-    <button class="trans-send" onclick="envoyerProposition()">📨 Envoyer la proposition</button>
-    <button class="trans-cancel" onclick="fermerTransaction()">Annuler</button>
-  </div>
-</div>
-
-<!-- Bouton flottant -->
-<button class="chat-fab" id="chat-fab" onclick="toggleChat()">
-  💬
-  <div class="chat-notif" id="chat-notif">!</div>
-</button>
-
-
-<!-- ══ FIREBASE ══ -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
-    authDomain: "alkamo-3c76e.firebaseapp.com",
-    databaseURL: "https://alkamo-3c76e-default-rtdb.firebaseio.com",
-    projectId: "alkamo-3c76e",
-    storageBucket: "alkamo-3c76e.firebasestorage.app",
-    messagingSenderId: "101034335840",
-    appId: "1:101034335840:web:f433830959af109193ad05"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  function genCode() {
-    return Math.random().toString(36).substr(2,6).toUpperCase();
-  }
-
-  // ─── Créer une partie ───
-  window.creerPartieEnLigne = function(nomJoueur) {
-    const code = genCode();
-    set(ref(db, 'parties/' + code), {
-      code: code,
-      joueurs: { j1: { nom: nomJoueur, score: 0 } },
-      etat: 'attente',
-      maquette: null,
-      chat: {},
-      createdAt: Date.now()
-    });
-    window._codePartie = code;
-    window._idJoueur = 'j1';
-    window._estCreateur = true;
-    return code;
-  };
-
-  // ─── Rejoindre une partie ───
-  window.rejoindrePatie = function(code, nomJoueur) {
-    const idJ = 'j' + Date.now().toString().slice(-4);
-    update(ref(db, 'parties/' + code + '/joueurs'), {
-      [idJ]: { nom: nomJoueur, score: 0 }
-    });
-    window._codePartie = code;
-    window._idJoueur = idJ;
-    window._estCreateur = false;
-    // Écouter le démarrage de la partie
-    ecouterDemarrage(code);
-  };
-
-  // ─── Écouter le démarrage (pour les joueurs qui rejoignent) ───
-  function ecouterDemarrage(code) {
-    onValue(ref(db, 'parties/' + code + '/etat'), (snap) => {
-      const etat = snap.val();
-      if (etat === 'en_cours' && !window._estCreateur) {
-        // Récupérer la maquette choisie
-        get(ref(db, 'parties/' + code + '/maquette')).then(mSnap => {
-          const maq = mSnap.val();
-          if (maq) {
-            window._maqActive = maq;
-            _maqActive = maq;
-            // Démarrer le jeu côté joueur B
-            if (typeof startGameEnLigne === 'function') {
-              startGameEnLigne();
-            }
-          }
-        });
-      }
-    });
-    window.ecouterChat(code);
-  }
-
-  // ─── Démarrer la partie (créateur) ───
-  window.demarrerPartieFirebase = function(code, maquette) {
-    update(ref(db, 'parties/' + code), {
-      etat: 'en_cours',
-      maquette: maquette
-    });
-  };
-
-  // ─── Envoyer message chat ───
-  window.envoyerMsgFirebase = function(type, nomJoueur) {
-    if (!window._codePartie) return;
-    push(ref(db, 'parties/' + window._codePartie + '/chat'), {
-      type: type,
-      joueur: nomJoueur,
-      ts: Date.now()
-    });
-  };
-
-  // ─── Écouter le chat ───
-  window.ecouterChat = function(code) {
-    onValue(ref(db, 'parties/' + code + '/chat'), (snap) => {
-      const msgs = snap.val();
-      if (!msgs) return;
-      const log = document.getElementById('chat-log');
-      if (!log) return;
-      log.innerHTML = '';
-      const LABELS = {
-        accept: { label: '✅ Accepter', cls: 'accept' },
-        refuse: { label: '❌ Refuser', cls: 'refuse' },
-        propose: { label: '🤝 Echanger', cls: 'propose' },
-        contest: { label: '⚠️ Contester', cls: 'contest' },
-        bravo: { label: '🎉 Bien joué !', cls: 'bravo' },
-      };
-      Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
-        if (msg.type === 'transaction') {
-          // Message de transaction
-          const estMoi = msg.idJoueur === window._idJoueur;
-          if (typeof afficherMessageTransaction === 'function') {
-            afficherMessageTransaction(msg, estMoi);
-          }
-          return;
-        }
-        const m = LABELS[msg.type];
-        if (!m) return;
-        const div = document.createElement('div');
-        div.className = 'chat-msg ' + m.cls;
-        div.innerHTML = '<div class="chat-who">' + msg.joueur + '</div>' + m.label;
-        log.appendChild(div);
-      });
-      log.scrollTop = log.scrollHeight;
-      // Notif si fermé
-      if (!document.getElementById('chat-panel')?.classList.contains('open')) {
-        document.getElementById('chat-notif')?.classList.add('show');
-      }
-    });
-  };
-
-  window._firebase_db = db;
-  console.log('✅ Firebase connecté !');
-
-// ═══════════════════════════════════════
-// TRANSACTIONS (ÉCHANGE DE LETTRES)
-// ═══════════════════════════════════════
-function ouvrirTransaction() {
-  const zone = document.getElementById('chat-transaction');
-  zone.style.display = 'block';
-  zone.classList.add('open');
+// ─── Échange de lettres ───
+function ouvrirEchange() {
+  const zone = document.getElementById('chat-echange');
+  zone.classList.add('show');
   
-  // Remplir les options avec les lettres du joueur actuel
-  const select = document.getElementById('trans-ma-lettre');
-  select.innerHTML = '<option value="">Ma lettre...</option>';
-  if (G.players && G.players[G.curP]) {
-    G.players[G.curP].letters.forEach((l, i) => {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = l === '*' ? '🃏 Joker' : l;
-      select.appendChild(opt);
+  // Remplir mes lettres
+  const sel1 = document.getElementById('sel-ma-lettre');
+  sel1.innerHTML = '<option value="">Ma lettre...</option>';
+  const joueur = G.players?.[G.curP];
+  if (joueur) {
+    joueur.letters.forEach((l, i) => {
+      const o = document.createElement('option');
+      o.value = i + '|' + l;
+      o.textContent = l === '*' ? '🃏 Joker' : l;
+      sel1.appendChild(o);
     });
   }
   
-  // Lettres possibles A-Z pour demander
-  const select2 = document.getElementById('trans-sa-lettre');
-  select2.innerHTML = '<option value="">Lettre voulue...</option>';
+  // Lettres demandées A-Z
+  const sel2 = document.getElementById('sel-sa-lettre');
+  sel2.innerHTML = '<option value="">Je veux...</option>';
   'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
-    const opt = document.createElement('option');
-    opt.value = l;
-    opt.textContent = l;
-    select2.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = l; o.textContent = l;
+    sel2.appendChild(o);
   });
 }
 
-
-function viderChatLog() {
-  const log = document.getElementById('chat-log');
-  if (log) log.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">Utilisez les boutons ci-dessous</div>';
+function fermerEchange() {
+  document.getElementById('chat-echange').classList.remove('show');
 }
 
-function fermerTransaction() {
-  const zone = document.getElementById('chat-transaction');
-  zone.classList.remove('open');
-  zone.style.display = 'none';
-}
-
-function envoyerProposition() {
-  const idxMaLettre = document.getElementById('trans-ma-lettre').value;
-  const saLettre = document.getElementById('trans-sa-lettre').value;
+function envoyerEchange() {
+  const v1 = document.getElementById('sel-ma-lettre').value;
+  const v2 = document.getElementById('sel-sa-lettre').value;
+  if (!v1 || !v2) { alert('Choisissez les deux lettres !'); return; }
   
-  if (idxMaLettre === '' || !saLettre) {
-    alert('Choisissez votre lettre et la lettre souhaitée !');
-    return;
-  }
+  const [idx, maLettre] = v1.split('|');
+  const who = G.players?.[G.curP]?.name || 'Joueur';
+  fermerEchange();
   
-  const joueur = G.players?.[G.curP];
-  if (!joueur) return;
-  const maLettre = joueur.letters[parseInt(idxMaLettre)];
-  
-  // Fermer la zone transaction
-  fermerTransaction();
-  
-  // Créer le message de proposition
-  const proposMsg = {
-    type: 'transaction',
-    joueur: joueur.name,
+  const msg = {
+    type: 'echange', joueur: who,
     maLettre: maLettre === '*' ? 'JOKER' : maLettre,
-    saLettre: saLettre,
-    idxLettre: parseInt(idxMaLettre),
-    idJoueur: window._idJoueur || 'local',
-    ts: Date.now()
+    saLettre: v2, idxLettre: parseInt(idx),
+    idJoueur: window._idJoueur || 'local', ts: Date.now()
   };
   
-  // Envoyer via Firebase ou afficher localement
-  if (window._codePartie && window._firebase_db) {
-    window._firebase_push(
-      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
-      proposMsg
-    );
+  if (window._codePartie && window._firebase_push && window._firebase_ref && window._firebase_db) {
+    window._firebase_push(window._firebase_ref(window._firebase_db, 
+      'parties/' + window._codePartie + '/chat'), msg);
   } else {
-    // Mode local : afficher directement
-    afficherMessageTransaction(proposMsg, true);
+    afficherMsgEchange(msg, true);
   }
 }
 
-function afficherMessageTransaction(msg, estMoi) {
-  const log = document.getElementById('chat-log');
-  if (!log) return;
-  
-  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
-    log.innerHTML = '';
-  }
-  
-  const div = document.createElement('div');
-  div.className = 'chat-msg transaction';
-  div.innerHTML = `
-    <div class="chat-who">${msg.joueur}</div>
-    🔄 Propose <strong>${msg.maLettre}</strong> contre <strong>${msg.saLettre}</strong>
-    ${!estMoi ? `<div class="trans-btns">
-      <button class="trans-accept-btn" onclick="accepterEchange('${msg.idJoueur}', '${msg.maLettre}', '${msg.saLettre}', ${msg.idxLettre}, this)">✅ Accepter</button>
-      <button class="trans-refuse-btn" onclick="refuserEchange(this)">❌ Refuser</button>
-    </div>` : '<div style="font-size:.65rem;color:rgba(255,255,255,.3);margin-top:4px">En attente de réponse...</div>'}
-  `;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-  
-  if (!document.getElementById('chat-panel')?.classList.contains('open')) {
-    document.getElementById('chat-notif')?.classList.add('show');
-  }
+function afficherMsgEchange(msg, estMoi) {
+  const html = `🔄 Propose <b>${msg.maLettre}</b> contre <b>${msg.saLettre}</b>` +
+    (!estMoi ? `<div class="echange-actions">
+      <button class="ea-btn ea-ok" onclick="accepterEchange(this,'${msg.maLettre}','${msg.saLettre}',${msg.idxLettre})">✅ Accepter</button>
+      <button class="ea-btn ea-non" onclick="refuserEchange(this)">❌ Refuser</button>
+    </div>` : '<div style="font-size:.63rem;color:rgba(255,255,255,.25);margin-top:4px">En attente...</div>');
+  ajouterMsg('echange', msg.joueur, '', html);
 }
 
-function accepterEchange(idJoueurProposeur, maLettre, saLettre, idxLettre, btn) {
-  // Vérifier si on a la lettre demandée
-  const joueurActuel = G.players[G.curP];
-  const idxSaLettre = joueurActuel.letters.indexOf(saLettre);
-  
-  if (idxSaLettre === -1) {
-    // Message : on n'a pas la lettre
-    sendChatMsg('refuse');
-    btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
-      '<div style="color:#e74c3c;font-size:.72rem">❌ Vous n\'avez pas cette lettre !</div>';
-    return;
+function accepterEchange(btn, maLettre, saLettre, idxLettre) {
+  const joueur = G.players?.[G.curP];
+  if (!joueur) return;
+  const idxSa = joueur.letters.indexOf(saLettre);
+  if (idxSa === -1) {
+    btn.closest('.echange-actions').innerHTML = '<span style="color:#ff6b6b;font-size:.7rem">❌ Vous n\'avez pas cette lettre</span>';
+    chatMsg('refuse'); return;
   }
-  
-  // Effectuer l'échange localement
-  // (En mode Firebase, on synchroniserait via la base)
-  joueurActuel.letters[idxSaLettre] = maLettre === 'JOKER' ? '*' : maLettre;
-  
-  btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
-    '<div style="color:#4DC99A;font-size:.72rem">✅ Échange effectué !</div>';
-  
-  sendChatMsg('accept');
+  joueur.letters[idxSa] = maLettre === 'JOKER' ? '*' : maLettre;
+  btn.closest('.echange-actions').innerHTML = '<span style="color:#4DC99A;font-size:.7rem">✅ Échange effectué !</span>';
+  chatMsg('accept');
   renderChevalet();
-  log(`✅ Échange : ${saLettre} ↔ ${maLettre}`, 'good');
+  log('✅ Échange : ' + saLettre + ' ↔ ' + maLettre, 'good');
 }
 
 function refuserEchange(btn) {
-  btn.closest('.chat-msg').querySelector('.trans-btns').innerHTML = 
-    '<div style="color:#e74c3c;font-size:.72rem">❌ Échange refusé</div>';
-  sendChatMsg('refuse');
+  btn.closest('.echange-actions').innerHTML = '<span style="color:#ff6b6b;font-size:.7rem">❌ Refusé</span>';
+  chatMsg('refuse');
 }
 
 </script>
@@ -3802,6 +3518,61 @@ function refuserEchange(btn) {
     </button>
   </div>
 </div>
+
+
+<!-- ══ CHAT ALKAMO ══ -->
+<div id="chat-panel">
+  <!-- Header -->
+  <div id="chat-hdr">
+    <span id="chat-hdr-title">💬 MESSAGES JOUEURS</span>
+    <div class="chat-hdr-btns">
+      <button class="chat-hdr-btn" onclick="viderChat()" title="Effacer">🗑</button>
+      <button class="chat-hdr-btn" onclick="fermerChat()">✕</button>
+    </div>
+  </div>
+
+  <!-- Log messages -->
+  <div id="chat-log">
+    <div class="chat-msg info"><span class="who"></span>Utilisez les boutons ci-dessous</div>
+  </div>
+
+  <!-- Boutons principaux -->
+  <div id="chat-btns">
+    <button class="cbtn g" onclick="chatMsg('accept')">✅ Accepter</button>
+    <button class="cbtn r" onclick="chatMsg('refuse')">❌ Refuser</button>
+    <button class="cbtn o" onclick="chatMsg('contest')">⚠️ Contester</button>
+    <button class="cbtn y" onclick="chatMsg('bravo')">🎉 Bien joué !</button>
+    <button class="cbtn p" id="btn-echange" onclick="ouvrirEchange()" style="grid-column:span 2;display:none">🔄 Proposer un échange</button>
+  </div>
+
+  <!-- Zone échange de lettres -->
+  <div id="chat-echange">
+    <div class="echange-title">🔄 ÉCHANGE DE LETTRE</div>
+    <div class="echange-row">
+      <select class="echange-sel" id="sel-ma-lettre">
+        <option value="">Ma lettre...</option>
+      </select>
+      <span class="echange-arrow">⇄</span>
+      <select class="echange-sel" id="sel-sa-lettre">
+        <option value="">Je veux...</option>
+      </select>
+    </div>
+    <button class="echange-send" onclick="envoyerEchange()">📨 Envoyer la proposition</button>
+    <button class="echange-cancel" onclick="fermerEchange()">Annuler</button>
+  </div>
+
+  <!-- Toggle transactions (visible seulement pour créateur) -->
+  <div id="chat-toggle-trans" style="display:none">
+    <span>Transactions</span>
+    <button id="trans-toggle-btn" class="off" onclick="toggleTransactions()">OFF</button>
+  </div>
+</div>
+
+<!-- Bouton flottant -->
+<button id="chat-fab" onclick="ouvrirChat()">
+  💬
+  <div id="chat-notif"></div>
+</button>
 
 </body>
 </html>
