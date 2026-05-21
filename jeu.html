@@ -3276,10 +3276,16 @@ const CHAT_MSGS = {
 
 function toggleChat() {
   const panel = document.getElementById('chat-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
+  const estOuvert = panel.classList.contains('open');
+  
+  if (!estOuvert) {
+    // Ouverture : fermer la zone transaction
+    const trans = document.getElementById('chat-transaction');
+    if (trans) trans.classList.remove('open');
     document.getElementById('chat-notif').classList.remove('show');
   }
+  
+  panel.classList.toggle('open');
 }
 
 function showChatBtn() {
@@ -3442,7 +3448,10 @@ function onlineDemarrer() {
 <div class="chat-panel" id="chat-panel">
   <div class="chat-hdr">
     💬 MESSAGES JOUEURS
-    <button class="chat-close" onclick="toggleChat()">✕</button>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button onclick="viderChatLog()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:.65rem;cursor:pointer;padding:2px 6px">🗑</button>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
   </div>
   <div class="chat-log" id="chat-log">
     <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">
@@ -3620,6 +3629,7 @@ function onlineDemarrer() {
 // ═══════════════════════════════════════
 function ouvrirTransaction() {
   const zone = document.getElementById('chat-transaction');
+  zone.style.display = 'block';
   zone.classList.add('open');
   
   // Remplir les options avec les lettres du joueur actuel
@@ -3645,8 +3655,18 @@ function ouvrirTransaction() {
   });
 }
 
+
+function viderChatLog() {
+  const log = document.getElementById('chat-log');
+  if (log) {
+    log.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">Utilisez les boutons ci-dessous</div>';
+  }
+}
+
 function fermerTransaction() {
-  document.getElementById('chat-transaction').classList.remove('open');
+  const zone = document.getElementById('chat-transaction');
+  zone.classList.remove('open');
+  zone.style.display = 'none';
 }
 
 function envoyerProposition() {
