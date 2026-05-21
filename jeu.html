@@ -3277,14 +3277,11 @@ const CHAT_MSGS = {
 function toggleChat() {
   const panel = document.getElementById('chat-panel');
   const estOuvert = panel.classList.contains('open');
-  
   if (!estOuvert) {
-    // Ouverture : fermer la zone transaction
     const trans = document.getElementById('chat-transaction');
-    if (trans) trans.classList.remove('open');
+    if (trans) { trans.classList.remove('open'); trans.style.display = 'none'; }
     document.getElementById('chat-notif').classList.remove('show');
   }
-  
   panel.classList.toggle('open');
 }
 
@@ -3449,7 +3446,7 @@ function onlineDemarrer() {
   <div class="chat-hdr">
     💬 MESSAGES JOUEURS
     <div style="display:flex;gap:6px;align-items:center">
-      <button onclick="viderChatLog()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:.65rem;cursor:pointer;padding:2px 6px">🗑</button>
+      <button onclick="viderChatLog()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:.75rem;cursor:pointer;padding:2px 6px" title="Effacer">🗑</button>
       <button class="chat-close" onclick="toggleChat()">✕</button>
     </div>
   </div>
@@ -3658,9 +3655,7 @@ function ouvrirTransaction() {
 
 function viderChatLog() {
   const log = document.getElementById('chat-log');
-  if (log) {
-    log.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">Utilisez les boutons ci-dessous</div>';
-  }
+  if (log) log.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">Utilisez les boutons ci-dessous</div>';
 }
 
 function fermerTransaction() {
