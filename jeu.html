@@ -1615,6 +1615,17 @@ let setupCfg = { n: 2, mode: 'pvp' };
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('s-' + id).classList.add('active');
+  // Montrer le chat seulement pendant le jeu
+  const fab = document.getElementById('chat-fab');
+  const panel = document.getElementById('chat-panel');
+  if (fab) {
+    if (id === 'game') {
+      fab.classList.add('visible');
+    } else {
+      fab.classList.remove('visible');
+      if (panel) panel.classList.remove('open');
+    }
+  }
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -3272,7 +3283,7 @@ function toggleChat() {
 }
 
 function showChatBtn() {
-  document.getElementById('chat-fab').classList.add('visible');
+  // Géré automatiquement par go()
 }
 
 function sendChatMsg(type) {
