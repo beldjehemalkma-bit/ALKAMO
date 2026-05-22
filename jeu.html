@@ -621,97 +621,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   background-clip: text;
 }
 
-/* ══ CHAT PANEL ══ */
-.chat-panel {
-  position: fixed;
-  bottom: 70px; right: 80px;
-  width: 280px;
-  background: rgba(13,11,30,.95);
-  border: 1px solid rgba(200,160,32,.3);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.6);
-  display: none;
-  flex-direction: column;
-  z-index: 500;
-  overflow: hidden;
-  backdrop-filter: blur(20px);
-}
-.chat-panel.open { display: flex; }
-.chat-hdr {
-  padding: 10px 14px;
-  background: linear-gradient(135deg,rgba(83,74,183,.3),rgba(200,160,32,.2));
-  border-bottom: 1px solid rgba(200,160,32,.2);
-  font-size: .8rem; font-weight: 900;
-  color: #FAD060; letter-spacing: 1px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.chat-close {
-  background: none; border: none; color: rgba(255,255,255,.5);
-  cursor: pointer; font-size: 1rem; padding: 0 4px;
-}
-.chat-close:hover { color: #fff; }
-.chat-log {
-  flex: 1; overflow-y: auto; padding: 10px;
-  max-height: 180px; min-height: 80px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.chat-msg {
-  padding: 6px 10px; border-radius: 10px;
-  font-size: .78rem; font-weight: 600;
-  animation: fadeIn .3s ease;
-}
-.chat-msg.accept { background: rgba(29,158,117,.2); border: 1px solid rgba(29,158,117,.4); color: #4DC99A; }
-.chat-msg.refuse { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); color: #e74c3c; }
-.chat-msg.propose { background: rgba(83,74,183,.2); border: 1px solid rgba(83,74,183,.4); color: #9B8FFF; }
-.chat-msg.contest { background: rgba(255,165,0,.15); border: 1px solid rgba(255,165,0,.3); color: #FFA500; }
-.chat-msg.bravo { background: rgba(200,160,32,.15); border: 1px solid rgba(200,160,32,.3); color: #FAD060; }
-.chat-msg .chat-who { font-size: .65rem; opacity: .7; margin-bottom: 2px; }
-.chat-btns {
-  padding: 10px;
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  border-top: 1px solid rgba(255,255,255,.06);
-}
-.chat-btn {
-  padding: 7px 6px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.05);
-  color: #fff; font-size: .72rem; font-weight: 700;
-  cursor: pointer; transition: all .2s; text-align: center;
-}
-.chat-btn:hover { transform: translateY(-1px); }
-.chat-btn.g { border-color: rgba(29,158,117,.4); background: rgba(29,158,117,.1); color: #4DC99A; }
-.chat-btn.r { border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.1); color: #e74c3c; }
-.chat-btn.p { border-color: rgba(83,74,183,.4); background: rgba(83,74,183,.1); color: #9B8FFF; }
-.chat-btn.o { border-color: rgba(255,165,0,.4); background: rgba(255,165,0,.1); color: #FFA500; }
-.chat-btn.y { border-color: rgba(200,160,32,.4); background: rgba(200,160,32,.1); color: #FAD060; }
-
-/* Bouton flottant pour ouvrir le chat */
-.chat-fab {
-  position: fixed;
-  bottom: 16px; right: 80px;
-  width: 48px; height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg,#534AB7,#C8A020);
-  border: none; color: #fff; font-size: 1.3rem;
-  cursor: pointer; z-index: 500;
-  box-shadow: 0 4px 16px rgba(83,74,183,.5);
-  display: none;
-  align-items: center; justify-content: center;
-  transition: transform .2s;
-}
-.chat-fab:hover { transform: scale(1.1); }
-.chat-fab.visible { display: flex; }
-.chat-notif {
-  position: absolute; top: -2px; right: -2px;
-  width: 16px; height: 16px;
-  background: #e74c3c; border-radius: 50%;
-  font-size: .6rem; font-weight: 900;
-  display: none; align-items: center; justify-content: center;
-}
-.chat-notif.show { display: flex; }
-
-@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+ to { opacity:1; transform:none; } }
 
 /* ══ PARTIE EN LIGNE ══ */
 .online-modal {
@@ -3008,10 +2918,6 @@ function dicoUnivVerifier() {
   }
 }
 
-function dicoUnivLive(val) {
-  if (val.length >= 3) dicoUnivVerifier();
-  else document.getElementById('dico-check-result-univ').style.display = 'none';
-}
 
 document.addEventListener('DOMContentLoaded', function() {
   var inp = document.getElementById('dico-search-univ');
@@ -3323,43 +3229,11 @@ const CHAT_MSGS = {
   bravo:   { label: "🎉 Bien joue !", cls: "bravo" },
 };
 
-function toggleChat() {
-  const panel = document.getElementById('chat-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) {
-    document.getElementById('chat-notif').classList.remove('show');
-  }
-}
 
 function showChatBtn() {
   document.getElementById('chat-fab').classList.add('visible');
 }
 
-function sendChatMsg(type) {
-  const msg = CHAT_MSGS[type];
-  if (!msg) return;
-  const who = G.players?.[G.curP]?.name || 'Joueur';
-  
-  // Envoyer via Firebase si connecté en ligne
-  if (window.envoyerMsgFirebase && window._codePartie) {
-    window.envoyerMsgFirebase(type, who);
-    return; // Firebase met à jour le log automatiquement
-  }
-  
-  // Mode local (sans Firebase)
-  const log = document.getElementById('chat-log');
-  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
-    log.innerHTML = '';
-  }
-  const div = document.createElement('div');
-  div.className = 'chat-msg ' + msg.cls;
-  div.innerHTML = '<div class="chat-who">' + who + '</div>' + msg.label;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-  if (!document.getElementById('chat-panel').classList.contains('open')) {
-    document.getElementById('chat-notif').classList.add('show');
-  }
-}
 
 
 // ═══════════════════════════════════════
@@ -3613,32 +3487,6 @@ function echangeRefuser(btn) {
   <text x="30" y="54" text-anchor="middle" font-family="Arial" font-size="6" fill="#C8A020">✦ ✦</text>
 </svg></div>
 
-<!-- ══ CHAT PANEL ══ -->
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-hdr">
-    💬 MESSAGES JOUEURS
-    <button class="chat-close" onclick="toggleChat()">✕</button>
-  </div>
-  <div class="chat-log" id="chat-log">
-    <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">
-      Utilisez les boutons ci-dessous
-    </div>
-  </div>
-  <div class="chat-btns">
-    <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
-    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Je refuse</button>
-    <button class="chat-btn p" onclick="sendChatMsg('propose')">🤝 Echanger</button>
-    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Je conteste</button>
-    <button class="chat-btn y" onclick="sendChatMsg('bravo')" style="grid-column:span 2">🎉 Bien joué !</button>
-  </div>
-</div>
-
-<!-- Bouton flottant -->
-<button class="chat-fab" id="chat-fab" onclick="chatOuvrir()">
-  💬
-  <div class="chat-notif" id="chat-notif">!</div>
-</button>
-
 
 <!-- ══ FIREBASE ══ -->
 <script type="module">
@@ -3716,38 +3564,7 @@ function echangeRefuser(btn) {
 
   // ─── Démarrer la partie (créateur) ───
   window.demarrerPartieFirebase = function(code, maquette) {
-    update(ref(db, 'parties/' + code), {
-      etat: 'en_cours',
-      maquette: maquette
-    });
-  };
-
-  // ─── Envoyer message chat ───
-  window.envoyerMsgFirebase = function(type, nomJoueur) {
-    if (!window._codePartie) return;
-    push(ref(db, 'parties/' + window._codePartie + '/chat'), {
-      type: type,
-      joueur: nomJoueur,
-      ts: Date.now()
-    });
-  };
-
-  // ─── Écouter le chat ───
-  window.ecouterChat = function(code) {
-    onValue(ref(db, 'parties/' + code + '/chat'), (snap) => {
-      const msgs = snap.val();
-      if (!msgs) return;
-      const log = document.getElementById('chat-log');
-      if (!log) return;
-      log.innerHTML = '';
-      const LABELS = {
-        accept: { label: '✅ Accepter', cls: 'accept' },
-        refuse: { label: '❌ Refuser', cls: 'refuse' },
-        propose: { label: '🤝 Echanger', cls: 'propose' },
-        contest: { label: '⚠️ Contester', cls: 'contest' },
-        bravo: { label: '🎉 Bien joué !', cls: 'bravo' },
-      };
-      Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
+    update(forEach(msg => {
         const m = LABELS[msg.type];
         if (!m) return;
         const div = document.createElement('div');
