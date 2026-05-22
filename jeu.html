@@ -759,6 +759,11 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   margin: 14px 0;
 }
 .online-sep { color: rgba(255,255,255,.2); margin: 14px 0; font-size: .8rem; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
 </style>
 </head>
 <body>
@@ -3301,6 +3306,11 @@ function onlineRejoindre() {
     _modeEnLigne = true;
     window._nomJoueur = nom;
     window.rejoindrePatie(code, nom);
+    // Afficher écran d'attente
+    fermerOnline();
+    const ma = document.getElementById('m-attente');
+    if (ma) ma.style.display = 'flex';
+    document.getElementById('attente-joueurs').textContent = nom + ' connecté ✅';
     fermerOnline();
     showChatBtn();
     openMaquette(true);
@@ -3481,16 +3491,29 @@ function onlineDemarrer() {
     onValue(ref(db, 'parties/' + code + '/etat'), (snap) => {
       const etat = snap.val();
       if (etat === 'en_cours' && !window._estCreateur) {
+        // Fermer écran d'attente
+        const ma = document.getElementById('m-attente');
+        if (ma) ma.style.display = 'none';
         // Récupérer la maquette choisie
         get(ref(db, 'parties/' + code + '/maquette')).then(mSnap => {
           const maq = mSnap.val();
           if (maq) {
             window._maqActive = maq;
             _maqActive = maq;
-            // Démarrer le jeu côté joueur B
             if (typeof startGameEnLigne === 'function') {
               startGameEnLigne();
             }
+          }
+        });
+      }
+      // Mettre à jour le nombre de joueurs dans l'écran d'attente
+      if (etat === 'attente') {
+        get(ref(db, 'parties/' + code + '/joueurs')).then(jSnap => {
+          const joueurs = jSnap.val();
+          if (joueurs) {
+            const noms = Object.values(joueurs).map(j => j.nom).join(', ');
+            const el = document.getElementById('attente-joueurs');
+            if (el) el.textContent = 'Joueurs connectés : ' + noms;
           }
         });
       }
@@ -3589,5 +3612,21 @@ function onlineDemarrer() {
   </div>
 </div>
 
+<!-- ══ ÉCRAN ATTENTE ══ -->
+<div class="ov" id="m-attente" style="z-index:700;display:none">
+  <div class="modal" style="text-align:center;padding:32px 24px;max-width:320px">
+    <div style="font-size:2.5rem;margin-bottom:12px">⏳</div>
+    <div style="font-size:1.1rem;font-weight:900;color:#FAD060;margin-bottom:8px;letter-spacing:1px">EN ATTENTE</div>
+    <div id="attente-msg" style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:16px">
+      Connecté ! En attente du démarrage par le créateur...
+    </div>
+    <div id="attente-joueurs" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <div style="width:8px;height:8px;border-radius:50%;background:#534AB7;animation:pulse 1s infinite"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;animation:pulse 1s .3s infinite"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#C8A020;animation:pulse 1s .6s infinite"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
