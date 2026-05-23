@@ -764,6 +764,11 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.7); }
 }
+
+#ind-tour {
+  transition: all .35s ease;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -2314,6 +2319,15 @@ function _confirmerMotFinalize(word, pIdx) {
     log('⚠ Cagnotte épuisée — phase finale !', 'inf');
   }
   drawCase(false);
+
+  if (_modeEnLigne && window._codePartie && window.publierAction) {
+    window.publierAction(window._codePartie, 'valider', {
+      mot: word, pts: ev.score,
+      theme: G.curCase ? (G.curCase.free ? 'MOT LIBRE' : G.curCase.th) : '?'
+    });
+    if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
+  }
+
   nextTurn();
 }
 
@@ -2356,6 +2370,8 @@ function passerTour() {
   
   // En mode en ligne : pas de limite de passes
   if (_modeEnLigne) {
+    if (window._codePartie && window.publierAction)
+      window.publierAction(window._codePartie, 'passer', {});
     drawCase(true);
     nextTurn();
     return;
@@ -2430,7 +2446,6 @@ function confirmerChange() {
 // TOUR SUIVANT
 // ═══════════════════════════════════════════
 function nextTurn() {
-  // Si temps écoulé, fin de partie après ce tour
   if (_tempsEcoule) { endGame(); return; }
   G.word = []; G.changeSel = []; G.changeMode = false; G.insertPos = 0;
   G.themeChanged = false;
@@ -2439,8 +2454,19 @@ function nextTurn() {
   G.round++;
   document.getElementById('tmr-exp').classList.remove('show');
   renderAll();
-  startTimer(); // timer repart à 3:00 pour le joueur suivant
-  log('⏱ Tour de ' + curP().name, 'inf');
+  startTimer();
+  log('Tour de ' + curP().name, 'inf');
+
+  if (_modeEnLigne && window._codePartie && window.passerAuTourSuivant) {
+    const monId = window._idJoueur;
+    const advId = window._idAdverse || (monId === 'j1' ? 'j2' : 'j1');
+    const joueurActifActuel = window._joueurActifId || monId;
+    const joueurSuivant = joueurActifActuel === monId ? advId : monId;
+    window._joueurActifId = joueurSuivant;
+    window.passerAuTourSuivant(window._codePartie, joueurSuivant, G.round);
+    afficherIndicateurTour();
+  }
+
   if (curP().isBot) setTimeout(botPlay, 1500);
 }
 
@@ -3072,6 +3098,9 @@ function startGameEnLigne() {
   CASES = MAQUETTES[_maqActive].cases;
   shuffle(G.letterBag);
   G.players[0].letters = drawL(10);
+  window._joueurActifId = 'j1';
+  window._partieDemar = true;
+  if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
   drawCase(true);
   go('game');
   showChatBtn();
@@ -3305,12 +3334,13 @@ function onlineRejoindre() {
   if (window.rejoindrePatie) {
     _modeEnLigne = true;
     window._nomJoueur = nom;
+    window._idAdverse = 'j1';
     window.rejoindrePatie(code, nom);
-    // Afficher écran d'attente
     fermerOnline();
     const ma = document.getElementById('m-attente');
     if (ma) ma.style.display = 'flex';
-    document.getElementById('attente-joueurs').textContent = nom + ' connecté ✅';
+    const attEl = document.getElementById('attente-joueurs');
+    if (attEl) attEl.textContent = nom + ' connecté — En attente du créateur...';
     fermerOnline();
     showChatBtn();
     openMaquette(true);
@@ -3452,19 +3482,16 @@ function onlineDemarrer() {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  function genCode() {
-    return Math.random().toString(36).substr(2,6).toUpperCase();
-  }
+  function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
-  // ─── Créer une partie ───
+  // Créer une partie
   window.creerPartieEnLigne = function(nomJoueur) {
     const code = genCode();
     set(ref(db, 'parties/' + code), {
-      code: code,
+      code, etat: 'attente', maquette: null, chat: {},
       joueurs: { j1: { nom: nomJoueur, score: 0 } },
-      etat: 'attente',
-      maquette: null,
-      chat: {},
+      tour: { joueurActif: 'j1', numero: 0, action: null, theme: null },
+      scores: { j1: 0 },
       createdAt: Date.now()
     });
     window._codePartie = code;
@@ -3473,86 +3500,116 @@ function onlineDemarrer() {
     return code;
   };
 
-  // ─── Rejoindre une partie ───
+  // Rejoindre une partie
   window.rejoindrePatie = function(code, nomJoueur) {
     const idJ = 'j' + Date.now().toString().slice(-4);
-    update(ref(db, 'parties/' + code + '/joueurs'), {
-      [idJ]: { nom: nomJoueur, score: 0 }
-    });
     window._codePartie = code;
     window._idJoueur = idJ;
     window._estCreateur = false;
-    // Écouter le démarrage de la partie
-    ecouterDemarrage(code);
+    window._idAdverse = 'j1';
+    update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom: nomJoueur, score: 0 } });
+    update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
+    ecouterPartie(code);
   };
 
-  // ─── Écouter le démarrage (pour les joueurs qui rejoignent) ───
-  function ecouterDemarrage(code) {
-    onValue(ref(db, 'parties/' + code + '/etat'), (snap) => {
-      const etat = snap.val();
-      if (etat === 'en_cours' && !window._estCreateur) {
-        // Fermer écran d'attente
+  // Démarrer la partie
+  window.demarrerPartieFirebase = function(code, maquette) {
+    update(ref(db, 'parties/' + code), {
+      etat: 'en_cours', maquette: maquette,
+      'tour/joueurActif': 'j1', 'tour/numero': 1, 'tour/action': 'debut'
+    });
+  };
+
+  // Publier le thème tiré
+  window.publierTheme = function(code, themeData) {
+    update(ref(db, 'parties/' + code + '/tour'), { theme: themeData, action: 'jouer' });
+  };
+
+  // Publier une action
+  window.publierAction = function(code, type, data) {
+    push(ref(db, 'parties/' + code + '/actions'), {
+      type, joueur: window._idJoueur,
+      nom: window._nomJoueur || 'Joueur',
+      data: data || {}, ts: Date.now()
+    });
+    update(ref(db, 'parties/' + code + '/tour'), { action: type, dernierJoueur: window._idJoueur });
+  };
+
+  // Passer au tour suivant
+  window.passerAuTourSuivant = function(code, joueurSuivant, numero) {
+    update(ref(db, 'parties/' + code + '/tour'), {
+      joueurActif: joueurSuivant, numero: numero,
+      theme: null, action: 'attente_theme'
+    });
+  };
+
+  // Mettre à jour le score
+  window.majScore = function(code, idJoueur, score) {
+    update(ref(db, 'parties/' + code + '/scores'), { [idJoueur]: score });
+  };
+
+  // Écouter toute la partie
+  function ecouterPartie(code) {
+    onValue(ref(db, 'parties/' + code), (snap) => {
+      const d = snap.val();
+      if (!d) return;
+
+      // Démarrage côté joueur 2
+      if (d.etat === 'en_cours' && !window._estCreateur && !window._partieDemar) {
+        window._partieDemar = true;
         const ma = document.getElementById('m-attente');
         if (ma) ma.style.display = 'none';
-        // Récupérer la maquette choisie
-        get(ref(db, 'parties/' + code + '/maquette')).then(mSnap => {
-          const maq = mSnap.val();
-          if (maq) {
-            window._maqActive = maq;
-            _maqActive = maq;
-            if (typeof startGameEnLigne === 'function') {
-              startGameEnLigne();
-            }
-          }
-        });
+        if (d.maquette) {
+          _maqActive = d.maquette;
+          window._maqActive = d.maquette;
+          if (typeof startGameEnLigne === 'function') startGameEnLigne();
+        }
+        // Mémoriser l'ID adverse
+        const ids = Object.keys(d.joueurs || {});
+        window._idAdverse = ids.find(id => id !== window._idJoueur) || 'j1';
       }
-      // Mettre à jour le nombre de joueurs dans l'écran d'attente
-      if (etat === 'attente') {
-        get(ref(db, 'parties/' + code + '/joueurs')).then(jSnap => {
-          const joueurs = jSnap.val();
-          if (joueurs) {
-            const noms = Object.values(joueurs).map(j => j.nom).join(', ');
-            const el = document.getElementById('attente-joueurs');
-            if (el) el.textContent = 'Joueurs connectés : ' + noms;
-          }
-        });
+
+      // Écran d'attente : afficher joueurs connectés
+      if (d.etat === 'attente' && d.joueurs) {
+        const noms = Object.values(d.joueurs).map(j => j.nom).join(', ');
+        const el = document.getElementById('attente-joueurs');
+        if (el) el.textContent = 'Connectés : ' + noms;
+      }
+
+      // Synchroniser tour et scores
+      if (d.etat === 'en_cours' && d.tour && window._partieDemar) {
+        if (typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
       }
     });
+
+    // Écouter les actions
+    onValue(ref(db, 'parties/' + code + '/actions'), (snap) => {
+      const actions = snap.val();
+      if (!actions || !window._partieDemar) return;
+      const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
+      const derniere = liste[liste.length - 1];
+      if (derniere && typeof traiterActionDistante === 'function') {
+        traiterActionDistante(derniere);
+      }
+    });
+
     window.ecouterChat(code);
   }
 
-  // ─── Démarrer la partie (créateur) ───
-  window.demarrerPartieFirebase = function(code, maquette) {
-    update(ref(db, 'parties/' + code), {
-      etat: 'en_cours',
-      maquette: maquette
-    });
-  };
-
-  // ─── Envoyer message chat ───
-  window.envoyerMsgFirebase = function(type, nomJoueur) {
-    if (!window._codePartie) return;
-    push(ref(db, 'parties/' + window._codePartie + '/chat'), {
-      type: type,
-      joueur: nomJoueur,
-      ts: Date.now()
-    });
-  };
-
-  // ─── Écouter le chat ───
+  // Chat
   window.ecouterChat = function(code) {
     onValue(ref(db, 'parties/' + code + '/chat'), (snap) => {
       const msgs = snap.val();
       if (!msgs) return;
-      const log = document.getElementById('chat-log');
-      if (!log) return;
-      log.innerHTML = '';
+      const logEl = document.getElementById('chat-log');
+      if (!logEl) return;
+      logEl.innerHTML = '';
       const LABELS = {
         accept: { label: '✅ Accepter', cls: 'accept' },
         refuse: { label: '❌ Refuser', cls: 'refuse' },
         propose: { label: '🤝 Echanger', cls: 'propose' },
         contest: { label: '⚠️ Contester', cls: 'contest' },
-        bravo: { label: '🎉 Bien joué !', cls: 'bravo' },
+        bravo:   { label: '🎉 Bien joué !', cls: 'bravo' },
       };
       Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
         const m = LABELS[msg.type];
@@ -3560,18 +3617,118 @@ function onlineDemarrer() {
         const div = document.createElement('div');
         div.className = 'chat-msg ' + m.cls;
         div.innerHTML = '<div class="chat-who">' + msg.joueur + '</div>' + m.label;
-        log.appendChild(div);
+        logEl.appendChild(div);
       });
-      log.scrollTop = log.scrollHeight;
-      // Notif si fermé
-      if (!document.getElementById('chat-panel')?.classList.contains('open')) {
+      logEl.scrollTop = logEl.scrollHeight;
+      if (!document.getElementById('chat-panel')?.classList.contains('open'))
         document.getElementById('chat-notif')?.classList.add('show');
-      }
     });
   };
 
+  window.envoyerMsgFirebase = function(type, nomJoueur) {
+    if (!window._codePartie) return;
+    push(ref(db, 'parties/' + window._codePartie + '/chat'), { type, joueur: nomJoueur, ts: Date.now() });
+  };
+
   window._firebase_db = db;
-  console.log('✅ Firebase connecté !');
+  window._firebase_ref = ref;
+  window._firebase_push = push;
+  console.log('Firebase connecté !');
+
+// ════════════════════════════════════════
+// SYNCHRONISATION MULTIJOUEUR
+// ════════════════════════════════════════
+let _partieDemar = false;
+
+function estMonTour() {
+  if (!_modeEnLigne) return true;
+  return window._idJoueur === (window._joueurActifId || 'j1');
+}
+
+function afficherIndicateurTour() {
+  if (!_modeEnLigne) return;
+  let ind = document.getElementById('ind-tour');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'ind-tour';
+    ind.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:20px;font-size:.75rem;font-weight:900;letter-spacing:1px;z-index:200;transition:all .3s;pointer-events:none;';
+    document.body.appendChild(ind);
+  }
+  const monTour = estMonTour();
+  if (monTour) {
+    ind.textContent = "C'EST VOTRE TOUR !";
+    ind.style.cssText += 'background:linear-gradient(135deg,rgba(29,158,117,.9),rgba(83,74,183,.9));color:#fff;box-shadow:0 4px 16px rgba(29,158,117,.4);';
+  } else {
+    const nom = window._nomJoueurActif || "l'autre joueur";
+    ind.textContent = "Tour de " + nom + "...";
+    ind.style.cssText += 'background:rgba(0,0,0,.7);color:rgba(255,255,255,.55);box-shadow:none;';
+  }
+  // Activer/désactiver les contrôles
+  const actifs = monTour;
+  ['btn-val','btn-pass','btn-chg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.disabled = !actifs; el.style.opacity = actifs ? '1' : '0.3'; }
+  });
+  const chev = document.getElementById('chev');
+  const drop = document.getElementById('wdrop');
+  if (chev) chev.style.pointerEvents = actifs ? 'auto' : 'none';
+  if (drop) drop.style.pointerEvents = actifs ? 'auto' : 'none';
+}
+
+function syncTour(tour, joueurs, scores) {
+  if (!tour) return;
+  window._joueurActifId = tour.joueurActif;
+  if (joueurs && joueurs[tour.joueurActif])
+    window._nomJoueurActif = joueurs[tour.joueurActif].nom;
+
+  // Mettre à jour les scores
+  if (scores && G.players && G.players.length > 1) {
+    const idsJ = Object.keys(scores);
+    G.players.forEach((p, i) => {
+      const id = i === 0 ? (window._estCreateur ? window._idJoueur : window._idAdverse)
+                         : (window._estCreateur ? window._idAdverse : window._idJoueur);
+      if (id && scores[id] !== undefined) p.score = scores[id];
+    });
+    renderAll();
+  }
+
+  afficherIndicateurTour();
+
+  // Thème de l'adversaire à afficher
+  if (!estMonTour() && tour.theme && tour.action === 'jouer') {
+    if (!G.curCase || G.curCase.id !== tour.theme.id) {
+      G.curCase = { id: tour.theme.id, th: tour.theme.th, free: !!tour.theme.free, emoji: tour.theme.emoji || '' };
+      if (typeof renderTheme === 'function') renderTheme();
+    }
+  }
+}
+
+function traiterActionDistante(action) {
+  if (!action || action.joueur === window._idJoueur) return;
+  if (window._dernierActionTs && action.ts <= window._dernierActionTs) return;
+  window._dernierActionTs = action.ts;
+
+  if (action.type === 'valider') {
+    const mot = action.data.mot || '';
+    const pts = action.data.pts || 0;
+    if (pts > 0) {
+      log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
+      if (G.themeHistory) {
+        G.themeHistory.unshift({ theme: action.data.theme || '?', player: action.nom, word: mot, pts });
+        renderHistPanel();
+      }
+    } else {
+      log(action.nom + ' : mot refusé', 'bad');
+    }
+  } else if (action.type === 'passer') {
+    log(action.nom + ' passe son tour', '');
+  } else if (action.type === 'echanger') {
+    log(action.nom + ' échange des lettres', '');
+  } else if (action.type === 'fin_partie') {
+    endGame();
+  }
+}
+
 </script>
 
 
