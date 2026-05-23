@@ -2458,12 +2458,10 @@ function nextTurn() {
   log('Tour de ' + curP().name, 'inf');
 
   if (_modeEnLigne && window._codePartie && window.passerAuTourSuivant) {
-    const monId = window._idJoueur;
-    const advId = window._idAdverse || (monId === 'j1' ? 'j2' : 'j1');
-    const joueurSuivant = advId; // toujours passer à l'adversaire
-    window.passerAuTourSuivant(window._codePartie, joueurSuivant, G.round);
-    // NE PAS mettre à jour _joueurActifId localement - Firebase le fait
-    stopTimer(); // arrêter mon chrono - Firebase redémarre pour le bon joueur
+    stopTimer(); // arrêter mon chrono
+    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
+    window.passerAuTourSuivant(window._codePartie, advId, G.round);
+    // syncTour gèrera le reste via Firebase
   }
 
   if (curP().isBot) setTimeout(botPlay, 1500);
@@ -3099,17 +3097,22 @@ function startGameEnLigne() {
   CASES = MAQUETTES[_maqActive].cases;
   shuffle(G.letterBag);
   G.players[0].letters = drawL(10);
-  window._joueurActifId = 'j1';
+  window._joueurActifId = 'j1'; // j1 commence toujours
   window._partieDemar = true;
-  if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
   drawCase(true);
   go('game');
   showChatBtn();
   renderAll();
-  startTimer();
+  // Chrono seulement si c'est mon tour (j1 = créateur commence)
+  if (estMonTour()) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+  if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
   renderHistPanel();
   startPartieTimer();
-  log('✦ Partie en ligne démarrée ! Bonne chance !', 'inf');
+  log('Partie en ligne démarrée !', 'inf');
 }
 
 /* ── Touch drag (mobile) ── */
@@ -3355,7 +3358,146 @@ function onlineDemarrer() {
   openMaquette(true);
 }
 
+
+
+// ════════════════════════════════════════
+// SYNCHRONISATION MULTIJOUEUR
+// ════════════════════════════════════════
+let _partieDemar = false;
+
+function estMonTour() {
+  if (!_modeEnLigne) return true;
+  return window._idJoueur === (window._joueurActifId || 'j1');
+}
+
+function afficherIndicateurTour() {
+  if (!_modeEnLigne) return;
+  const monTour = estMonTour();
+  
+  // Bannière indicateur
+  let ind = document.getElementById('ind-tour');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'ind-tour';
+    ind.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);' +
+      'padding:5px 16px;border-radius:20px;font-size:.75rem;font-weight:900;' +
+      'letter-spacing:1px;z-index:200;pointer-events:none;white-space:nowrap;transition:all .3s;';
+    document.body.appendChild(ind);
+  }
+  if (monTour) {
+    ind.textContent = "🎯 C'EST VOTRE TOUR !";
+    ind.style.background = 'linear-gradient(135deg,rgba(29,158,117,.9),rgba(83,74,183,.9))';
+    ind.style.color = '#fff';
+    ind.style.boxShadow = '0 4px 16px rgba(29,158,117,.4)';
+  } else {
+    const nom = window._nomJoueurActif || "l'autre joueur";
+    ind.textContent = "⏳ Tour de " + nom + "...";
+    ind.style.background = 'rgba(0,0,0,.75)';
+    ind.style.color = 'rgba(255,255,255,.6)';
+    ind.style.boxShadow = 'none';
+  }
+  
+  // Score adversaire affiché quelque part
+  const nomAdv = window._nomAdverse || window._nomJoueurActif || '';
+  const scoreAdv = window._scoreAdverse || 0;
+  let scoreBadge = document.getElementById('score-adverse');
+  if (!scoreBadge && nomAdv) {
+    scoreBadge = document.createElement('div');
+    scoreBadge.id = 'score-adverse';
+    scoreBadge.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);' +
+      'padding:3px 12px;border-radius:12px;font-size:.7rem;font-weight:700;' +
+      'background:rgba(0,0,0,.6);color:rgba(255,255,255,.5);z-index:199;pointer-events:none;';
+    document.body.appendChild(scoreBadge);
+  }
+  if (scoreBadge && nomAdv) {
+    scoreBadge.textContent = nomAdv + ' : ' + scoreAdv + ' pts';
+  }
+  
+  // Activer/désactiver les contrôles
+  ['btn-val','btn-pass','btn-chg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.disabled = !monTour; el.style.opacity = monTour ? '1' : '0.3'; }
+  });
+  const chev = document.getElementById('chev');
+  const drop = document.getElementById('wdrop');
+  if (chev) chev.style.pointerEvents = monTour ? 'auto' : 'none';
+  if (drop) drop.style.pointerEvents = monTour ? 'auto' : 'none';
+}
+
+function syncTour(tour, joueurs, scores) {
+  if (!tour || !window._partieDemar) return;
+  
+  const ancienActif = window._joueurActifId;
+  window._joueurActifId = tour.joueurActif;
+  
+  // Nom du joueur actif
+  if (joueurs && joueurs[tour.joueurActif])
+    window._nomJoueurActif = joueurs[tour.joueurActif].nom;
+
+  // Score de l'adversaire dans le log
+  if (scores && scores[window._idAdverse] !== undefined) {
+    window._scoreAdverse = scores[window._idAdverse];
+  }
+
+  // Afficher l'indicateur de tour
+  afficherIndicateurTour();
+
+  // Chrono : démarrer/arrêter selon le tour
+  if (estMonTour()) {
+    if (!G.timer) startTimer();
+  } else {
+    stopTimer();
+  }
+
+  // Si le tour vient de changer vers moi : tirer un nouveau thème
+  if (estMonTour() && ancienActif !== window._idJoueur && tour.action === 'attente_theme') {
+    drawCase(true);
+    if (G.curCase && window.publierTheme && window._codePartie) {
+      window.publierTheme(window._codePartie, {
+        id: G.curCase.id, th: G.curCase.th,
+        free: !!G.curCase.free, emoji: G.curCase.emoji || ''
+      });
+    }
+  }
+
+  // Thème de l'adversaire
+  if (!estMonTour() && tour.theme && (tour.action === 'jouer' || tour.action === 'attente_theme')) {
+    if (tour.theme.id && (!G.curCase || G.curCase.id !== tour.theme.id)) {
+      G.curCase = { id: tour.theme.id, th: tour.theme.th, free: !!tour.theme.free, emoji: tour.theme.emoji || '' };
+      if (typeof renderTheme === 'function') renderTheme();
+    }
+  }
+}
+
+function traiterActionDistante(action) {
+  if (!action || action.joueur === window._idJoueur) return;
+  if (window._dernierActionTs && action.ts <= window._dernierActionTs) return;
+  window._dernierActionTs = action.ts;
+
+  if (action.type === 'valider') {
+    const mot = action.data.mot || '';
+    const pts = action.data.pts || 0;
+    if (pts > 0) {
+      log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
+      if (G.themeHistory) {
+        G.themeHistory.unshift({ theme: action.data.theme || '?', player: action.nom, word: mot, pts });
+        renderHistPanel();
+      }
+    } else {
+      log(action.nom + ' : mot refusé', 'bad');
+    }
+  } else if (action.type === 'passer') {
+    log(action.nom + ' passe son tour', '');
+  } else if (action.type === 'echanger') {
+    log(action.nom + ' échange des lettres', '');
+  } else if (action.type === 'fin_partie') {
+    endGame();
+  }
+}
+
+
 </script>
+
 
 <!-- Modal Dictionnaire -->
 <div class="ov" id="m-dico">
@@ -3640,112 +3782,40 @@ function onlineDemarrer() {
     push(ref(db, 'parties/' + window._codePartie + '/chat'), { type, joueur: nomJoueur, ts: Date.now() });
   };
 
+  // Écouter la partie côté créateur
+  window.ecouterPartieCreateur = function(code) {
+    onValue(ref(db, 'parties/' + code + '/actions'), (snap) => {
+      const actions = snap.val();
+      if (!actions) return;
+      const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
+      const derniere = liste[liste.length - 1];
+      if (derniere && typeof traiterActionDistante === 'function') traiterActionDistante(derniere);
+    });
+    onValue(ref(db, 'parties/' + code), (snap) => {
+      const d = snap.val();
+      if (!d || !window._partieDemar) return;
+      if (d.joueurs) {
+        const ids = Object.keys(d.joueurs);
+        const advId = ids.find(id => id !== window._idJoueur);
+        if (advId && d.joueurs[advId]) {
+          window._idAdverse = advId;
+          window._nomAdverse = d.joueurs[advId].nom;
+          if (!window._advAnnonce) {
+            window._advAnnonce = true;
+            if (typeof log === 'function') log('👥 ' + window._nomAdverse + ' a rejoint !', 'inf');
+          }
+        }
+        if (advId && d.scores && d.scores[advId] !== undefined)
+          window._scoreAdverse = d.scores[advId];
+      }
+      if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
+    });
+  };
+
   window._firebase_db = db;
   window._firebase_ref = ref;
   window._firebase_push = push;
   console.log('Firebase connecté !');
-
-// ════════════════════════════════════════
-// SYNCHRONISATION MULTIJOUEUR
-// ════════════════════════════════════════
-let _partieDemar = false;
-
-function estMonTour() {
-  if (!_modeEnLigne) return true;
-  return window._idJoueur === (window._joueurActifId || 'j1');
-}
-
-function afficherIndicateurTour() {
-  if (!_modeEnLigne) return;
-  let ind = document.getElementById('ind-tour');
-  if (!ind) {
-    ind = document.createElement('div');
-    ind.id = 'ind-tour';
-    ind.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:20px;font-size:.75rem;font-weight:900;letter-spacing:1px;z-index:200;transition:all .3s;pointer-events:none;';
-    document.body.appendChild(ind);
-  }
-  const monTour = estMonTour();
-  if (monTour) {
-    ind.textContent = "C'EST VOTRE TOUR !";
-    ind.style.cssText += 'background:linear-gradient(135deg,rgba(29,158,117,.9),rgba(83,74,183,.9));color:#fff;box-shadow:0 4px 16px rgba(29,158,117,.4);';
-  } else {
-    const nom = window._nomJoueurActif || "l'autre joueur";
-    ind.textContent = "Tour de " + nom + "...";
-    ind.style.cssText += 'background:rgba(0,0,0,.7);color:rgba(255,255,255,.55);box-shadow:none;';
-  }
-  // Activer/désactiver les contrôles
-  const actifs = monTour;
-  ['btn-val','btn-pass','btn-chg'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.disabled = !actifs; el.style.opacity = actifs ? '1' : '0.3'; }
-  });
-  const chev = document.getElementById('chev');
-  const drop = document.getElementById('wdrop');
-  if (chev) chev.style.pointerEvents = actifs ? 'auto' : 'none';
-  if (drop) drop.style.pointerEvents = actifs ? 'auto' : 'none';
-}
-
-function syncTour(tour, joueurs, scores) {
-  if (!tour) return;
-  window._joueurActifId = tour.joueurActif;
-  if (joueurs && joueurs[tour.joueurActif])
-    window._nomJoueurActif = joueurs[tour.joueurActif].nom;
-
-  // Mettre à jour les scores
-  if (scores && G.players && G.players.length > 1) {
-    const idsJ = Object.keys(scores);
-    G.players.forEach((p, i) => {
-      const id = i === 0 ? (window._estCreateur ? window._idJoueur : window._idAdverse)
-                         : (window._estCreateur ? window._idAdverse : window._idJoueur);
-      if (id && scores[id] !== undefined) p.score = scores[id];
-    });
-    renderAll();
-  }
-
-  afficherIndicateurTour();
-
-  // Démarrer/arrêter le chrono selon qui joue
-  if (estMonTour()) {
-    if (!G.timer) startTimer(); // démarrer si pas déjà en cours
-  } else {
-    stopTimer(); // arrêter si c'est le tour de l'autre
-  }
-
-  // Thème de l'adversaire à afficher
-  if (!estMonTour() && tour.theme && tour.action === 'jouer') {
-    if (!G.curCase || G.curCase.id !== tour.theme.id) {
-      G.curCase = { id: tour.theme.id, th: tour.theme.th, free: !!tour.theme.free, emoji: tour.theme.emoji || '' };
-      if (typeof renderTheme === 'function') renderTheme();
-    }
-  }
-}
-
-function traiterActionDistante(action) {
-  if (!action || action.joueur === window._idJoueur) return;
-  if (window._dernierActionTs && action.ts <= window._dernierActionTs) return;
-  window._dernierActionTs = action.ts;
-
-  if (action.type === 'valider') {
-    const mot = action.data.mot || '';
-    const pts = action.data.pts || 0;
-    if (pts > 0) {
-      log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
-      if (G.themeHistory) {
-        G.themeHistory.unshift({ theme: action.data.theme || '?', player: action.nom, word: mot, pts });
-        renderHistPanel();
-      }
-    } else {
-      log(action.nom + ' : mot refusé', 'bad');
-    }
-  } else if (action.type === 'passer') {
-    log(action.nom + ' passe son tour', '');
-  } else if (action.type === 'echanger') {
-    log(action.nom + ' échange des lettres', '');
-  } else if (action.type === 'fin_partie') {
-    endGame();
-  }
-}
-
 </script>
 
 
