@@ -2460,11 +2460,10 @@ function nextTurn() {
   if (_modeEnLigne && window._codePartie && window.passerAuTourSuivant) {
     const monId = window._idJoueur;
     const advId = window._idAdverse || (monId === 'j1' ? 'j2' : 'j1');
-    const joueurActifActuel = window._joueurActifId || monId;
-    const joueurSuivant = joueurActifActuel === monId ? advId : monId;
-    window._joueurActifId = joueurSuivant;
+    const joueurSuivant = advId; // toujours passer à l'adversaire
     window.passerAuTourSuivant(window._codePartie, joueurSuivant, G.round);
-    afficherIndicateurTour();
+    // NE PAS mettre à jour _joueurActifId localement - Firebase le fait
+    stopTimer(); // arrêter mon chrono - Firebase redémarre pour le bon joueur
   }
 
   if (curP().isBot) setTimeout(botPlay, 1500);
@@ -3074,6 +3073,8 @@ function startGameEnLigne() {
   // Si créateur : signaler à Firebase que la partie démarre avec la maquette choisie
   if (window._estCreateur && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive);
+    // Créateur écoute aussi Firebase pour recevoir les actions de l'adversaire
+    if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
 
@@ -3562,11 +3563,20 @@ function onlineDemarrer() {
         if (d.maquette) {
           _maqActive = d.maquette;
           window._maqActive = d.maquette;
+          // Mémoriser l'ID et nom de l'adversaire (j1 = créateur)
+          window._idAdverse = 'j1';
+          window._nomAdverse = d.joueurs && d.joueurs['j1'] ? d.joueurs['j1'].nom : 'Joueur 1';
           if (typeof startGameEnLigne === 'function') startGameEnLigne();
+          // Ajouter le créateur à G.players après démarrage
+          setTimeout(() => {
+            if (G.players && G.players.length === 1) {
+              G.players.unshift({ name: window._nomAdverse, score: 0, letters: [], isBot: false });
+              G.curP = 1; // joueur 2 est à l'index 1
+              log('👥 ' + window._nomAdverse + ' est le créateur', 'inf');
+              renderAll();
+            }
+          }, 500);
         }
-        // Mémoriser l'ID adverse
-        const ids = Object.keys(d.joueurs || {});
-        window._idAdverse = ids.find(id => id !== window._idJoueur) || 'j1';
       }
 
       // Écran d'attente : afficher joueurs connectés
@@ -3693,6 +3703,13 @@ function syncTour(tour, joueurs, scores) {
   }
 
   afficherIndicateurTour();
+
+  // Démarrer/arrêter le chrono selon qui joue
+  if (estMonTour()) {
+    if (!G.timer) startTimer(); // démarrer si pas déjà en cours
+  } else {
+    stopTimer(); // arrêter si c'est le tour de l'autre
+  }
 
   // Thème de l'adversaire à afficher
   if (!estMonTour() && tour.theme && tour.action === 'jouer') {
