@@ -1803,15 +1803,33 @@ function renderAll() {
 function renderScores() {
   const b = document.getElementById('sbar');
   b.innerHTML = '';
-  G.players.forEach((p, i) => {
-    const d = document.createElement('div');
-    d.className = 'ps' + (i === G.curP ? ' cur' : '');
-    d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
-      '<div class="ps-pts">' + p.score + '</div>' +
-      '<div class="ps-sub">pts · ' + p.letters.length + '🔤</div>';
-    b.appendChild(d);
-  });
-  document.getElementById('chev-lbl').textContent = 'CHEVALET — ' + curP().name;
+  const monTour = !_modeEnLigne || estMonTour();
+  const p = G.players[0];
+  const d = document.createElement('div');
+  d.className = 'ps' + (monTour ? ' cur' : '');
+  d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
+    '<div class="ps-pts">' + p.score + '</div>' +
+    '<div class="ps-sub">pts</div>';
+  b.appendChild(d);
+  if (_modeEnLigne && window._nomAdverse) {
+    const dA = document.createElement('div');
+    dA.className = 'ps' + (!monTour ? ' cur' : '');
+    dA.innerHTML = '<div class="ps-name">' + window._nomAdverse + '</div>' +
+      '<div class="ps-pts">' + (window._scoreAdverse || 0) + '</div>' +
+      '<div class="ps-sub">adversaire</div>';
+    b.appendChild(dA);
+  }
+  if (!_modeEnLigne && G.players.length > 1) {
+    G.players.slice(1).forEach((p2, i) => {
+      const d2 = document.createElement('div');
+      d2.className = 'ps' + ((i+1) === G.curP ? ' cur' : '');
+      d2.innerHTML = '<div class="ps-name">' + p2.name + '</div>' +
+        '<div class="ps-pts">' + p2.score + '</div>' +
+        '<div class="ps-sub">pts</div>';
+      b.appendChild(d2);
+    });
+  }
+  document.getElementById('chev-lbl').textContent = 'CHEVALET - ' + p.name;
   document.getElementById('bag-lbl').textContent = G.letterBag.length + ' lettres restantes';
 }
 
@@ -3096,15 +3114,8 @@ function validerMaquette() {
 function startGameEnLigne() {
   const nom = window._nomJoueur || 'Joueur';
   const code = window._codePartie || '';
-  
-  // Si créateur : signaler à Firebase que la partie démarre avec la maquette choisie
-  if (window._estCreateur && window.demarrerPartieFirebase) {
-    window.demarrerPartieFirebase(code, _maqActive);
-    // Créateur écoute aussi Firebase pour recevoir les actions de l'adversaire
-    if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
-    if (window.ecouterChat) window.ecouterChat(code);
-  }
 
+  // Initialiser G d'abord
   G = {
     players: [{ name: nom, score: 0, letters: [], isBot: false }],
     curP: 0,
@@ -3112,13 +3123,8 @@ function startGameEnLigne() {
     caseBag: mkCaseBag(),
     usedCaseIds: new Set(),
     curCase: null,
-    word: [],
-    changeSel: [],
-    changeMode: false,
-    insertPos: null,
-    previousCaseId: null,
-    turnsPlayed: 0,
-    startTime: Date.now(),
+    word: [], changeSel: [], changeMode: false,
+    insertPos: null, previousCaseId: null,
     timer: null, timeLeft: 180, timerExpired: false,
     phase: 'normal', passCount: 0, round: 0,
     themeChanged: false, themeHistory: []
@@ -3126,22 +3132,38 @@ function startGameEnLigne() {
   CASES = MAQUETTES[_maqActive].cases;
   shuffle(G.letterBag);
   G.players[0].letters = drawL(10);
-  window._joueurActifId = 'j1'; // j1 commence toujours
+
+  // Marquer la partie comme démarrée AVANT d'écouter Firebase
+  window._joueurActifId = 'j1';
   window._partieDemar = true;
+
+  // Créateur : démarrer Firebase + écouter
+  if (window._estCreateur && window.demarrerPartieFirebase) {
+    window.demarrerPartieFirebase(code, _maqActive);
+    if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
+    if (window.ecouterChat) window.ecouterChat(code);
+  }
+
   drawCase(true);
   go('game');
   showChatBtn();
   renderAll();
-  // Chrono seulement si c'est mon tour (j1 = créateur commence)
+
+  // Chrono seulement si c'est mon tour
   if (estMonTour()) {
     startTimer();
   } else {
     stopTimer();
   }
-  if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
+
+  // Afficher l'indicateur APRÈS renderAll
+  setTimeout(() => {
+    if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
+  }, 200);
+
   renderHistPanel();
   startPartieTimer();
-  log('Partie en ligne démarrée !', 'inf');
+  log('Partie en ligne démarrée ! Bonne chance !', 'inf');
 }
 
 /* ── Touch drag (mobile) ── */
@@ -3401,6 +3423,8 @@ function estMonTour() {
 
 function afficherIndicateurTour() {
   if (!_modeEnLigne) return;
+  // Ne rien faire si G n'est pas encore initialisé
+  if (typeof G === 'undefined' || !G.players) return;
   const monTour = estMonTour();
   
   // Bannière indicateur
@@ -3454,7 +3478,9 @@ function afficherIndicateurTour() {
 }
 
 function syncTour(tour, joueurs, scores) {
-  if (!tour || !window._partieDemar) return;
+  if (!tour) return;
+  // Vérifier que G est initialisé
+  if (typeof G === 'undefined' || !G.players) return;
   
   const ancienActif = window._joueurActifId;
   window._joueurActifId = tour.joueurActif;
@@ -3505,6 +3531,7 @@ function syncTour(tour, joueurs, scores) {
 
 function traiterActionDistante(action) {
   if (!action || action.joueur === window._idJoueur) return;
+  if (typeof G === 'undefined' || !G.players) return;
   if (window._dernierActionTs && action.ts <= window._dernierActionTs) return;
   window._dernierActionTs = action.ts;
 
@@ -3835,7 +3862,9 @@ function traiterActionDistante(action) {
     });
     onValue(ref(db, 'parties/' + code), (snap) => {
       const d = snap.val();
-      if (!d || !window._partieDemar) return;
+      if (!d) return;
+      // Attendre que G soit initialisé
+      if (typeof G === 'undefined' || !G.players) return;
       if (d.joueurs) {
         const ids = Object.keys(d.joueurs);
         const advId = ids.find(id => id !== window._idJoueur);
