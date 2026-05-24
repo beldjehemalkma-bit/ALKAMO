@@ -1998,6 +1998,11 @@ function updateChangeUI() {
 // INTERACTIONS TUILES
 // ═══════════════════════════════════════════
 function handleTileClick(idx, letter) {
+  // Bloquer si pas son tour en mode en ligne
+  if (_modeEnLigne && !estMonTour()) {
+    log('⏳ Ce n\'est pas votre tour !', '');
+    return;
+  }
   if (G.changeMode) {
     // Mode changement : toggle sélection rouge
     const pos = G.changeSel.indexOf(idx);
@@ -2415,7 +2420,10 @@ function passerTour() {
       window.publierAction(window._codePartie, 'passer', {});
     // NE PAS appeler drawCase ni nextTurn - Firebase via syncTour s'en charge
     stopTimer();
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
+    // Calculer l'ID adverse de façon robuste
+    const monId = window._idJoueur || 'j1';
+    const advId = window._idAdverse || (monId === 'j1' ? 'j9999' : 'j1');
+    log('Passage tour → ' + advId, 'inf');
     if (window.passerAuTourSuivant)
       window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
     return;
@@ -3471,10 +3479,13 @@ function afficherIndicateurTour() {
     const el = document.getElementById(id);
     if (el) { el.disabled = !monTour; el.style.opacity = monTour ? '1' : '0.3'; }
   });
+  // Chevalet visible toujours, mais actions bloquées si pas son tour
   const chev = document.getElementById('chev');
   const drop = document.getElementById('wdrop');
-  if (chev) chev.style.pointerEvents = monTour ? 'auto' : 'none';
+  if (chev) chev.style.pointerEvents = 'auto'; // toujours visible
   if (drop) drop.style.pointerEvents = monTour ? 'auto' : 'none';
+  // Opacité réduite sur le chevalet si pas son tour
+  if (chev) chev.style.opacity = monTour ? '1' : '0.6';
 }
 
 function syncTour(tour, joueurs, scores) {
@@ -3504,11 +3515,17 @@ function syncTour(tour, joueurs, scores) {
     stopTimer();
   }
 
-  // Si le tour vient de changer vers moi : tirer un nouveau thème
+  // Si le tour vient de changer vers moi : tirer un nouveau thème + recompléter lettres
   const tourEstNouveau = ancienActif && ancienActif !== window._idJoueur;
   if (estMonTour() && tourEstNouveau && tour.action === 'attente_theme') {
     G.round++;
     document.getElementById('tmr-exp')?.classList.remove('show');
+    // Recompléter les lettres si nécessaire
+    const p = G.players[0];
+    if (p.letters.length < 10) {
+      const newL = drawL(10 - p.letters.length);
+      p.letters.push(...newL);
+    }
     renderAll();
     drawCase(true); // tirer le nouveau thème
     if (G.curCase && window.publierTheme && window._codePartie) {
@@ -3774,6 +3791,7 @@ function traiterActionDistante(action) {
           // Mémoriser l'ID et nom de l'adversaire (j1 = créateur)
           window._idAdverse = 'j1';
           window._nomAdverse = d.joueurs && d.joueurs['j1'] ? d.joueurs['j1'].nom : 'Joueur 1';
+          console.log('Adversaire:', window._idAdverse, window._nomAdverse);
           if (typeof startGameEnLigne === 'function') startGameEnLigne();
           // Ajouter le créateur à G.players après démarrage
           setTimeout(() => {
@@ -3932,7 +3950,7 @@ function envoyerMessage() {
   // Afficher localement
   ajouterMsgTexteLocal(who, texte, true);
   // Envoyer via Firebase
-  if (window.envoyerMsgFirebase && window._codePartie) {
+  if (window._codePartie && window._firebase_push && window._firebase_ref && window._firebase_db) {
     window._firebase_push(
       window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
       { type: 'texte', joueur: who, texte: texte, ts: Date.now() }
