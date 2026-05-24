@@ -2368,12 +2368,15 @@ function passerTour() {
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
   
-  // En mode en ligne : pas de limite de passes
+  // En mode en ligne : publier l'action et laisser Firebase gérer
   if (_modeEnLigne) {
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    drawCase(true);
-    nextTurn();
+    // NE PAS appeler drawCase ni nextTurn - Firebase via syncTour s'en charge
+    stopTimer();
+    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
+    if (window.passerAuTourSuivant)
+      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
     return;
   }
   
@@ -2450,20 +2453,23 @@ function nextTurn() {
   G.word = []; G.changeSel = []; G.changeMode = false; G.insertPos = 0;
   G.themeChanged = false;
   setBgUrgent(false);
+
+  // En mode en ligne : Firebase gère le tour, pas nextTurn
+  if (_modeEnLigne) {
+    stopTimer();
+    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
+    if (window.passerAuTourSuivant && window._codePartie)
+      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
+    return;
+  }
+
+  // Mode local uniquement
   G.curP = (G.curP + 1) % G.players.length;
   G.round++;
   document.getElementById('tmr-exp').classList.remove('show');
   renderAll();
   startTimer();
   log('Tour de ' + curP().name, 'inf');
-
-  if (_modeEnLigne && window._codePartie && window.passerAuTourSuivant) {
-    stopTimer(); // arrêter mon chrono
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
-    window.passerAuTourSuivant(window._codePartie, advId, G.round);
-    // syncTour gèrera le reste via Firebase
-  }
-
   if (curP().isBot) setTimeout(botPlay, 1500);
 }
 
@@ -3450,14 +3456,19 @@ function syncTour(tour, joueurs, scores) {
   }
 
   // Si le tour vient de changer vers moi : tirer un nouveau thème
-  if (estMonTour() && ancienActif !== window._idJoueur && tour.action === 'attente_theme') {
-    drawCase(true);
+  const tourEstNouveau = ancienActif && ancienActif !== window._idJoueur;
+  if (estMonTour() && tourEstNouveau && tour.action === 'attente_theme') {
+    G.round++;
+    document.getElementById('tmr-exp')?.classList.remove('show');
+    renderAll();
+    drawCase(true); // tirer le nouveau thème
     if (G.curCase && window.publierTheme && window._codePartie) {
       window.publierTheme(window._codePartie, {
         id: G.curCase.id, th: G.curCase.th,
         free: !!G.curCase.free, emoji: G.curCase.emoji || ''
       });
     }
+    log('Tour ' + G.round + ' — ' + (window._nomJoueur || 'Joueur'), 'inf');
   }
 
   // Thème de l'adversaire
