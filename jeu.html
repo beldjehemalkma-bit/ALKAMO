@@ -1780,15 +1780,23 @@ function renderAll() {
 function renderScores() {
   const b = document.getElementById('sbar');
   b.innerHTML = '';
-  G.players.forEach((p, i) => {
-    const d = document.createElement('div');
-    d.className = 'ps' + (i === G.curP ? ' cur' : '');
-    d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
-      '<div class="ps-pts">' + p.score + '</div>' +
-      '<div class="ps-sub">pts · ' + p.letters.length + '🔤</div>';
-    b.appendChild(d);
-  });
-  document.getElementById('chev-lbl').textContent = 'CHEVALET — ' + curP().name;
+  const p = G.players[0];
+  const monTour = !_modeEnLigne || estMonTour();
+  const d = document.createElement('div');
+  d.className = 'ps' + (monTour ? ' cur' : '');
+  d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
+    '<div class="ps-pts">' + p.score + '</div>' +
+    '<div class="ps-sub">pts</div>';
+  b.appendChild(d);
+  if (_modeEnLigne && window._nomAdverse) {
+    const dA = document.createElement('div');
+    dA.className = 'ps' + (!monTour ? ' cur' : '');
+    dA.innerHTML = '<div class="ps-name">' + window._nomAdverse + '</div>' +
+      '<div class="ps-pts">' + (window._scoreAdverse || 0) + '</div>' +
+      '<div class="ps-sub">adversaire</div>';
+    b.appendChild(dA);
+  }
+  document.getElementById('chev-lbl').textContent = 'CHEVALET - ' + p.name;
   document.getElementById('bag-lbl').textContent = G.letterBag.length + ' lettres restantes';
 }
 
@@ -3420,7 +3428,7 @@ function afficherIndicateurTour() {
   }
   
   // Activer/désactiver les contrôles
-  ['btn-val','btn-pass','btn-chg'].forEach(id => {
+  ['btn-val','btn-pass','btn-chg-toggle'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.disabled = !monTour; el.style.opacity = monTour ? '1' : '0.3'; }
   });
@@ -3722,9 +3730,7 @@ function traiterActionDistante(action) {
           if (typeof startGameEnLigne === 'function') startGameEnLigne();
           // Ajouter le créateur à G.players après démarrage
           setTimeout(() => {
-            if (G.players && G.players.length === 1) {
-              G.players.unshift({ name: window._nomAdverse, score: 0, letters: [], isBot: false });
-              G.curP = 1; // joueur 2 est à l'index 1
+            if (G.players && G.players.length === 1) {              G.curP = 1; // joueur 2 est à l'index 1
               log('👥 ' + window._nomAdverse + ' est le créateur', 'inf');
               renderAll();
             }
