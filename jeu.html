@@ -769,6 +769,15 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   transition: all .35s ease;
   white-space: nowrap;
 }
+
+.chat-input-zone{display:flex;gap:6px;padding:8px 10px 4px;border-top:1px solid rgba(255,255,255,.08);}
+.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:.78rem;outline:none;}
+.chat-input-field::placeholder{color:rgba(255,255,255,.25);}
+.chat-input-field:focus{border-color:rgba(200,160,32,.5);}
+.chat-send-btn{padding:7px 12px;border-radius:10px;background:linear-gradient(135deg,#534AB7,#1D9E75);border:none;color:#fff;font-size:.85rem;cursor:pointer;font-weight:700;}
+.chat-send-btn:hover{opacity:.85;}
+.chat-msg.texte{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#E8F4FF;padding:5px 8px;}
+.chat-msg.texte.moi{background:rgba(83,74,183,.2);border-color:rgba(83,74,183,.4);color:#C8C4FF;text-align:right;}
 </style>
 </head>
 <body>
@@ -1006,8 +1015,8 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <div class="end-w" id="end-w" style="font-size:1.2rem;font-weight:900;color:#FAD060;margin:12px 0 20px;text-align:center;line-height:1.4"></div>
     <div class="end-scores" id="end-sc"></div>
     <div class="end-btns" style="flex-direction:column;gap:10px;margin-top:8px">
-      <button class="btn btn-p" style="width:100%;padding:14px;font-size:1rem" onclick="go('maquette')">🎲 Rejouer</button>
-      <button class="btn btn-out" style="width:100%" onclick="go('home')">🏠 Retour à l'accueil</button>
+      <button class="btn btn-p" style="width:100%;padding:14px;font-size:1rem" onclick="retourMaquette()">🎲 Rejouer</button>
+      <button class="btn btn-out" style="width:100%" onclick="retourAccueil()">🏠 Retour à l'accueil</button>
     </div>
   </div>
 </div>
@@ -1613,6 +1622,20 @@ function startGame() {
     const v = document.getElementById('pn'+i)?.value.trim() || '';
     names.push(isBot ? '🤖 Ordinateur' : (v || 'Joueur '+(i+1)));
   }
+  // Réinitialiser tout l'état en ligne pour le mode solo
+  _modeEnLigne = false;
+  window._joueurActifId = undefined;
+  window._nomAdverse = undefined;
+  window._scoreAdverse = undefined;
+  window._idAdverse = undefined;
+  window._partieDemar = false;
+  window._advAnnonce = false;
+  window._codePartie = undefined;
+  ['ind-tour','score-adverse'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
+
   G = {
     players: names.map((nm, i) => ({
       name: nm, score: 0, letters: [],
@@ -1780,23 +1803,15 @@ function renderAll() {
 function renderScores() {
   const b = document.getElementById('sbar');
   b.innerHTML = '';
-  const p = G.players[0];
-  const monTour = !_modeEnLigne || estMonTour();
-  const d = document.createElement('div');
-  d.className = 'ps' + (monTour ? ' cur' : '');
-  d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
-    '<div class="ps-pts">' + p.score + '</div>' +
-    '<div class="ps-sub">pts</div>';
-  b.appendChild(d);
-  if (_modeEnLigne && window._nomAdverse) {
-    const dA = document.createElement('div');
-    dA.className = 'ps' + (!monTour ? ' cur' : '');
-    dA.innerHTML = '<div class="ps-name">' + window._nomAdverse + '</div>' +
-      '<div class="ps-pts">' + (window._scoreAdverse || 0) + '</div>' +
-      '<div class="ps-sub">adversaire</div>';
-    b.appendChild(dA);
-  }
-  document.getElementById('chev-lbl').textContent = 'CHEVALET - ' + p.name;
+  G.players.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'ps' + (i === G.curP ? ' cur' : '');
+    d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
+      '<div class="ps-pts">' + p.score + '</div>' +
+      '<div class="ps-sub">pts · ' + p.letters.length + '🔤</div>';
+    b.appendChild(d);
+  });
+  document.getElementById('chev-lbl').textContent = 'CHEVALET — ' + curP().name;
   document.getElementById('bag-lbl').textContent = G.letterBag.length + ' lettres restantes';
 }
 
@@ -3428,7 +3443,7 @@ function afficherIndicateurTour() {
   }
   
   // Activer/désactiver les contrôles
-  ['btn-val','btn-pass','btn-chg-toggle'].forEach(id => {
+  ['btn-val','btn-pass','btn-chg'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.disabled = !monTour; el.style.opacity = monTour ? '1' : '0.3'; }
   });
@@ -3610,17 +3625,22 @@ function traiterActionDistante(action) {
       Utilisez les boutons ci-dessous
     </div>
   </div>
+  <div class="chat-input-zone">
+    <input type="text" id="chat-input" class="chat-input-field"
+           placeholder="Message..." maxlength="80"
+           onkeydown="if(event.key==='Enter')envoyerMessage()">
+    <button class="chat-send-btn" onclick="envoyerMessage()">➤</button>
+  </div>
   <div class="chat-btns">
     <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
-    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Je refuse</button>
-    <button class="chat-btn p" onclick="sendChatMsg('propose')">🤝 Echanger</button>
-    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Je conteste</button>
-    <button class="chat-btn y" onclick="sendChatMsg('bravo')" style="grid-column:span 2">🎉 Bien joué !</button>
+    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Refuser</button>
+    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Contester</button>
+    <button class="chat-btn y" onclick="sendChatMsg('bravo')">🎉 Bien joué !</button>
   </div>
 </div>
 
 <!-- Bouton flottant -->
-<button class="chat-fab" id="chat-fab" onclick="alert('💬 Chat temporairement désactivé\nDisponible dans une prochaine version !')">
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()">
   💬
   <div class="chat-notif" id="chat-notif" style="display:none"></div>
 </button>
@@ -3783,11 +3803,7 @@ function traiterActionDistante(action) {
       Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-20).forEach(msg => {
         if (msg.type === 'texte') {
           const estMoi = msg.joueur === (G.players?.[0]?.name || window._nomJoueur || '');
-          const d = document.createElement('div');
-          d.className = 'chat-msg texte' + (estMoi ? ' moi' : '');
-          d.innerHTML = '<div class="chat-who">' + msg.joueur + '</div><div>' + 
-            (msg.texte || '').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
-          logEl.appendChild(d);
+          if (typeof ajouterMsgTexteLocal === 'function') ajouterMsgTexteLocal(msg.joueur, msg.texte || '', estMoi);
           return;
         }
         const m = LABELS[msg.type];
@@ -3843,6 +3859,39 @@ function traiterActionDistante(action) {
   window._firebase_push = push;
   console.log('Firebase connecté !');
 
+function retourAccueil() {
+  // Réinitialiser l'état en ligne
+  _modeEnLigne = false;
+  window._joueurActifId = undefined;
+  window._nomAdverse = undefined;
+  window._scoreAdverse = undefined;
+  window._partieDemar = false;
+  window._codePartie = undefined;
+  // Masquer le chat
+  document.getElementById('chat-fab')?.classList.remove('visible');
+  document.getElementById('chat-panel')?.classList.remove('open');
+  // Supprimer les indicateurs
+  ['ind-tour','score-adverse'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.remove();
+  });
+  go('home');
+}
+
+function retourMaquette() {
+  _modeEnLigne = false;
+  window._joueurActifId = undefined;
+  window._nomAdverse = undefined;
+  window._scoreAdverse = undefined;
+  window._partieDemar = false;
+  window._codePartie = undefined;
+  ['ind-tour','score-adverse'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.remove();
+  });
+  go('maquette');
+  renderMaquetteTabs();
+  renderMaqGrille(_maqActive);
+}
+
 // ─── Envoyer un message texte libre ───
 function envoyerMessage() {
   const input = document.getElementById('chat-input');
@@ -3850,14 +3899,11 @@ function envoyerMessage() {
   const texte = input.value.trim();
   if (!texte) return;
   input.value = '';
-  
   const who = G.players?.[0]?.name || window._nomJoueur || 'Joueur';
-  
-  // Afficher localement (côté envoyeur)
-  ajouterMsgTexte(who, texte, true);
-  
+  // Afficher localement
+  ajouterMsgTexteLocal(who, texte, true);
   // Envoyer via Firebase
-  if (window._firebase_push && window._firebase_ref && window._firebase_db && window._codePartie) {
+  if (window.envoyerMsgFirebase && window._codePartie) {
     window._firebase_push(
       window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
       { type: 'texte', joueur: who, texte: texte, ts: Date.now() }
@@ -3865,28 +3911,20 @@ function envoyerMessage() {
   }
 }
 
-// ─── Afficher un message texte dans le log ───
-function ajouterMsgTexte(who, texte, estMoi) {
-  const log = document.getElementById('chat-log');
-  if (!log) return;
-  // Vider le message d'accueil
-  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
-    log.innerHTML = '';
-  }
-  // Max 20 messages
-  while (log.children.length >= 20) log.removeChild(log.firstChild);
-  
+function ajouterMsgTexteLocal(who, texte, estMoi) {
+  const logEl = document.getElementById('chat-log');
+  if (!logEl) return;
+  if (logEl.children.length === 1 && logEl.children[0].style.textAlign === 'center')
+    logEl.innerHTML = '';
+  while (logEl.children.length >= 20) logEl.removeChild(logEl.firstChild);
   const div = document.createElement('div');
   div.className = 'chat-msg texte' + (estMoi ? ' moi' : '');
-  div.innerHTML = '<div class="chat-who">' + who + '</div>' + 
-    '<div>' + texte.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-  
-  // Notification si panel fermé
-  if (!document.getElementById('chat-panel')?.classList.contains('open')) {
+  div.innerHTML = '<div class="chat-who">' + who + '</div><div>' +
+    texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+  if (!document.getElementById('chat-panel')?.classList.contains('open'))
     document.getElementById('chat-notif')?.classList.add('show');
-  }
 }
 
 </script>
