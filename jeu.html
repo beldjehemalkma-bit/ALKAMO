@@ -3780,7 +3780,16 @@ function traiterActionDistante(action) {
         contest: { label: '⚠️ Contester', cls: 'contest' },
         bravo:   { label: '🎉 Bien joué !', cls: 'bravo' },
       };
-      Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(msg => {
+      Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-20).forEach(msg => {
+        if (msg.type === 'texte') {
+          const estMoi = msg.joueur === (G.players?.[0]?.name || window._nomJoueur || '');
+          const d = document.createElement('div');
+          d.className = 'chat-msg texte' + (estMoi ? ' moi' : '');
+          d.innerHTML = '<div class="chat-who">' + msg.joueur + '</div><div>' + 
+            (msg.texte || '').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+          logEl.appendChild(d);
+          return;
+        }
         const m = LABELS[msg.type];
         if (!m) return;
         const div = document.createElement('div');
@@ -3833,6 +3842,53 @@ function traiterActionDistante(action) {
   window._firebase_ref = ref;
   window._firebase_push = push;
   console.log('Firebase connecté !');
+
+// ─── Envoyer un message texte libre ───
+function envoyerMessage() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const texte = input.value.trim();
+  if (!texte) return;
+  input.value = '';
+  
+  const who = G.players?.[0]?.name || window._nomJoueur || 'Joueur';
+  
+  // Afficher localement (côté envoyeur)
+  ajouterMsgTexte(who, texte, true);
+  
+  // Envoyer via Firebase
+  if (window._firebase_push && window._firebase_ref && window._firebase_db && window._codePartie) {
+    window._firebase_push(
+      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
+      { type: 'texte', joueur: who, texte: texte, ts: Date.now() }
+    );
+  }
+}
+
+// ─── Afficher un message texte dans le log ───
+function ajouterMsgTexte(who, texte, estMoi) {
+  const log = document.getElementById('chat-log');
+  if (!log) return;
+  // Vider le message d'accueil
+  if (log.children.length === 1 && log.children[0].style.textAlign === 'center') {
+    log.innerHTML = '';
+  }
+  // Max 20 messages
+  while (log.children.length >= 20) log.removeChild(log.firstChild);
+  
+  const div = document.createElement('div');
+  div.className = 'chat-msg texte' + (estMoi ? ' moi' : '');
+  div.innerHTML = '<div class="chat-who">' + who + '</div>' + 
+    '<div>' + texte.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>';
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  
+  // Notification si panel fermé
+  if (!document.getElementById('chat-panel')?.classList.contains('open')) {
+    document.getElementById('chat-notif')?.classList.add('show');
+  }
+}
+
 </script>
 
 
