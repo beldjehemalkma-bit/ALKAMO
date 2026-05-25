@@ -2413,8 +2413,11 @@ function passerTour() {
     stopTimer();
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    if (window._idAdverse && window.passerAuTourSuivant)
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      // Inclure l'ID de la case jouée pour éviter les répétitions
+      const lastId = G.curCase ? G.curCase.id : null;
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
+    }
     return;
   }
   
@@ -3480,6 +3483,11 @@ function syncTour(tour, joueurs, scores) {
     stopTimer();
   }
 
+  // Marquer la case jouée par l'adversaire comme utilisée localement
+  if (!estMonTour() && tour.lastCaseId && typeof G !== 'undefined' && G.usedCaseIds) {
+    G.usedCaseIds.add(tour.lastCaseId);
+  }
+
   const tourChange = ancienActif && ancienActif !== window._idJoueur;
   if (estMonTour() && tourChange && tour.action === 'attente_theme') {
     G.word = []; G.changeSel = []; G.changeMode = false;
@@ -3491,7 +3499,9 @@ function syncTour(tour, joueurs, scores) {
     drawCase(true);
     if (G.curCase && window.publierTheme && window._codePartie) {
       window.publierTheme(window._codePartie, {
-        id: G.curCase.id, th: G.curCase.th, free: !!G.curCase.free, emoji: G.curCase.emoji || ''
+        id: G.curCase.id, th: G.curCase.th, free: !!G.curCase.free,
+        emoji: G.curCase.emoji || '', minL: G.curCase.minL || 3,
+        maxL: G.curCase.maxL || 10, bonus: G.curCase.bonus || 0
       });
     }
     log('Tour ' + G.round + ' — a vous !', 'inf');
@@ -3500,9 +3510,14 @@ function syncTour(tour, joueurs, scores) {
   if (!estMonTour() && tour.theme && tour.action === 'jouer') {
     const t = tour.theme;
     if (t.id && (!G.curCase || G.curCase.id !== t.id)) {
-      G.curCase = { id: t.id, th: t.th, free: !!t.free, emoji: t.emoji || '' };
+      // Récupérer la case complète depuis CASES si possible
+      const caseComplete = (typeof CASES !== 'undefined' && CASES)
+        ? CASES.find(c => c.id === t.id) : null;
+      G.curCase = caseComplete || {
+        id: t.id, th: t.th, free: !!t.free, emoji: t.emoji || '',
+        minL: t.minL || 3, maxL: t.maxL || 10, bonus: t.bonus || 0
+      };
       if (typeof renderCase === 'function') renderCase();
-      else if (typeof renderTheme === 'function') renderTheme();
     }
   }
 }
@@ -3738,11 +3753,13 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     });
   };
 
-  window.passerAuTourSuivant = function(code, joueurSuivant, numero) {
-    update(ref(db, 'parties/' + code + '/tour'), {
+  window.passerAuTourSuivant = function(code, joueurSuivant, numero, lastCaseId) {
+    const data = {
       joueurActif: joueurSuivant, numero: numero,
       action: 'attente_theme', theme: null
-    });
+    };
+    if (lastCaseId) data.lastCaseId = lastCaseId;
+    update(ref(db, 'parties/' + code + '/tour'), data);
   };
 
   window.majScore = function(code, idJoueur, score) {
