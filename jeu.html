@@ -2359,14 +2359,24 @@ function _confirmerMotFinalize(word, pIdx) {
     G.phase = 'final';
     log('⚠ Cagnotte épuisée — phase finale !', 'inf');
   }
+  // Sauvegarder le thème ET l'ID de la case AVANT drawCase
+  const themePubLie = G.curCase ? (G.curCase.free ? 'MOT LIBRE' : G.curCase.th) : '?';
+  const caseIdPubLie = G.curCase ? G.curCase.id : null;
+  
   drawCase(false);
 
   if (_modeEnLigne && window._codePartie && window.publierAction) {
     window.publierAction(window._codePartie, 'valider', {
-      mot: word, pts: ev.score,
-      theme: G.curCase ? (G.curCase.free ? 'MOT LIBRE' : G.curCase.th) : '?'
+      mot: word, pts: ev.score, theme: themePubLie
     });
     if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
+  }
+
+  // Passer le tour en envoyant l'ID de la case jouée
+  if (_modeEnLigne && window._idAdverse && window.passerAuTourSuivant) {
+    stopTimer();
+    window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    return;
   }
 
   nextTurn();
@@ -3876,6 +3886,43 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window._firebase_ref = ref;
   window._firebase_push = push;
   console.log('Firebase connecté !');
+
+function retourAccueil() {
+  _modeEnLigne = false;
+  window._joueurActifId = undefined;
+  window._nomAdverse = undefined;
+  window._scoreAdverse = undefined;
+  window._idAdverse = undefined;
+  window._partieDemar = false;
+  window._advAnnonce = false;
+  window._codePartie = undefined;
+  ['ind-tour','score-adverse'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  });
+  document.getElementById('chat-fab') && (document.getElementById('chat-fab').classList.remove('visible'));
+  document.getElementById('chat-panel') && (document.getElementById('chat-panel').classList.remove('open'));
+  go('home');
+}
+
+function retourMaquette() {
+  _modeEnLigne = false;
+  window._joueurActifId = undefined;
+  window._nomAdverse = undefined;
+  window._scoreAdverse = undefined;
+  window._idAdverse = undefined;
+  window._partieDemar = false;
+  window._advAnnonce = false;
+  window._codePartie = undefined;
+  ['ind-tour','score-adverse'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  });
+  go('maquette');
+  if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
+  if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
+}
+
 </script>
 
 
