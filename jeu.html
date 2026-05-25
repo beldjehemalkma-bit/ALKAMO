@@ -1,4 +1,18 @@
-<!DOCTYPE html>
+<
+function envoyerMessage() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const texte = input.value.trim();
+  if (!texte) return;
+  input.value = '';
+  const who = window._nomJoueur || G.players?.[0]?.name || 'Joueur';
+  if (window.envoyerMsgTexteFirebase && window._codePartie) {
+    window.envoyerMsgTexteFirebase(texte, who);
+  } else {
+    ajouterMsgTexteLocal(who, texte, true);
+  }
+}
+!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -2409,15 +2423,13 @@ function passerTour() {
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
   
-  // En mode en ligne : publier l'action et laisser Firebase gérer
+  // En mode en ligne : publier l'action et passer à l'adversaire
   if (_modeEnLigne) {
+    stopTimer();
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    // NE PAS appeler drawCase ni nextTurn - Firebase via syncTour s'en charge
-    stopTimer();
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
-    if (window.passerAuTourSuivant)
-      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
+    if (window._idAdverse && window.passerAuTourSuivant)
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
     return;
   }
   
@@ -2498,9 +2510,8 @@ function nextTurn() {
   // En mode en ligne : Firebase gère le tour, pas nextTurn
   if (_modeEnLigne) {
     stopTimer();
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
-    if (window.passerAuTourSuivant && window._codePartie)
-      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
+    if (window._idAdverse && window.passerAuTourSuivant && window._codePartie)
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
     return;
   }
 
@@ -3114,55 +3125,56 @@ function validerMaquette() {
 function startGameEnLigne() {
   const nom = window._nomJoueur || 'Joueur';
   const code = window._codePartie || '';
+  const estJ1 = window._estCreateur === true;
 
-  // Initialiser G d'abord
+  // 1. Initialiser G
   G = {
     players: [{ name: nom, score: 0, letters: [], isBot: false }],
-    curP: 0,
-    letterBag: mkBag(),
-    caseBag: mkCaseBag(),
-    usedCaseIds: new Set(),
-    curCase: null,
-    word: [], changeSel: [], changeMode: false,
-    insertPos: null, previousCaseId: null,
-    timer: null, timeLeft: 180, timerExpired: false,
-    phase: 'normal', passCount: 0, round: 0,
-    themeChanged: false, themeHistory: []
+    curP: 0, letterBag: mkBag(), caseBag: mkCaseBag(),
+    usedCaseIds: new Set(), curCase: null,
+    word: [], changeSel: [], changeMode: false, insertPos: null,
+    previousCaseId: null, timer: null, timeLeft: 180, timerExpired: false,
+    phase: 'normal', passCount: 0, round: 0, themeChanged: false, themeHistory: []
   };
   CASES = MAQUETTES[_maqActive].cases;
   shuffle(G.letterBag);
   G.players[0].letters = drawL(10);
 
-  // Marquer la partie comme démarrée AVANT d'écouter Firebase
-  window._joueurActifId = 'j1';
+  // 2. Initialiser les variables de tour
+  window._joueurActifId = 'j1'; // j1 commence toujours
   window._partieDemar = true;
 
-  // Créateur : démarrer Firebase + écouter
-  if (window._estCreateur && window.demarrerPartieFirebase) {
+  // 3. Créateur : publier le démarrage sur Firebase PUIS écouter
+  if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive);
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
 
+  // 4. Afficher le jeu
   drawCase(true);
   go('game');
   showChatBtn();
   renderAll();
+  renderHistPanel();
+  startPartieTimer();
 
-  // Chrono seulement si c'est mon tour
+  // 5. Chrono et indicateur selon le tour
   if (estMonTour()) {
     startTimer();
   } else {
     stopTimer();
   }
+  setTimeout(() => afficherIndicateurTour(), 300);
 
-  // Afficher l'indicateur APRÈS renderAll
-  setTimeout(() => {
-    if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
-  }, 200);
+  // 6. Créateur publie le premier thème
+  if (estJ1 && G.curCase && window.publierTheme) {
+    window.publierTheme(code, {
+      id: G.curCase.id, th: G.curCase.th,
+      free: !!G.curCase.free, emoji: G.curCase.emoji || ''
+    });
+  }
 
-  renderHistPanel();
-  startPartieTimer();
   log('Partie en ligne démarrée ! Bonne chance !', 'inf');
 }
 
@@ -3416,127 +3428,146 @@ function onlineDemarrer() {
 // ════════════════════════════════════════
 let _partieDemar = false;
 
+// Est-ce mon tour ?
 function estMonTour() {
   if (!_modeEnLigne) return true;
-  return window._idJoueur === (window._joueurActifId || 'j1');
+  if (!window._joueurActifId) return window._idJoueur === 'j1';
+  return window._idJoueur === window._joueurActifId;
 }
 
+// Mettre à jour l'interface selon le tour
 function afficherIndicateurTour() {
   if (!_modeEnLigne) return;
-  // Ne rien faire si G n'est pas encore initialisé
   if (typeof G === 'undefined' || !G.players) return;
+
   const monTour = estMonTour();
-  
-  // Bannière indicateur
+
+  // Bannière "C'EST VOTRE TOUR" ou "Tour de X..."
   let ind = document.getElementById('ind-tour');
   if (!ind) {
     ind = document.createElement('div');
     ind.id = 'ind-tour';
-    ind.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);' +
-      'padding:5px 16px;border-radius:20px;font-size:.75rem;font-weight:900;' +
-      'letter-spacing:1px;z-index:200;pointer-events:none;white-space:nowrap;transition:all .3s;';
+    ind.style.cssText = [
+      'position:fixed','top:56px','left:50%','transform:translateX(-50%)',
+      'padding:5px 16px','border-radius:20px','font-size:.75rem',
+      'font-weight:900','letter-spacing:1px','z-index:200',
+      'pointer-events:none','white-space:nowrap','transition:all .3s'
+    ].join(';');
     document.body.appendChild(ind);
   }
   if (monTour) {
-    ind.textContent = "🎯 C'EST VOTRE TOUR !";
+    ind.textContent = "C'EST VOTRE TOUR !";
     ind.style.background = 'linear-gradient(135deg,rgba(29,158,117,.9),rgba(83,74,183,.9))';
     ind.style.color = '#fff';
     ind.style.boxShadow = '0 4px 16px rgba(29,158,117,.4)';
   } else {
-    const nom = window._nomJoueurActif || "l'autre joueur";
-    ind.textContent = "⏳ Tour de " + nom + "...";
+    ind.textContent = "Tour de " + (window._nomJoueurActif || "l'adversaire") + "...";
     ind.style.background = 'rgba(0,0,0,.75)';
     ind.style.color = 'rgba(255,255,255,.6)';
     ind.style.boxShadow = 'none';
   }
-  
-  // Score adversaire affiché quelque part
-  const nomAdv = window._nomAdverse || window._nomJoueurActif || '';
-  const scoreAdv = window._scoreAdverse || 0;
-  let scoreBadge = document.getElementById('score-adverse');
-  if (!scoreBadge && nomAdv) {
-    scoreBadge = document.createElement('div');
-    scoreBadge.id = 'score-adverse';
-    scoreBadge.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);' +
-      'padding:3px 12px;border-radius:12px;font-size:.7rem;font-weight:700;' +
-      'background:rgba(0,0,0,.6);color:rgba(255,255,255,.5);z-index:199;pointer-events:none;';
-    document.body.appendChild(scoreBadge);
+
+  // Badge score adversaire
+  if (window._nomAdverse) {
+    let badge = document.getElementById('score-adverse');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'score-adverse';
+      badge.style.cssText = [
+        'position:fixed','top:90px','left:50%','transform:translateX(-50%)',
+        'padding:3px 12px','border-radius:12px','font-size:.7rem',
+        'font-weight:700','background:rgba(0,0,0,.6)',
+        'color:rgba(255,255,255,.5)','z-index:199','pointer-events:none'
+      ].join(';');
+      document.body.appendChild(badge);
+    }
+    badge.textContent = window._nomAdverse + ' : ' + (window._scoreAdverse || 0) + ' pts';
   }
-  if (scoreBadge && nomAdv) {
-    scoreBadge.textContent = nomAdv + ' : ' + scoreAdv + ' pts';
-  }
-  
-  // Activer/désactiver les contrôles
+
+  // Boutons d'action : actifs seulement si mon tour
   ['btn-val','btn-pass','btn-chg-toggle'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.disabled = !monTour; el.style.opacity = monTour ? '1' : '0.3'; }
+    if (!el) return;
+    el.disabled = !monTour;
+    el.style.opacity = monTour ? '1' : '0.35';
   });
+
+  // Chevalet : toujours visible, mais zone de dépôt bloquée si pas mon tour
   const chev = document.getElementById('chev');
   const drop = document.getElementById('wdrop');
-  if (chev) { chev.style.pointerEvents = 'auto'; chev.style.opacity = monTour ? '1' : '0.75'; }
+  if (chev) {
+    chev.style.pointerEvents = 'auto'; // toujours cliquable
+    chev.style.opacity = monTour ? '1' : '0.6';
+  }
   if (drop) drop.style.pointerEvents = monTour ? 'auto' : 'none';
 }
 
+// Synchroniser l'état reçu de Firebase
 function syncTour(tour, joueurs, scores) {
   if (!tour) return;
-  // Vérifier que G est initialisé
   if (typeof G === 'undefined' || !G.players) return;
-  
+
   const ancienActif = window._joueurActifId;
   window._joueurActifId = tour.joueurActif;
-  
+
   // Nom du joueur actif
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
 
-  // Score de l'adversaire dans le log
-  if (scores && scores[window._idAdverse] !== undefined) {
+  // Score adversaire
+  if (scores && window._idAdverse && scores[window._idAdverse] !== undefined)
     window._scoreAdverse = scores[window._idAdverse];
-  }
 
-  // Afficher l'indicateur de tour
+  // Mettre à jour l'interface
   afficherIndicateurTour();
 
-  // Chrono : démarrer/arrêter selon le tour
+  // Chrono : démarrer seulement si c'est mon tour
   if (estMonTour()) {
     if (!G.timer) startTimer();
   } else {
     stopTimer();
   }
 
-  // Si le tour vient de changer vers moi : tirer un nouveau thème
-  const tourEstNouveau = ancienActif && ancienActif !== window._idJoueur;
-  if (estMonTour() && tourEstNouveau && tour.action === 'attente_theme') {
+  // Le tour vient de changer VERS MOI
+  const tourChangé = ancienActif && ancienActif !== window._idJoueur;
+  if (estMonTour() && tourChangé && tour.action === 'attente_theme') {
+    G.word = []; G.changeSel = []; G.changeMode = false;
     G.round++;
     document.getElementById('tmr-exp')?.classList.remove('show');
-    // Recompléter les lettres
-    const p0 = G.players[0];
-    if (p0.letters.length < 10) {
-      const newL = drawL(10 - p0.letters.length);
-      p0.letters.push(...newL);
+
+    // Recompléter les lettres si nécessaire
+    const p = G.players[0];
+    if (p.letters.length < 10) {
+      p.letters.push(...drawL(10 - p.letters.length));
     }
+
     renderAll();
-    drawCase(true); // tirer le nouveau thème
+    drawCase(true);
+
+    // Publier le thème pour l'adversaire
     if (G.curCase && window.publierTheme && window._codePartie) {
       window.publierTheme(window._codePartie, {
         id: G.curCase.id, th: G.curCase.th,
         free: !!G.curCase.free, emoji: G.curCase.emoji || ''
       });
     }
-    log('Tour ' + G.round + ' — ' + (window._nomJoueur || 'Joueur'), 'inf');
+    log('Tour ' + G.round + ' — à vous de jouer !', 'inf');
   }
 
-  // Thème de l'adversaire
-  if (!estMonTour() && tour.theme && (tour.action === 'jouer' || tour.action === 'attente_theme')) {
-    if (tour.theme.id && (!G.curCase || G.curCase.id !== tour.theme.id)) {
-      G.curCase = { id: tour.theme.id, th: tour.theme.th, free: !!tour.theme.free, emoji: tour.theme.emoji || '' };
-      if (typeof renderTheme === 'function') renderTheme();
+  // Afficher le thème de l'adversaire
+  if (!estMonTour() && tour.theme && tour.action === 'jouer') {
+    const t = tour.theme;
+    if (t.id && (!G.curCase || G.curCase.id !== t.id)) {
+      G.curCase = { id: t.id, th: t.th, free: !!t.free, emoji: t.emoji || '' };
+      renderCase();
     }
   }
 }
 
+// Traiter une action reçue de l'adversaire
 function traiterActionDistante(action) {
-  if (!action || action.joueur === window._idJoueur) return;
+  if (!action) return;
+  if (action.joueur === window._idJoueur) return;
   if (typeof G === 'undefined' || !G.players) return;
   if (window._dernierActionTs && action.ts <= window._dernierActionTs) return;
   window._dernierActionTs = action.ts;
@@ -3546,10 +3577,10 @@ function traiterActionDistante(action) {
     const pts = action.data.pts || 0;
     if (pts > 0) {
       log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
-      if (G.themeHistory) {
-        G.themeHistory.unshift({ theme: action.data.theme || '?', player: action.nom, word: mot, pts });
-        renderHistPanel();
-      }
+      G.themeHistory && G.themeHistory.unshift({
+        theme: action.data.theme || '?', player: action.nom, word: mot, pts
+      });
+      renderHistPanel();
     } else {
       log(action.nom + ' : mot refusé', 'bad');
     }
@@ -3561,9 +3592,7 @@ function traiterActionDistante(action) {
     endGame();
   }
 }
-
-
-</script>
+</script>>
 
 
 <!-- Modal Dictionnaire -->
@@ -3682,7 +3711,7 @@ function traiterActionDistante(action) {
 <!-- ══ FIREBASE ══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
@@ -3697,17 +3726,18 @@ function traiterActionDistante(action) {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  // ─── Utilitaires ───
+  function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
-  // Créer une partie
-  window.creerPartieEnLigne = function(nomJoueur) {
+  // ─── Créer une partie ───
+  window.creerPartieEnLigne = function(nom) {
     const code = genCode();
-    set(ref(db, 'parties/' + code), {
-      code, etat: 'attente', maquette: null, chat: {},
-      joueurs: { j1: { nom: nomJoueur, score: 0 } },
-      tour: { joueurActif: 'j1', numero: 0, action: null, theme: null },
-      scores: { j1: 0 },
-      createdAt: Date.now()
+    set(pRef(code), {
+      code, etat: 'attente', maquette: null,
+      joueurs: { j1: { nom, score: 0 } },
+      tour: { joueurActif: 'j1', numero: 0, action: 'debut', theme: null },
+      scores: { j1: 0 }, chat: {}, createdAt: Date.now()
     });
     window._codePartie = code;
     window._idJoueur = 'j1';
@@ -3715,112 +3745,147 @@ function traiterActionDistante(action) {
     return code;
   };
 
-  // Rejoindre une partie
-  window.rejoindrePatie = function(code, nomJoueur) {
+  // ─── Rejoindre ───
+  window.rejoindrePatie = function(code, nom) {
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
     window._idJoueur = idJ;
     window._estCreateur = false;
     window._idAdverse = 'j1';
-    update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom: nomJoueur, score: 0 } });
+    update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
-    ecouterPartie(code);
+    // Écouter la partie
+    _ecouterPartie(code);
   };
 
-  // Démarrer la partie
+  // ─── Démarrer ───
   window.demarrerPartieFirebase = function(code, maquette) {
-    update(ref(db, 'parties/' + code), {
-      etat: 'en_cours', maquette: maquette,
-      'tour/joueurActif': 'j1', 'tour/numero': 1, 'tour/action': 'debut'
+    update(pRef(code), {
+      etat: 'en_cours', maquette,
+      'tour/joueurActif': 'j1',
+      'tour/numero': 1,
+      'tour/action': 'attente_theme',
+      'tour/theme': null
     });
   };
 
-  // Publier le thème tiré
-  window.publierTheme = function(code, themeData) {
-    update(ref(db, 'parties/' + code + '/tour'), { theme: themeData, action: 'jouer' });
+  // ─── Publier thème ───
+  window.publierTheme = function(code, t) {
+    update(ref(db, 'parties/' + code + '/tour'), { theme: t, action: 'jouer' });
   };
 
-  // Publier une action
+  // ─── Publier action ───
   window.publierAction = function(code, type, data) {
     push(ref(db, 'parties/' + code + '/actions'), {
       type, joueur: window._idJoueur,
       nom: window._nomJoueur || 'Joueur',
       data: data || {}, ts: Date.now()
     });
-    update(ref(db, 'parties/' + code + '/tour'), { action: type, dernierJoueur: window._idJoueur });
   };
 
-  // Passer au tour suivant
+  // ─── Passer au tour suivant ───
   window.passerAuTourSuivant = function(code, joueurSuivant, numero) {
     update(ref(db, 'parties/' + code + '/tour'), {
-      joueurActif: joueurSuivant, numero: numero,
-      theme: null, action: 'attente_theme'
+      joueurActif: joueurSuivant,
+      numero: numero,
+      action: 'attente_theme',
+      theme: null
     });
   };
 
-  // Mettre à jour le score
+  // ─── Mettre à jour score ───
   window.majScore = function(code, idJoueur, score) {
     update(ref(db, 'parties/' + code + '/scores'), { [idJoueur]: score });
   };
 
-  // Écouter toute la partie
-  function ecouterPartie(code) {
-    onValue(ref(db, 'parties/' + code), (snap) => {
+  // ─── Écouter la partie (joueur 2) ───
+  function _ecouterPartie(code) {
+    onValue(pRef(code), snap => {
       const d = snap.val();
       if (!d) return;
 
-      // Démarrage côté joueur 2
+      // Démarrage de la partie côté joueur 2
       if (d.etat === 'en_cours' && !window._estCreateur && !window._partieDemar) {
         window._partieDemar = true;
+        // Masquer écran attente
         const ma = document.getElementById('m-attente');
         if (ma) ma.style.display = 'none';
-        if (d.maquette) {
-          _maqActive = d.maquette;
-          window._maqActive = d.maquette;
-          // Mémoriser l'ID et nom de l'adversaire (j1 = créateur)
-          window._idAdverse = 'j1';
-          window._nomAdverse = d.joueurs && d.joueurs['j1'] ? d.joueurs['j1'].nom : 'Joueur 1';
-          if (typeof startGameEnLigne === 'function') startGameEnLigne();
-          // Ajouter le créateur à G.players après démarrage
-          setTimeout(() => {
-            if (G.players && G.players.length === 1) {              G.curP = 1; // joueur 2 est à l'index 1
-              log('👥 ' + window._nomAdverse + ' est le créateur', 'inf');
-              renderAll();
-            }
-          }, 500);
-        }
+        // Mémoriser l'adversaire
+        window._idAdverse = 'j1';
+        window._nomAdverse = d.joueurs?.j1?.nom || 'Joueur 1';
+        // Démarrer le jeu
+        _maqActive = d.maquette;
+        if (typeof startGameEnLigne === 'function') startGameEnLigne();
+        return;
       }
 
-      // Écran d'attente : afficher joueurs connectés
+      // Écran d'attente
       if (d.etat === 'attente' && d.joueurs) {
-        const noms = Object.values(d.joueurs).map(j => j.nom).join(', ');
         const el = document.getElementById('attente-joueurs');
-        if (el) el.textContent = 'Connectés : ' + noms;
+        if (el) el.textContent = Object.values(d.joueurs).map(j => j.nom).join(', ');
       }
 
-      // Synchroniser tour et scores
+      // Synchronisation du tour en cours
       if (d.etat === 'en_cours' && d.tour && window._partieDemar) {
         if (typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
       }
     });
 
     // Écouter les actions
-    onValue(ref(db, 'parties/' + code + '/actions'), (snap) => {
+    onValue(ref(db, 'parties/' + code + '/actions'), snap => {
       const actions = snap.val();
       if (!actions || !window._partieDemar) return;
-      const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
+      const liste = Object.values(actions).sort((a, b) => a.ts - b.ts);
       const derniere = liste[liste.length - 1];
-      if (derniere && typeof traiterActionDistante === 'function') {
+      if (derniere && typeof traiterActionDistante === 'function')
         traiterActionDistante(derniere);
-      }
     });
 
+    // Chat
     window.ecouterChat(code);
   }
 
-  // Chat
+  // ─── Écouter la partie (créateur) ───
+  window.ecouterPartieCreateur = function(code) {
+    onValue(pRef(code), snap => {
+      const d = snap.val();
+      if (!d || !window._partieDemar) return;
+
+      // Récupérer nom/ID adversaire
+      if (d.joueurs) {
+        const advId = Object.keys(d.joueurs).find(id => id !== window._idJoueur);
+        if (advId && d.joueurs[advId]) {
+          window._idAdverse = advId;
+          window._nomAdverse = d.joueurs[advId].nom;
+          if (!window._advAnnonce) {
+            window._advAnnonce = true;
+            if (typeof log === 'function') log(window._nomAdverse + ' a rejoint !', 'inf');
+            if (typeof renderAll === 'function') renderAll();
+          }
+        }
+        if (window._idAdverse && d.scores?.[window._idAdverse] !== undefined)
+          window._scoreAdverse = d.scores[window._idAdverse];
+      }
+
+      // Synchroniser le tour
+      if (d.tour && typeof syncTour === 'function')
+        syncTour(d.tour, d.joueurs, d.scores);
+    });
+
+    // Écouter les actions de l'adversaire
+    onValue(ref(db, 'parties/' + code + '/actions'), snap => {
+      const actions = snap.val();
+      if (!actions || !window._partieDemar) return;
+      const liste = Object.values(actions).sort((a, b) => a.ts - b.ts);
+      const derniere = liste[liste.length - 1];
+      if (derniere && typeof traiterActionDistante === 'function')
+        traiterActionDistante(derniere);
+    });
+  };
+
+  // ─── Chat ───
   window.ecouterChat = function(code) {
-    onValue(ref(db, 'parties/' + code + '/chat'), (snap) => {
+    onValue(ref(db, 'parties/' + code + '/chat'), snap => {
       const msgs = snap.val();
       if (!msgs) return;
       const logEl = document.getElementById('chat-log');
@@ -3833,10 +3898,14 @@ function traiterActionDistante(action) {
         contest: { label: '⚠️ Contester', cls: 'contest' },
         bravo:   { label: '🎉 Bien joué !', cls: 'bravo' },
       };
-      Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-20).forEach(msg => {
+      Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-30).forEach(msg => {
         if (msg.type === 'texte') {
-          const estMoi = msg.joueur === (G.players?.[0]?.name || window._nomJoueur || '');
-          if (typeof ajouterMsgTexteLocal === 'function') ajouterMsgTexteLocal(msg.joueur, msg.texte || '', estMoi);
+          const moi = msg.joueur === (window._nomJoueur || '');
+          const d = document.createElement('div');
+          d.className = 'chat-msg texte' + (moi ? ' moi' : '');
+          d.innerHTML = '<div class="chat-who">' + msg.joueur + '</div>' +
+            '<div>' + (msg.texte||'').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+          logEl.appendChild(d);
           return;
         }
         const m = LABELS[msg.type];
@@ -3852,116 +3921,24 @@ function traiterActionDistante(action) {
     });
   };
 
-  window.envoyerMsgFirebase = function(type, nomJoueur) {
+  window.envoyerMsgFirebase = function(type, nom) {
     if (!window._codePartie) return;
-    push(ref(db, 'parties/' + window._codePartie + '/chat'), { type, joueur: nomJoueur, ts: Date.now() });
+    push(ref(db, 'parties/' + window._codePartie + '/chat'),
+      { type, joueur: nom, ts: Date.now() });
   };
 
-  // Écouter la partie côté créateur
-  window.ecouterPartieCreateur = function(code) {
-    onValue(ref(db, 'parties/' + code + '/actions'), (snap) => {
-      const actions = snap.val();
-      if (!actions) return;
-      const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
-      const derniere = liste[liste.length - 1];
-      if (derniere && typeof traiterActionDistante === 'function') traiterActionDistante(derniere);
-    });
-    onValue(ref(db, 'parties/' + code), (snap) => {
-      const d = snap.val();
-      if (!d) return;
-      // Attendre que G soit initialisé
-      if (typeof G === 'undefined' || !G.players) return;
-      if (d.joueurs) {
-        const ids = Object.keys(d.joueurs);
-        const advId = ids.find(id => id !== window._idJoueur);
-        if (advId && d.joueurs[advId]) {
-          window._idAdverse = advId;
-          window._nomAdverse = d.joueurs[advId].nom;
-          if (!window._advAnnonce) {
-            window._advAnnonce = true;
-            if (typeof log === 'function') log('👥 ' + window._nomAdverse + ' a rejoint !', 'inf');
-          }
-        }
-        if (advId && d.scores && d.scores[advId] !== undefined)
-          window._scoreAdverse = d.scores[advId];
-      }
-      if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
-    });
+  window.envoyerMsgTexteFirebase = function(texte, nom) {
+    if (!window._codePartie) return;
+    push(ref(db, 'parties/' + window._codePartie + '/chat'),
+      { type: 'texte', joueur: nom, texte, ts: Date.now() });
   };
 
+  // Rendre disponibles pour le script principal
   window._firebase_db = db;
   window._firebase_ref = ref;
   window._firebase_push = push;
+
   console.log('Firebase connecté !');
-
-function retourAccueil() {
-  // Réinitialiser l'état en ligne
-  _modeEnLigne = false;
-  window._joueurActifId = undefined;
-  window._nomAdverse = undefined;
-  window._scoreAdverse = undefined;
-  window._partieDemar = false;
-  window._codePartie = undefined;
-  // Masquer le chat
-  document.getElementById('chat-fab')?.classList.remove('visible');
-  document.getElementById('chat-panel')?.classList.remove('open');
-  // Supprimer les indicateurs
-  ['ind-tour','score-adverse'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.remove();
-  });
-  go('home');
-}
-
-function retourMaquette() {
-  _modeEnLigne = false;
-  window._joueurActifId = undefined;
-  window._nomAdverse = undefined;
-  window._scoreAdverse = undefined;
-  window._partieDemar = false;
-  window._codePartie = undefined;
-  ['ind-tour','score-adverse'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.remove();
-  });
-  go('maquette');
-  renderMaquetteTabs();
-  renderMaqGrille(_maqActive);
-}
-
-// ─── Envoyer un message texte libre ───
-function envoyerMessage() {
-  const input = document.getElementById('chat-input');
-  if (!input) return;
-  const texte = input.value.trim();
-  if (!texte) return;
-  input.value = '';
-  const who = G.players?.[0]?.name || window._nomJoueur || 'Joueur';
-  // Afficher localement
-  ajouterMsgTexteLocal(who, texte, true);
-  // Envoyer via Firebase
-  if (window.envoyerMsgFirebase && window._codePartie) {
-    window._firebase_push(
-      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
-      { type: 'texte', joueur: who, texte: texte, ts: Date.now() }
-    );
-  }
-}
-
-function ajouterMsgTexteLocal(who, texte, estMoi) {
-  const logEl = document.getElementById('chat-log');
-  if (!logEl) return;
-  if (logEl.children.length === 1 && logEl.children[0].style.textAlign === 'center')
-    logEl.innerHTML = '';
-  while (logEl.children.length >= 20) logEl.removeChild(logEl.firstChild);
-  const div = document.createElement('div');
-  div.className = 'chat-msg texte' + (estMoi ? ' moi' : '');
-  div.innerHTML = '<div class="chat-who">' + who + '</div><div>' +
-    texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
-  if (!document.getElementById('chat-panel')?.classList.contains('open'))
-    document.getElementById('chat-notif')?.classList.add('show');
-}
-
 </script>
 
 
