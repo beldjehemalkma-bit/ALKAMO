@@ -2204,7 +2204,9 @@ function evalWordSync(word) {
       // 5. Féminin pluriel -ES → masculin (GRANDES → GRAND)
       if (nm.endsWith('ES') && words.some(w => norm(w) === nm.slice(0,-2))) return true;
       // 6. Masculin → féminin en -E (GRAND → GRANDE)
-      if (!nm.endsWith('E') && words.some(w => norm(w) === nm + 'E')) return true;
+      // Seulement si le mot saisi ressemble à un adjectif (pas un nom tronqué)
+      // Minimum 4 lettres et la forme sans E doit être dans le dico
+      if (!nm.endsWith('E') && nm.length >= 4 && words.some(w => norm(w) === nm + 'E') && words.some(w => norm(w) === nm)) return true;
       // 7. Féminin en -RICE (ACTRICE → ACTEUR)
       if (nm.endsWith('RICE') && words.some(w => norm(w) === nm.slice(0,-4) + 'EUR')) return true;
       // 8. Féminin en -IERE (CUISINIERE → CUISINIER)
@@ -2720,6 +2722,13 @@ function showFloat(txt) {
 
 // Initialiser la zone de drop au chargement
 document.addEventListener('DOMContentLoaded', function() {
+  // Si on revient depuis la fin de partie en ligne
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('ecran') === 'maquette') {
+    go('maquette');
+    if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
+    if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
+  }
   setupDropZone();
   makeDraggableScroll('chev');
   makeDraggableScroll('wdrop');
@@ -3017,6 +3026,13 @@ function dicoUnivLive(val) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Si on revient depuis la fin de partie en ligne
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('ecran') === 'maquette') {
+    go('maquette');
+    if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
+    if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
+  }
   var inp = document.getElementById('dico-search-univ');
   if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') dicoUnivVerifier(); });
 });
@@ -3888,39 +3904,13 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   console.log('Firebase connecté !');
 
 function retourAccueil() {
-  _modeEnLigne = false;
-  window._joueurActifId = undefined;
-  window._nomAdverse = undefined;
-  window._scoreAdverse = undefined;
-  window._idAdverse = undefined;
-  window._partieDemar = false;
-  window._advAnnonce = false;
-  window._codePartie = undefined;
-  ['ind-tour','score-adverse'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.remove();
-  });
-  document.getElementById('chat-fab') && (document.getElementById('chat-fab').classList.remove('visible'));
-  document.getElementById('chat-panel') && (document.getElementById('chat-panel').classList.remove('open'));
-  go('home');
+  // Recharger la page proprement pour tout réinitialiser
+  window.location.href = window.location.pathname;
 }
 
 function retourMaquette() {
-  _modeEnLigne = false;
-  window._joueurActifId = undefined;
-  window._nomAdverse = undefined;
-  window._scoreAdverse = undefined;
-  window._idAdverse = undefined;
-  window._partieDemar = false;
-  window._advAnnonce = false;
-  window._codePartie = undefined;
-  ['ind-tour','score-adverse'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.remove();
-  });
-  go('maquette');
-  if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
-  if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
+  // Recharger et aller directement à la sélection de maquette
+  window.location.href = window.location.pathname + '?ecran=maquette';
 }
 
 </script>
