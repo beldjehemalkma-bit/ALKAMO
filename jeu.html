@@ -168,8 +168,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .tuto-free{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.3);border-radius:8px;padding:8px 12px;margin:10px 0;font-size:.82rem;color:var(--green);}
 
 /* FIN */
-#s-end{align-items:center;justify-content:center;padding:20px;text-align:center;}
-.end-card{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(200,160,32,.3);border-radius:22px;padding:28px;width:100%;max-width:480px;}
+#s-end{align-items:center;justify-content:center;padding:20px;text-align:center;z-index:250;position:relative;}
+.end-card{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(200,160,32,.3);border-radius:22px;padding:28px;width:100%;max-width:480px;position:relative;z-index:300;}
 .end-t{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .end-w{font-size:1.1rem;color:var(--green);margin:8px 0 22px;}
 .end-scores{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
@@ -2625,21 +2625,42 @@ function endGame() {
   stopTimer();
   stopBgMusic();
   stopPartieTimer();
+  // Nettoyer indicateurs visuels
+  ['ind-tour','score-adverse'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.remove();
+  });
 
-  // Pénalité lettres restantes
+  // Mode en ligne : construire liste joueurs avec vrais scores
+  if (_modeEnLigne) {
+    var pen = 0;
+    G.players[0].letters.forEach(function(l) { if (l) pen += (vL(l)||0); });
+    var scoreLocal = Math.max(0, G.players[0].score - pen);
+    var nomLocal = window._nomJoueur || G.players[0].name;
+    if (pen > 0) log(nomLocal + ' : -' + pen + ' pts (lettres restantes)', 'bad');
+    var joueurs = [{ name: nomLocal, score: scoreLocal, letters: [] }];
+    if (window._nomAdverse) {
+      joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0, letters: [] });
+    }
+    var sorted = joueurs.slice().sort(function(a,b) { return b.score - a.score; });
+    _afficherEcranFin(sorted);
+    return;
+  }
+
+  // Mode local
   G.players.forEach(function(p) {
     var pen = 0;
     p.letters.forEach(function(l) { if (l) pen += (vL(l)||0); });
     if (pen > 0) {
       p.score = Math.max(0, p.score - pen);
-      log(p.name + ' : −' + pen + ' pts (lettres restantes)', 'bad');
+      log(p.name + ' : -' + pen + ' pts (lettres restantes)', 'bad');
     }
   });
-
-  // Trier par score
   var sorted = G.players.slice().sort(function(a,b) { return b.score - a.score; });
+  _afficherEcranFin(sorted);
+}
 
-  // Aller à l'écran de fin
+
+function _afficherEcranFin(sorted) {
   go('end');
 
   // Remplir l'écran
