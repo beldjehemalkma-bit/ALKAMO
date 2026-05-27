@@ -451,7 +451,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   border:2px solid transparent; transition:all .2s;
 }
 .theme-dot:hover, .theme-dot.active { border-color:#FAD060; transform:scale(1.2); }
-.theme-dot.dark  { background:#1a1a2e; }
+.theme-dot.dark  { background:#1a1a2e; border:2px solid rgba(255,255,255,.3) !important; }
 .theme-dot.light { background:linear-gradient(135deg,#1565C0,#0D47A1); }
 .theme-dot.gold  { background:linear-gradient(135deg,#1D9E75,#4DC99A); }
 
@@ -925,6 +925,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
     <!-- Thème -->
     <div class="theme-box">
+      <div id="ind-tour-inline" style="display:none;font-size:.7rem;font-weight:900;letter-spacing:1px;margin-bottom:6px;padding:3px 10px;border-radius:10px;background:linear-gradient(135deg,rgba(29,158,117,.4),rgba(83,74,183,.4));color:#fff;text-align:center;"></div>
       <div class="theme-lbl">THÈME DU TOUR</div>
       <div class="theme-val" id="tname">—</div>
       <div class="theme-sub" id="tsub"></div>
@@ -1267,7 +1268,7 @@ function startBgMusic() {
   try {
     const ac = getAC();
     _bgGain = ac.createGain();
-    _bgGain.gain.value = 0.04;
+    _bgGain.gain.value = 0.12;
     _bgGain.connect(ac.destination);
     _bgNodes = [];
 
@@ -3470,23 +3471,19 @@ function afficherIndicateurTour() {
   if (typeof G === 'undefined' || !G.players) return;
   const monTour = estMonTour();
 
-  let ind = document.getElementById('ind-tour');
-  if (!ind) {
-    ind = document.createElement('div');
-    ind.id = 'ind-tour';
-    ind.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:20px;font-size:.75rem;font-weight:900;letter-spacing:1px;z-index:200;pointer-events:none;white-space:nowrap;transition:all .3s;';
-    document.body.appendChild(ind);
-  }
-  if (monTour) {
-    ind.textContent = "C'EST VOTRE TOUR !";
-    ind.style.background = 'linear-gradient(135deg,rgba(29,158,117,.9),rgba(83,74,183,.9))';
-    ind.style.color = '#fff';
-    ind.style.boxShadow = '0 4px 16px rgba(29,158,117,.4)';
-  } else {
-    ind.textContent = "Tour de " + (window._nomJoueurActif || "l'adversaire") + "...";
-    ind.style.background = 'rgba(0,0,0,.75)';
-    ind.style.color = 'rgba(255,255,255,.6)';
-    ind.style.boxShadow = 'none';
+  // Indicateur dans la zone thème (inline, pas en fixed)
+  const ind = document.getElementById('ind-tour-inline');
+  if (ind) {
+    ind.style.display = 'block';
+    if (monTour) {
+      ind.textContent = "🎯 C'EST VOTRE TOUR !";
+      ind.style.background = 'linear-gradient(135deg,rgba(29,158,117,.5),rgba(83,74,183,.5))';
+      ind.style.color = '#fff';
+    } else {
+      ind.textContent = "⏳ Tour de " + (window._nomJoueurActif || "l'adversaire");
+      ind.style.background = 'rgba(0,0,0,.4)';
+      ind.style.color = 'rgba(255,255,255,.6)';
+    }
   }
 
   if (window._nomAdverse) {
@@ -3925,12 +3922,12 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   console.log('Firebase connecté !');
 
 function retourAccueil() {
-  // Recharger la page proprement pour tout réinitialiser
+  stopBgMusic();
   window.location.href = window.location.pathname;
 }
 
 function retourMaquette() {
-  // Recharger et aller directement à la sélection de maquette
+  stopBgMusic();
   window.location.href = window.location.pathname + '?ecran=maquette';
 }
 
