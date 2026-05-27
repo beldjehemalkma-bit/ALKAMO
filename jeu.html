@@ -2386,23 +2386,25 @@ function _confirmerMotFinalize(word, pIdx) {
     G.phase = 'final';
     log('⚠ Cagnotte épuisée — phase finale !', 'inf');
   }
-  // Sauvegarder le thème ET l'ID de la case AVANT drawCase
+  // Sauvegarder le thème AVANT drawCase pour le log
   const themePubLie = G.curCase ? (G.curCase.free ? 'MOT LIBRE' : G.curCase.th) : '?';
   const caseIdPubLie = G.curCase ? G.curCase.id : null;
-  
+
   drawCase(false);
 
-  if (_modeEnLigne && window._codePartie && window.publierAction) {
-    window.publierAction(window._codePartie, 'valider', {
-      mot: word, pts: ev.score, theme: themePubLie
-    });
+  if (_modeEnLigne && window._codePartie) {
+    // Publier le mot validé
+    if (window.publierAction) {
+      window.publierAction(window._codePartie, 'valider', {
+        mot: word, pts: ev.score, theme: themePubLie
+      });
+    }
     if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
-  }
-
-  // Passer le tour en envoyant l'ID de la case jouée
-  if (_modeEnLigne && window._idAdverse && window.passerAuTourSuivant) {
+    // Passer le tour - syncTour gérera le nouveau thème côté J2
     stopTimer();
-    window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    }
     return;
   }
 
@@ -3871,6 +3873,19 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         const el = document.getElementById('attente-joueurs');
         if (el) el.textContent = Object.values(d.joueurs).map(j => j.nom).join(', ');
       }
+      if (d.etat === 'terminee' && window._partieDemar && !window._finPartieRecu) {
+        window._finPartieRecu = true;
+        if (typeof stopTimer === 'function') stopTimer();
+        const par = d.finPartie ? d.finPartie.par : '?';
+        if (par !== (window._nomJoueur || '')) {
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1D9E75,#534AB7);color:#fff;padding:24px 36px;border-radius:18px;font-size:1.1rem;font-weight:900;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:260px;';
+          notif.innerHTML = '🏁 ' + par + '<br>a mis fin à la partie !';
+          document.body.appendChild(notif);
+          setTimeout(() => { notif.remove(); if (typeof endGame === 'function') endGame(); }, 2500);
+        }
+        return;
+      }
       if (d.etat === 'en_cours' && d.tour && window._partieDemar) {
         if (typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
       }
@@ -3889,6 +3904,20 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     onValue(pRef(code), snap => {
       const d = snap.val();
       if (!d || !window._partieDemar) return;
+      // Détecter fin de partie signalée par l'adversaire
+      if (d.etat === 'terminee' && !window._finPartieRecu) {
+        window._finPartieRecu = true;
+        if (typeof stopTimer === 'function') stopTimer();
+        const par = d.finPartie ? d.finPartie.par : '?';
+        if (par !== (window._nomJoueur || '')) {
+          const notif = document.createElement('div');
+          notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1D9E75,#534AB7);color:#fff;padding:24px 36px;border-radius:18px;font-size:1.1rem;font-weight:900;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:260px;';
+          notif.innerHTML = '🏁 ' + par + '<br>a mis fin à la partie !';
+          document.body.appendChild(notif);
+          setTimeout(() => { notif.remove(); if (typeof endGame === 'function') endGame(); }, 2500);
+        }
+        return;
+      }
       if (d.joueurs) {
         const advId = Object.keys(d.joueurs).find(id => id !== window._idJoueur);
         if (advId && d.joueurs[advId]) {
@@ -3960,7 +3989,11 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.signalerFinPartie = function(code, nom) {
-    update(pRef(code), { finPartie: { par: nom, ts: Date.now() } });
+    // Écrire dans deux endroits pour être sûr
+    update(pRef(code), { 
+      finPartie: { par: nom, ts: Date.now() },
+      etat: 'terminee'
+    });
   };
 
   window.ecouterFinPartie = function(code) {
