@@ -3216,6 +3216,8 @@ function startGameEnLigne() {
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
+  // Les deux joueurs écoutent la fin de partie
+  if (window.ecouterFinPartie) window.ecouterFinPartie(code);
 
   drawCase(true);
   go('game');
@@ -3955,6 +3957,26 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     push(ref(db, 'parties/' + window._codePartie + '/chat'), { type:'texte', joueur:nom, texte, ts: Date.now() });
   };
 
+  window.signalerFinPartie = function(code, nom) {
+    update(pRef(code), { finPartie: { par: nom, ts: Date.now() } });
+  };
+
+  window.ecouterFinPartie = function(code) {
+    onValue(ref(db, 'parties/' + code + '/finPartie'), snap => {
+      const d = snap.val();
+      if (!d || !window._partieDemar) return;
+      if (d.par === (window._nomJoueur || '')) return;
+      const notif = document.createElement('div');
+      notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1D9E75,#534AB7);color:#fff;padding:24px 36px;border-radius:18px;font-size:1.1rem;font-weight:900;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);';
+      notif.innerHTML = '🏁 ' + d.par + ' a mis fin à la partie !';
+      document.body.appendChild(notif);
+      setTimeout(() => {
+        notif.remove();
+        if (typeof endGame === 'function') endGame();
+      }, 2500);
+    });
+  };
+
   window._firebase_db = db;
   window._firebase_ref = ref;
   window._firebase_push = push;
@@ -3973,11 +3995,16 @@ function retourMaquette() {
 
 function confirmerFinPartie() {
   closeModal('m-menu');
-  if (_modeEnLigne && window._codePartie && window.publierAction) {
-    // Signaler à l'adversaire
-    window.publierAction(window._codePartie, 'fin_partie', {});
-    // Petit délai pour que Firebase envoie avant de finir
-    setTimeout(() => endGame(), 500);
+  if (_modeEnLigne && window._codePartie) {
+    // Écrire directement l'état de fin dans Firebase
+    if (window._firebase_ref && window._firebase_db) {
+      const { update } = window._firebase_fns || {};
+      // Utiliser update via le module Firebase
+      if (window.signalerFinPartie) {
+        window.signalerFinPartie(window._codePartie, window._nomJoueur || 'Joueur');
+      }
+    }
+    setTimeout(() => endGame(), 600);
   } else {
     endGame();
   }
