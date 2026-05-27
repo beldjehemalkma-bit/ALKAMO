@@ -4043,15 +4043,9 @@ function retourMaquette() {
 
 function confirmerFinPartie() {
   closeModal('m-menu');
-  if (_modeEnLigne && window._codePartie) {
-    // Écrire directement l'état de fin dans Firebase
-    if (window._firebase_ref && window._firebase_db) {
-      const { update } = window._firebase_fns || {};
-      // Utiliser update via le module Firebase
-      if (window.signalerFinPartie) {
-        window.signalerFinPartie(window._codePartie, window._nomJoueur || 'Joueur');
-      }
-    }
+  stopTimer();
+  if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur');
     setTimeout(() => endGame(), 600);
   } else {
     endGame();
