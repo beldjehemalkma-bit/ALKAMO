@@ -3210,6 +3210,7 @@ function startGameEnLigne() {
 
   window._joueurActifId = 'j1';
   window._partieDemar = true;
+  window._finPartieRecu = false;
 
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive);
@@ -3822,7 +3823,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(pRef(code), {
       etat: 'en_cours', maquette,
       'tour/joueurActif': 'j1', 'tour/numero': 1,
-      'tour/action': 'attente_theme', 'tour/theme': null
+      'tour/action': 'attente_theme', 'tour/theme': null,
+      finPartie: null
     });
   };
 
@@ -3964,11 +3966,24 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.ecouterFinPartie = function(code) {
     onValue(ref(db, 'parties/' + code + '/finPartie'), snap => {
       const d = snap.val();
-      if (!d || !window._partieDemar) return;
-      if (d.par === (window._nomJoueur || '')) return;
+      if (!d || !d.par) return; // null = pas encore de fin
+      if (d.par === (window._nomJoueur || '')) return; // c'est moi qui ai fini
+      if (window._finPartieRecu) return; // éviter les doublons
+      window._finPartieRecu = true;
+      // Arrêter le chrono immédiatement
+      if (typeof stopTimer === 'function') stopTimer();
+      // Afficher la notification
       const notif = document.createElement('div');
-      notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1D9E75,#534AB7);color:#fff;padding:24px 36px;border-radius:18px;font-size:1.1rem;font-weight:900;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);';
-      notif.innerHTML = '🏁 ' + d.par + ' a mis fin à la partie !';
+      notif.style.cssText = [
+        'position:fixed','top:50%','left:50%',
+        'transform:translate(-50%,-50%)',
+        'background:linear-gradient(135deg,#1D9E75,#534AB7)',
+        'color:#fff','padding:24px 36px','border-radius:18px',
+        'font-size:1.2rem','font-weight:900','z-index:9999',
+        'text-align:center','box-shadow:0 8px 32px rgba(0,0,0,.6)',
+        'min-width:280px'
+      ].join(';');
+      notif.innerHTML = '🏁 ' + d.par + '<br>a mis fin à la partie !';
       document.body.appendChild(notif);
       setTimeout(() => {
         notif.remove();
