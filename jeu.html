@@ -1029,7 +1029,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-out" onclick="closeModal('m-menu')">▶ Reprendre</button>
       <button class="btn btn-gold" onclick="go('tuto');closeModal('m-menu')">📖 Règles</button>
-      <button class="btn btn-red" onclick="stopTimer();go('home');closeModal('m-menu')">🚪 Quitter</button>
+      <button class="btn btn-red" onclick="confirmerFinPartie()">🏁 Fin de partie</button>
     </div>
   </div>
 </div>
@@ -1737,6 +1737,15 @@ function nouveauTheme() {
   if (G.themeChanged) { log('⚠ Un seul changement par tour !', 'bad'); return; }
   drawCase(false); G.themeChanged = true;
   log('🎲 Case ' + G.curCase.id + ' — ' + G.curCase.th, 'inf');
+  // Synchroniser le nouveau thème avec l'adversaire
+  if (_modeEnLigne && G.curCase && window.publierTheme && window._codePartie) {
+    window.publierTheme(window._codePartie, {
+      id: G.curCase.id, th: G.curCase.th,
+      free: !!G.curCase.free, emoji: G.curCase.emoji || '',
+      minL: G.curCase.minL || 3, maxL: G.curCase.maxL || 10,
+      bonus: G.curCase.bonus || 0
+    });
+  }
 }
 
 function renderCase() {
@@ -1806,30 +1815,45 @@ function renderScores() {
   b.innerHTML = '';
   const monTour = !_modeEnLigne || estMonTour();
   const p = G.players[0];
-  const d = document.createElement('div');
-  d.className = 'ps' + (monTour ? ' cur' : '');
-  d.innerHTML = '<div class="ps-name">' + p.name + '</div>' +
-    '<div class="ps-pts">' + p.score + '</div>' +
-    '<div class="ps-sub">pts</div>';
-  b.appendChild(d);
-  if (_modeEnLigne && window._nomAdverse) {
-    const dA = document.createElement('div');
-    dA.className = 'ps' + (!monTour ? ' cur' : '');
-    dA.innerHTML = '<div class="ps-name">' + window._nomAdverse + '</div>' +
-      '<div class="ps-pts">' + (window._scoreAdverse || 0) + '</div>' +
-      '<div class="ps-sub">adversaire</div>';
-    b.appendChild(dA);
-  }
-  if (!_modeEnLigne && G.players.length > 1) {
-    G.players.slice(1).forEach((p2, i) => {
-      const d2 = document.createElement('div');
-      d2.className = 'ps' + ((i+1) === G.curP ? ' cur' : '');
-      d2.innerHTML = '<div class="ps-name">' + p2.name + '</div>' +
-        '<div class="ps-pts">' + p2.score + '</div>' +
-        '<div class="ps-sub">pts</div>';
-      b.appendChild(d2);
+
+  if (_modeEnLigne) {
+    // Mode en ligne : affichage compact avec séparateur VS
+    const nomMoi = p.name;
+    const scoreMoi = p.score;
+    const nomAdv = window._nomAdverse || '...';
+    const scoreAdv = window._scoreAdverse || 0;
+
+    // Joueur local
+    const d1 = document.createElement('div');
+    d1.className = 'ps' + (monTour ? ' cur' : '');
+    d1.innerHTML = '<div class="ps-name">' + nomMoi + '</div>' +
+      '<div class="ps-pts">' + scoreMoi + ' <span style="font-size:.6rem;opacity:.6">pts</span></div>';
+    b.appendChild(d1);
+
+    // Séparateur VS
+    const sep = document.createElement('div');
+    sep.style.cssText = 'display:flex;align-items:center;padding:0 4px;font-size:.65rem;font-weight:900;color:rgba(200,160,32,.6);letter-spacing:1px;';
+    sep.textContent = 'VS';
+    b.appendChild(sep);
+
+    // Adversaire
+    const d2 = document.createElement('div');
+    d2.className = 'ps' + (!monTour ? ' cur' : '');
+    d2.innerHTML = '<div class="ps-name">' + nomAdv + '</div>' +
+      '<div class="ps-pts">' + scoreAdv + ' <span style="font-size:.6rem;opacity:.6">pts</span></div>';
+    b.appendChild(d2);
+
+  } else {
+    // Mode local multi-joueurs
+    G.players.forEach((pj, i) => {
+      const d = document.createElement('div');
+      d.className = 'ps' + (i === G.curP ? ' cur' : '');
+      d.innerHTML = '<div class="ps-name">' + pj.name + '</div>' +
+        '<div class="ps-pts">' + pj.score + ' <span style="font-size:.6rem;opacity:.6">pts</span></div>';
+      b.appendChild(d);
     });
   }
+
   document.getElementById('chev-lbl').textContent = 'CHEVALET - ' + p.name;
   document.getElementById('bag-lbl').textContent = G.letterBag.length + ' lettres restantes';
 }
@@ -3491,7 +3515,7 @@ function afficherIndicateurTour() {
     if (!badge) {
       badge = document.createElement('div');
       badge.id = 'score-adverse';
-      badge.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);padding:3px 12px;border-radius:12px;font-size:.7rem;font-weight:700;background:rgba(0,0,0,.6);color:rgba(255,255,255,.5);z-index:199;pointer-events:none;';
+      badge.style.cssText = 'position:fixed;top:60px;right:10px;padding:3px 10px;border-radius:10px;font-size:.68rem;font-weight:700;background:rgba(0,0,0,.6);color:rgba(255,255,255,.6);z-index:199;pointer-events:none;';
       document.body.appendChild(badge);
     }
     badge.textContent = window._nomAdverse + ' : ' + (window._scoreAdverse || 0) + ' pts';
@@ -3583,7 +3607,8 @@ function traiterActionDistante(action) {
   } else if (action.type === 'echanger') {
     log(action.nom + ' echange', '');
   } else if (action.type === 'fin_partie') {
-    if (typeof endGame === 'function') endGame();
+    log('🏁 ' + action.nom + ' a mis fin à la partie !', 'inf');
+    setTimeout(() => { if (typeof endGame === 'function') endGame(); }, 800);
   }
 }
 
@@ -3929,6 +3954,19 @@ function retourAccueil() {
 function retourMaquette() {
   stopBgMusic();
   window.location.href = window.location.pathname + '?ecran=maquette';
+}
+
+
+function confirmerFinPartie() {
+  closeModal('m-menu');
+  if (_modeEnLigne && window._codePartie && window.publierAction) {
+    // Signaler à l'adversaire
+    window.publierAction(window._codePartie, 'fin_partie', {});
+    // Petit délai pour que Firebase envoie avant de finir
+    setTimeout(() => endGame(), 500);
+  } else {
+    endGame();
+  }
 }
 
 </script>
