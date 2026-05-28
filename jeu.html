@@ -2657,19 +2657,32 @@ function endGame() {
     var el = document.getElementById(id); if (el) el.remove();
   });
 
-  // Mode en ligne : construire liste joueurs avec vrais scores
-  if (_modeEnLigne) {
-    var pen = 0;
-    G.players[0].letters.forEach(function(l) { if (l) pen += (vL(l)||0); });
-    var scoreLocal = Math.max(0, G.players[0].score - pen);
+  // Mode en ligne : récupérer scores depuis Firebase pour être sûr
+  if (_modeEnLigne && window._firebase_db && window._firebase_ref && window._codePartie) {
     var nomLocal = window._nomJoueur || G.players[0].name;
-    if (pen > 0) log(nomLocal + ' : -' + pen + ' pts (lettres restantes)', 'bad');
-    var joueurs = [{ name: nomLocal, score: scoreLocal, letters: [] }];
-    if (window._nomAdverse) {
-      joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0, letters: [] });
-    }
-    var sorted = joueurs.slice().sort(function(a,b) { return b.score - a.score; });
-    _afficherEcranFin(sorted);
+    // Récupérer les scores depuis Firebase (source de vérité)
+    window._firebase_fns_get(
+      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/scores'),
+      function(scores) {
+        var scoreLocal = scores[window._idJoueur] || G.players[0].score;
+        var scoreAdv = scores[window._idAdverse] || window._scoreAdverse || 0;
+        var joueurs = [
+          { name: nomLocal, score: scoreLocal, letters: [] },
+          { name: window._nomAdverse || '?', score: scoreAdv, letters: [] }
+        ];
+        var sorted = joueurs.slice().sort(function(a,b) { return b.score - a.score; });
+        _afficherEcranFin(sorted);
+      }
+    );
+    return;
+  }
+  // Fallback si Firebase pas disponible
+  if (_modeEnLigne) {
+    var nomLocal2 = window._nomJoueur || G.players[0].name;
+    var joueurs2 = [{ name: nomLocal2, score: G.players[0].score, letters: [] }];
+    if (window._nomAdverse) joueurs2.push({ name: window._nomAdverse, score: window._scoreAdverse || 0, letters: [] });
+    var sorted2 = joueurs2.slice().sort(function(a,b) { return b.score - a.score; });
+    _afficherEcranFin(sorted2);
     return;
   }
 
@@ -3778,7 +3791,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 <!-- ══ FIREBASE ══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
@@ -4030,6 +4043,13 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         if (typeof endGame === 'function') endGame();
       }, 2500);
     });
+  };
+
+    // Exposer get() pour les scores
+  window._firebase_fns_get = function(refObj, callback) {
+    get(refObj).then(snap => {
+      callback(snap.val() || {});
+    }).catch(() => callback({}));
   };
 
   window._firebase_db = db;
