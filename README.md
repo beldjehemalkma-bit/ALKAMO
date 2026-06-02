@@ -1,32 +1,101 @@
-LE JEU 
-PRINCIPE:  
-"ALKAMO" est un jeu de lettres qui se joue à 2, 3 ou 4 personnes. 
-C'est aussi un jeu de vocabulaire mettant en pratique la connaissance de la langue. 
-Le jeu consiste à former des mots à partir de lettres tirées de la cagnotte 'L'. 
-Le mot à former  relatif au  champ lexical ou sémantique du thème, est inscrit sur une 
-des cases illustrées du tapis et la plaque correspondante à la case est tirée de la cagnotte 'T'. 
-Les mots au choix doivent être formés avec le nombre de lettres requises ;
-Si le joueur forme le mot exact inscrit sur la case du tapis central, il aura labouré et 
-bénéficiera du double de la valeur de la somme des lettres. S'il ne peut former le mot exact, 
-il essaie de fouiller dans un ‘’champ ’’ pour trouver un mot ayant une relation avec le thème inscrit sur la case.
-Ce champ n'est en fait qu'un réseau lexical vaste ne se composant pas seulement de synonymes et de mots de même famille, 
-mais aussi de mots de même domaine et de même notion. *Les mots qui à cause de leur contexte de leur signification -
-du fait de leur connotation thématique - évoquant d’autres mots avec lesquels ils partagent un thème commun sont aussi valables. 
-Entre les mots, souvent des rapports de hiérarchie existent. D’ailleurs, la majorité des mots appartiennent à une classe et à plusieurs sous-classes. 
-Les synonymes à des sémantiques similaires, des définitions semblables : 
-par exemple, « demeure » est un synonyme de « maison ».
-Les mots de même famille sont des mots ayant la même racine. 
-On peut donc dire que les mots de même famille sont tous construits sur une même « base »; 
-Par exemple, « caisse », « caissette » et « caissière » sont des mots de même famille.
-Les mots de même domaine et de même notion sont des mots relatifs d’une manière ou d’une autre à notre champ lexical. 
-Par contre, les mots de même domaine seront beaucoup plus spécifiques et ne pourront pas être émis 
-dans un contexte non relatif à notre champ lexical. Les mots de même notion sont quant à eux plus génériques ;
-Ils peuvent être relatifs à d’autres champs lexicaux et prendre une autre signification.
-** Exemple : Champ lexical du mot « ARMEE »
-Synonyme ……………… guerre, conflit, combat
-De même famille  ………arme,armure, armistice
-De même domaine (spécifiques)  …  soldat,caserne, troupe
-De même notion (génériques) …blessure,violence,hostilité.
-On parle d’hyperonymie quand un terme général(mot-étiquette ou terme générique) englobe plusieurs termes spécifiques, appelés hyponymes. 
- Ex: Fruit            Poire   Orange Raisin
-       Raisin          Muscat      Cardinal
+# ALKAMO — Le Jeu des Mots
+
+> *« Là où les murs enferment, naît le jeu du mot qu'il faut »*
+
+---
+
+## Qu'est-ce qu'ALKAMO ?
+
+◆ ALKAMO est un jeu de lettres et de vocabulaire qui se joue à 2, 3 ou 4 personnes. Il met en pratique la connaissance de la langue française à travers la formation de mots liés à des champs lexicaux variés.
+
+◆ Conçu pour stimuler la culture générale, enrichir le vocabulaire et développer la pensée stratégique, ALKAMO invite les joueurs à puiser dans leurs connaissances pour « labourer » le tapis central.
+
+◆ Ce guide présente les règles complètes du jeu, le règlement officiel et toutes les informations nécessaires pour bien démarrer une partie.
+
+| 2 à 4 joueurs | 80+ thèmes | 188 lettres + 3 jokers |
+|:---:|:---:|:---:|
+
+### ■ Objectif
+Totaliser le plus de points en formant des mots liés aux thèmes du tapis.
+
+---
+
+## 📋 RÈGLES DU JEU
+
+### 1 — Mise en place
+- Chaque joueur reçoit **10 lettres** de la Cagnotte L
+- Le 1er joueur tire une **plaque thème** de la Cagnotte T
+- La plaque est posée sur le **tapis central**
+
+### 2 — Former un mot
+- Former un mot lié au **champ lexical** du thème
+- Pluriel, féminin, même famille : **acceptés !**
+- **Bonus Labourage** : mot exact de la case = score × 2
+- Si impossible : passer son tour
+
+### 3 — Le Super Mot ⭐
+Composer un mot avec les **10 lettres** du chevalet :
+> **+20 pts bonus** — Un seul Super Mot par joueur par partie
+
+---
+
+## ⚖️ RÈGLEMENT
+
+### 4 — Cases Spéciales
+| Case | Bonus |
+|------|-------|
+| C1, C5 | +10 pts bonus |
+| Labourage | Score × 2 |
+| 10 lettres | +20 pts bonus |
+
+### 5 — Achat · Vente · Échange
+
+| Action | Description |
+|--------|-------------|
+| **Achat** | Reçoit une lettre de la Cagnotte L |
+| **Vente** | Cède une lettre à un autre joueur |
+| **Échange** | 10 lettres restent identiques |
+
+> ⚠️ Autorisé **3 fois** par partie · Prix max = **2× valeur**
+
+### 6 — Fin de Partie
+La partie se termine quand :
+- Plus de plaques dans la Cagnotte T
+- Un joueur n'a plus de lettres
+- Plus de lettres dans la Cagnotte L
+- Tous déclarent ne plus pouvoir jouer
+
+---
+
+## 📚 CHAMP LEXICAL
+
+Réseau de mots liés à un thème commun :
+
+| Catégorie | Description |
+|-----------|-------------|
+| **Synonymes** | mots de même sens |
+| **Même famille** | racine commune |
+| **Même domaine** | même secteur |
+| **Même notion** | idée proche |
+
+### Exemple — Thème : ARMÉE
+- **Synonymes** : guerre, conflit, combat
+- **Famille** : arme, armure, armistice
+- **Domaine** : soldat, caserne, troupe
+- **Notion** : blessure, violence...
+
+---
+
+
+
+
+
+## 🎮 Jouer en ligne
+
+**[▶ Jouer maintenant](https://beldjehemalkma-bit.github.io/ALKAMO/jeu.html)**
+
+---
+
+*© 2025 ALKAMO — Beldjehem Alkma — Tous droits réservés*
+*beldjehemalkma-bit.github.io/ALKAMO*
+
