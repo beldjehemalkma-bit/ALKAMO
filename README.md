@@ -1,6 +1,6 @@
 # ALKAMO — Le Jeu des Mots
 
-> *« Là où les murs enferment, naît le jeu du mot qu'il faut »*
+<h1 align="center">« Là où les murs enferment,<br>naît le jeu du mot qu'il faut »</h1>
 
 ---
 
