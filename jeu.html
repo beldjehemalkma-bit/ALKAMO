@@ -1898,6 +1898,25 @@ function renderChevalet() {
   updateChangeUI();
 }
 
+// Clic-clic réordonnement zone mot
+let _fw = null;   // index de la tuile sélectionnée
+let _fwEl = null; // élément DOM de la tuile sélectionnée
+
+function _fwCancel() {
+  if (_fwEl) {
+    _fwEl.style.outline = '';
+    _fwEl.style.transform = '';
+    _fwEl.style.zIndex = '';
+  }
+  _fw = null; _fwEl = null;
+  document.body.style.cursor = '';
+}
+
+// Escape = annuler sélection
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && _fw !== null) { _fwCancel(); renderWord(); }
+});
+
 function renderWord() {
   const drop = document.getElementById('wdrop');
   const ph = document.getElementById('wph');
@@ -1944,16 +1963,91 @@ function renderWord() {
     const disp = item.letter === '*' ? (item.jokerAs || '?') : item.letter;
     t.innerHTML = disp + '<span class="tv">★</span>';
 
-    // Clic gauche = déplacer le curseur ICI
-    t.addEventListener('click', (e) => {
-      e.stopPropagation();
-      G.insertPos = pos;
-      renderWord();
+    // Clic-clic réordonnement — mousedown pour démarrer
+    t.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+
+      // Si déjà en mode déplacement → déposer ici
+      if (_fw !== null) {
+        if (_fw !== pos) {
+          const moved = G.word.splice(_fw, 1)[0];
+          const dest = _fw < pos ? pos - 1 : pos;
+          G.word.splice(dest, 0, moved);
+          G.insertPos = dest + 1;
+          snd('click'); tapSound();
+        }
+        _fwCancel();
+        renderChevalet(); renderWord();
+        return;
+      }
+
+      // 1er clic : créer tuile fantôme qui suit la souris
+      _fw = pos;
+      _fwEl = t;
+      t.style.opacity = '0.3';
+
+      // Créer div fantôme
+      const ghost = document.createElement('div');
+      ghost.id = '_fw_ghost';
+      ghost.className = t.className;
+      ghost.innerHTML = t.innerHTML;
+      ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;
+        width:44px;height:52px;opacity:0.95;
+        transform:rotate(-5deg) scale(1.1);
+        box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 12px rgba(200,160,32,.5);
+        border:2px solid #FAD060;border-radius:9px;
+        display:flex;align-items:center;justify-content:center;
+        font-size:1.3rem;font-weight:900;color:#fff;
+        left:${e.clientX - 22}px;top:${e.clientY - 26}px;`;
+      document.body.appendChild(ghost);
+      document.body.style.cursor = 'grabbing';
+
+      // Suivre la souris
+      function onMove(ev) {
+        ghost.style.left = (ev.clientX - 22) + 'px';
+        ghost.style.top  = (ev.clientY - 26) + 'px';
+      }
+
+      // Déposer au mouseup
+      function onUp(ev) {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        ghost.remove();
+        document.body.style.cursor = '';
+        if (_fw === null) return;
+
+        // Trouver la tuile la plus proche du point de dépôt
+        const tiles = [...document.querySelectorAll('#wdrop .gtile')];
+        let destPos = G.word.length; // par défaut : fin
+        for (let i = 0; i < tiles.length; i++) {
+          const r = tiles[i].getBoundingClientRect();
+          const mid = r.left + r.width / 2;
+          if (ev.clientX < mid) { destPos = i; break; }
+        }
+
+        const srcPos = _fw;
+        _fwEl.style.opacity = '';
+        _fw = null; _fwEl = null;
+
+        if (srcPos !== destPos) {
+          const moved = G.word.splice(srcPos, 1)[0];
+          const dest = srcPos < destPos ? destPos - 1 : destPos;
+          G.word.splice(dest, 0, moved);
+          G.insertPos = dest + 1;
+          snd('click'); tapSound();
+          renderChevalet(); renderWord();
+        }
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
     });
 
     // Double-clic = retirer la lettre
     t.addEventListener('dblclick', (e) => {
       e.stopPropagation();
+      _fwCancel();
       G.word.splice(pos, 1);
       if (G.insertPos > pos) G.insertPos = Math.max(0, G.insertPos - 1);
       snd('remove');
@@ -1961,9 +2055,10 @@ function renderWord() {
       renderWord();
     });
 
-    // Drag pour réordonner dans la zone mot
+    // Drag maintenu (inchangé)
     t.draggable = true;
     t.addEventListener('dragstart', (e) => {
+      _fwCancel();
       e.dataTransfer.setData('word-pos', String(pos));
       e.dataTransfer.setData('source', 'word');
       t.classList.add('drag-src');
@@ -1981,11 +2076,20 @@ function renderWord() {
     drop.appendChild(cur);
   }
 
-  // Clic sur la zone vide = déplacer curseur en fin
+  // Clic sur zone vide = déposer en fin OU déplacer curseur
   drop.addEventListener('click', (e) => {
     if (e.target === drop) {
-      G.insertPos = G.word.length;
-      renderWord();
+      if (_fw !== null) {
+        const item = G.word.splice(_fw, 1)[0];
+        G.word.push(item);
+        G.insertPos = G.word.length;
+        _fwCancel();
+        snd('click'); tapSound();
+        renderChevalet(); renderWord();
+      } else {
+        G.insertPos = G.word.length;
+        renderWord();
+      }
     }
   });
 
