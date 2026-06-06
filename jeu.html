@@ -623,18 +623,13 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
 /* ══ CHAT PANEL ══ */
 .chat-panel {
-  position: fixed;
-  bottom: 70px; right: 80px;
-  width: 280px;
-  background: rgba(13,11,30,.95);
-  border: 1px solid rgba(200,160,32,.3);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.6);
   display: none;
   flex-direction: column;
-  z-index: 500;
+  background: rgba(13,11,30,.97);
+  border: 1px solid rgba(200,160,32,.35);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
   overflow: hidden;
-  backdrop-filter: blur(20px);
 }
 .chat-panel.open { display: flex; }
 .chat-hdr {
@@ -689,7 +684,9 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 /* Bouton flottant pour ouvrir le chat */
 .chat-fab {
   position: fixed;
-  bottom: 16px; right: 80px;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 48px; height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg,#534AB7,#C8A020);
@@ -700,7 +697,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   align-items: center; justify-content: center;
   transition: transform .2s;
 }
-.chat-fab:hover { transform: scale(1.1); }
+.chat-fab:hover { transform: translateX(-50%) scale(1.1); }
 .chat-fab.visible { display: flex; }
 .chat-notif {
   position: absolute; top: -2px; right: -2px;
@@ -959,22 +956,50 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
       <button class="btn btn-g" onclick="nouveauTheme()">🎲 Nouveau Thème</button>
     </div>
 
-    <!-- Section changement lettres -->
-    <div class="chg-box" id="chg-box">
-      <div class="chg-lbl normal" id="chg-lbl">🔄 CHANGER DES LETTRES</div>
-      <div class="chg-info" id="chg-info">Impossible de former un mot ? Activez le mode changement.</div>
-      <div class="chg-row">
-        <button class="btn btn-sm btn-red" id="btn-chg-toggle" onclick="toggleChangeMode()">Activer le changement</button>
+    <!-- Rangée : Changer lettres + Chat côte à côte -->
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+
+      <!-- Section changement lettres -->
+      <div class="chg-box" id="chg-box" style="flex:1;min-width:0;">
+        <div class="chg-lbl normal" id="chg-lbl">🔄 CHANGER DES LETTRES</div>
+        <div class="chg-info" id="chg-info">Impossible de former un mot ? Activez le mode changement.</div>
+        <div class="chg-row">
+          <button class="btn btn-sm btn-red" id="btn-chg-toggle" onclick="toggleChangeMode()">Activer le changement</button>
+        </div>
+        <!-- Log déplacé ici -->
+        <div class="glog" id="glog" style="margin-top:8px;">
+          <div class="log-e inf">✦ Bienvenue dans ALKAMO !</div>
+        </div>
       </div>
+
+      <!-- Chat en ligne -->
+      <div class="chat-panel" id="chat-panel" style="flex:1;min-width:0;margin:0;position:relative;">
+        <div class="chat-hdr">
+          💬 CHAT
+        </div>
+        <div class="chat-log" id="chat-log" style="max-height:120px;">
+          <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:8px">
+            Messages joueurs
+          </div>
+        </div>
+        <div class="chat-input-zone">
+          <input type="text" id="chat-input" class="chat-input-field"
+                 placeholder="Message..." maxlength="80"
+                 onkeydown="if(event.key==='Enter')envoyerMessage()">
+          <button class="chat-send-btn" onclick="envoyerMessage()">➤</button>
+        </div>
+        <div class="chat-btns" style="grid-template-columns:1fr 1fr;">
+          <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
+          <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Refuser</button>
+          <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Contester</button>
+          <button class="chat-btn y" onclick="sendChatMsg('bravo')">🎉 Bravo !</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- Message timer expiré -->
     <div class="tmr-expired" id="tmr-exp">⏰ Temps écoulé — changement non autorisé !</div>
-
-    <!-- Log -->
-    <div class="glog" id="glog">
-      <div class="log-e inf">✦ Bienvenue dans ALKAMO !</div>
-    </div>
   </div>
   <div class="hist-panel" id="hist-panel">
     <div class="hist-hdr"><span>📋 THÈMES JOUÉS</span><span class="hist-count" id="hist-count">0/0</span></div>
@@ -3525,7 +3550,28 @@ function toggleChat() {
 }
 
 function showChatBtn() {
-  document.getElementById('chat-fab').classList.add('visible');
+  // Afficher le bouton ET ouvrir le chat directement
+  const fab = document.getElementById('chat-fab');
+  const panel = document.getElementById('chat-panel');
+  if (fab) fab.classList.add('visible');
+  if (panel) panel.classList.add('open');
+}
+
+// Son de notification chat (double ding)
+function chatNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1320].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.13);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.13 + 0.4);
+      o.start(ctx.currentTime + i * 0.13);
+      o.stop(ctx.currentTime + i * 0.13 + 0.4);
+    });
+  } catch(e) {}
 }
 
 function sendChatMsg(type) {
@@ -3551,6 +3597,7 @@ function sendChatMsg(type) {
   log.scrollTop = log.scrollHeight;
   if (!document.getElementById('chat-panel').classList.contains('open')) {
     document.getElementById('chat-notif').classList.add('show');
+    chatNotifSound();
   }
 }
 
@@ -3591,7 +3638,6 @@ function onlineRejoindre() {
     const attEl = document.getElementById('attente-joueurs');
     if (attEl) attEl.textContent = nom + ' connecté — En attente du créateur...';
     fermerOnline();
-    showChatBtn();
     openMaquette(true);
   }
 }
@@ -3599,7 +3645,6 @@ function onlineDemarrer() {
   _modeEnLigne = true;
   window._nomJoueur = document.getElementById('online-nom')?.value.trim() || 'Joueur';
   fermerOnline();
-  showChatBtn();
   openMaquette(true);
 }
 
@@ -3777,8 +3822,11 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
   logEl.appendChild(div);
   logEl.scrollTop = logEl.scrollHeight;
-  if (!document.getElementById('chat-panel')?.classList.contains('open'))
-    document.getElementById('chat-notif')?.classList.add('show');
+  if (!moi) {
+    chatNotifSound();
+    if (!document.getElementById('chat-panel')?.classList.contains('open'))
+      document.getElementById('chat-notif')?.classList.add('show');
+  }
 }
 </script>>
 
@@ -3865,32 +3913,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 </svg></div>
 
 <!-- ══ CHAT PANEL ══ -->
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-hdr">
-    💬 MESSAGES JOUEURS
-    <button class="chat-close" onclick="toggleChat()">✕</button>
-  </div>
-  <div class="chat-log" id="chat-log">
-    <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:10px">
-      Utilisez les boutons ci-dessous
-    </div>
-  </div>
-  <div class="chat-input-zone">
-    <input type="text" id="chat-input" class="chat-input-field"
-           placeholder="Message..." maxlength="80"
-           onkeydown="if(event.key==='Enter')envoyerMessage()">
-    <button class="chat-send-btn" onclick="envoyerMessage()">➤</button>
-  </div>
-  <div class="chat-btns">
-    <button class="chat-btn g" onclick="sendChatMsg('accept')">✅ Accepter</button>
-    <button class="chat-btn r" onclick="sendChatMsg('refuse')">❌ Refuser</button>
-    <button class="chat-btn o" onclick="sendChatMsg('contest')">⚠️ Contester</button>
-    <button class="chat-btn y" onclick="sendChatMsg('bravo')">🎉 Bien joué !</button>
-  </div>
-</div>
-
-<!-- Bouton flottant -->
-<button class="chat-fab" id="chat-fab" onclick="toggleChat()">
+<!-- Bouton flottant (gardé pour compatibilité mais caché) -->
+<button class="chat-fab" id="chat-fab" style="display:none!important" onclick="toggleChat()">
   💬
   <div class="chat-notif" id="chat-notif" style="display:none"></div>
 </button>
@@ -3988,6 +4012,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         window._nomAdverse = d.joueurs && d.joueurs.j1 ? d.joueurs.j1.nom : 'Joueur 1';
         _maqActive = d.maquette;
         if (typeof startGameEnLigne === 'function') startGameEnLigne();
+        if (typeof showChatBtn === 'function') showChatBtn();
         return;
       }
       if (d.etat === 'attente' && d.joueurs) {
