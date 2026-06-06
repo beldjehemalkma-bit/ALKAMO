@@ -2545,33 +2545,9 @@ function _confirmerMotFinalize(word, pIdx) {
 
 // ─── Quitter la partie ───
 function quitterPartie() {
-  const nbJoueurs = _modeEnLigne ? (window._nbJoueursEnLigne || 2) : G.players.length;
-  
-  if (_modeEnLigne && nbJoueurs > 2) {
-    // Partie en ligne avec 3+ joueurs : proposer de se retirer seulement
-    if (confirm('Voulez-vous vous retirer de la partie ?\nLes autres joueurs pourront continuer.')) {
-      // Marquer le joueur comme retiré dans Firebase
-      if (window._firebase_db && window._codePartie && window._idJoueur) {
-        const { ref, update } = window;
-        update(window._firebase_ref(window._firebase_db, 
-          'parties/' + window._codePartie + '/joueurs/' + window._idJoueur), 
-          { retire: true });
-      }
-      log('Vous avez quitté la partie.', 'bad');
-      setTimeout(() => go('home'), 2000);
-    }
-  } else {
-    // Partie à 2 joueurs ou mode local
-    if (confirm('Terminer la partie ?')) {
-      if (_modeEnLigne && window._firebase_db && window._codePartie) {
-        // Signaler la fin dans Firebase
-        const setFn = window._firebase_set;
-        if (setFn) setFn(window._firebase_ref(window._firebase_db, 
-          'parties/' + window._codePartie + '/etat'), 'terminee');
-      }
-      endGame();
-    }
-  }
+  // Ouvrir notre propre modal de confirmation
+  const mfin = document.getElementById('m-fin');
+  if (mfin) mfin.classList.add('open');
 }
 
 function passerTour() {
@@ -2783,39 +2759,16 @@ function endGame() {
   stopTimer();
   stopBgMusic();
   stopPartieTimer();
-  // Nettoyer indicateurs visuels
   ['ind-tour','score-adverse'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.remove();
   });
 
-  // Mode en ligne : récupérer scores depuis Firebase pour être sûr
-  if (_modeEnLigne && window._firebase_db && window._firebase_ref && window._codePartie) {
-    var nomLocal = window._nomJoueur || G.players[0].name;
-    // Récupérer les scores depuis Firebase (source de vérité)
-    window._firebase_fns_get(
-      window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/scores'),
-      function(scores) {
-        // Prendre le meilleur score entre Firebase et local (cas de désynchronisation)
-        var fbLocal = scores[window._idJoueur] || 0;
-        var scoreLocal = Math.max(fbLocal, G.players[0].score);
-        var scoreAdv = Math.max(scores[window._idAdverse] || 0, window._scoreAdverse || 0);
-        var joueurs = [
-          { name: nomLocal, score: scoreLocal, letters: [] },
-          { name: window._nomAdverse || '?', score: scoreAdv, letters: [] }
-        ];
-        var sorted = joueurs.slice().sort(function(a,b) { return b.score - a.score; });
-        _afficherEcranFin(sorted);
-      }
-    );
-    return;
-  }
-  // Fallback si Firebase pas disponible
+  // Mode en ligne : scores locaux
   if (_modeEnLigne) {
-    var nomLocal2 = window._nomJoueur || G.players[0].name;
-    var joueurs2 = [{ name: nomLocal2, score: G.players[0].score, letters: [] }];
-    if (window._nomAdverse) joueurs2.push({ name: window._nomAdverse, score: window._scoreAdverse || 0, letters: [] });
-    var sorted2 = joueurs2.slice().sort(function(a,b) { return b.score - a.score; });
-    _afficherEcranFin(sorted2);
+    var nomLocal = window._nomJoueur || G.players[0].name;
+    var joueurs = [{ name: nomLocal, score: G.players[0].score, letters: [] }];
+    if (window._nomAdverse) joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0, letters: [] });
+    _afficherEcranFin(joueurs.slice().sort(function(a,b) { return b.score - a.score; }));
     return;
   }
 
@@ -3550,7 +3503,8 @@ function toggleChat() {
 }
 
 function showChatBtn() {
-  // Afficher le bouton ET ouvrir le chat directement
+  // Chat uniquement en mode en ligne
+  if (!_modeEnLigne) return;
   const fab = document.getElementById('chat-fab');
   const panel = document.getElementById('chat-panel');
   if (fab) fab.classList.add('visible');
@@ -4196,13 +4150,16 @@ function retourMaquette() {
 
 function confirmerFinPartie() {
   closeModal('m-menu');
-  stopTimer();
-  if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
-    window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur');
-    setTimeout(() => endGame(), 600);
-  } else {
-    endGame();
-  }
+  const mfin = document.getElementById('m-fin');
+  if (mfin) mfin.classList.add('open');
+}
+
+function _executerFinPartie() {
+  var mfin = document.getElementById('m-fin');
+  if (mfin) { mfin.classList.remove('open'); mfin.style.display = 'none'; }
+  go('end');
+  var endW = document.getElementById('end-w');
+  if (endW) endW.textContent = '🏆 TEST FIN OK !';
 }
 
 </script>
@@ -4261,5 +4218,77 @@ function confirmerFinPartie() {
     </div>
   </div>
 </div>
+<!-- Modal Fin de Partie -->
+<div class="ov" id="m-fin" style="z-index:2000">
+  <div class="modal">
+    <h2 style="color:#e74c3c">🏁 Fin de partie ?</h2>
+    <p style="color:rgba(255,255,255,.7);font-size:.9rem;text-align:center;margin:12px 0">
+      Voulez-vous vraiment terminer ?<br>Les scores seront affichés.
+    </p>
+    <div class="mbtns">
+      <button class="btn btn-out" id="btn-fin-annuler">Annuler</button>
+      <button class="btn btn-red" id="btn-fin-ok">Terminer ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('btn-fin-annuler').addEventListener('click', function() {
+    var m = document.getElementById('m-fin');
+    m.classList.remove('open');
+    m.style.display = 'none';
+  });
+
+  document.getElementById('btn-fin-ok').addEventListener('click', function() {
+    var m = document.getElementById('m-fin');
+    m.classList.remove('open');
+    m.style.display = 'none';
+
+    try { stopTimer(); } catch(e) {}
+    try { stopPartieTimer(); } catch(e) {}
+    try { stopBgMusic(); } catch(e) {}
+
+    var joueurs = [];
+    if (_modeEnLigne) {
+      var nom = window._nomJoueur || G.players[0].name;
+      joueurs = [{ name: nom, score: G.players[0].score }];
+      if (window._nomAdverse) joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0 });
+    } else {
+      G.players.forEach(function(p) {
+        joueurs.push({ name: p.name, score: p.score });
+      });
+    }
+    joueurs.sort(function(a, b) { return b.score - a.score; });
+
+    go('end');
+
+    var endW = document.getElementById('end-w');
+    var sc = document.getElementById('end-sc');
+
+    if (endW) {
+      if (joueurs.length > 1 && joueurs[0].score === joueurs[1].score) {
+        endW.textContent = '🤝 Égalité ! ' + joueurs[0].score + ' pts';
+      } else {
+        endW.textContent = '🏆 ' + joueurs[0].name + ' gagne avec ' + joueurs[0].score + ' pts !';
+      }
+    }
+
+    if (sc) {
+      var medals = ['🥇', '🥈', '🥉', '4️⃣'];
+      sc.innerHTML = joueurs.map(function(p, i) {
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px;margin:6px 0;background:rgba(255,255,255,.05);border-radius:10px;">' +
+          '<span style="font-size:1.5rem">' + medals[i] + '</span>' +
+          '<span style="flex:1;font-weight:700;color:#fff">' + p.name + '</span>' +
+          '<span style="font-weight:900;color:#FAD060;font-size:1.1rem">' + p.score + ' pts</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    try { snd('win'); } catch(e) {}
+  });
+});
+</script>
+
 </body>
 </html>
