@@ -4114,6 +4114,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       if (window._finPartieRecu) return;
       window._finPartieRecu = true;
       if (typeof stopTimer === 'function') stopTimer();
+      if (typeof stopPartieTimer === 'function') stopPartieTimer();
+      if (typeof stopBgMusic === 'function') stopBgMusic();
       const notif = document.createElement('div');
       notif.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1D9E75,#534AB7);color:#fff;padding:24px 36px;border-radius:18px;font-size:1.2rem;font-weight:900;z-index:9999;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:280px;';
       notif.innerHTML = '🏁 ' + d.par + '<br>a mis fin à la partie !';
@@ -4121,7 +4123,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       setTimeout(() => {
         notif.remove();
         if (typeof endGame === 'function') endGame();
-      }, 2500);
+      }, 10000);
     });
   };
 
@@ -4248,6 +4250,11 @@ document.addEventListener('DOMContentLoaded', function() {
     try { stopTimer(); } catch(e) {}
     try { stopPartieTimer(); } catch(e) {}
     try { stopBgMusic(); } catch(e) {}
+
+    // Signaler la fin aux autres joueurs via Firebase
+    if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+      try { window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur'); } catch(e) {}
+    }
 
     var joueurs = [];
     if (_modeEnLigne) {
