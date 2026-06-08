@@ -3602,36 +3602,35 @@ function onlineDemarrer() {
   openMaquette(true);
 }
 
-// ── Démarrage automatique depuis le lobby ──
+// ── Démarrage automatique depuis le lobby (URL params) ──
 document.addEventListener('DOMContentLoaded', function() {
-  const code   = localStorage.getItem('alkamo_code_partie');
-  const role   = localStorage.getItem('alkamo_role');
-  const pseudo = localStorage.getItem('alkamo_pseudo_jeu');
-  const adv    = localStorage.getItem('alkamo_adversaire');
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  const role   = params.get('role');
+  const pseudo = params.get('pseudo');
+  const adv    = params.get('adv');
 
   if (!code || !role || !pseudo) return; // pas venu du lobby
 
-  // Nettoyer localStorage
-  localStorage.removeItem('alkamo_code_partie');
-  localStorage.removeItem('alkamo_role');
-  localStorage.removeItem('alkamo_pseudo_jeu');
-  localStorage.removeItem('alkamo_adversaire');
+  // Nettoyer l'URL sans recharger
+  window.history.replaceState({}, '', 'jeu.html');
 
-  // Pré-remplir le champ nom
-  const nomInput = document.getElementById('online-nom');
-  if (nomInput) nomInput.value = pseudo;
-
-  window._nomJoueur = pseudo;
+  window._nomJoueur  = pseudo;
   window._nomAdverse = adv || '';
 
   // Attendre que Firebase soit prêt
+  let _tries = 0;
   const _waitFirebase = setInterval(function() {
+    _tries++;
+    if (_tries > 50) { clearInterval(_waitFirebase); return; } // max 15s
+
     if (role === 'createur' && window._creerPartieAvecCode) {
       clearInterval(_waitFirebase);
       _modeEnLigne = true;
       window._creerPartieAvecCode(code, pseudo);
       fermerOnline();
       openMaquette(true);
+
     } else if (role === 'invite' && window.rejoindrePatie) {
       clearInterval(_waitFirebase);
       _modeEnLigne = true;
@@ -3645,9 +3644,6 @@ document.addEventListener('DOMContentLoaded', function() {
       openMaquette(true);
     }
   }, 300);
-
-  // Timeout après 10s
-  setTimeout(function() { clearInterval(_waitFirebase); }, 10000);
 });
 
 
