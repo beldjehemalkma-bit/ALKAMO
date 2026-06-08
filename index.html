@@ -962,7 +962,19 @@ window.sInscrire = async function() {
 };
 
 window.deconnexion = async function() {
+  if (_myUid) {
+    try { await remove(ref(db, 'lobby/' + _myUid)); } catch(e) {}
+  }
   await signOut(auth);
+  localStorage.removeItem('alkamo_pseudo');
+  localStorage.removeItem('alkamo_uid');
+  localStorage.removeItem('alkamo_pseudo_jeu');
+  localStorage.removeItem('alkamo_code_partie');
+  localStorage.removeItem('alkamo_role');
+  localStorage.removeItem('alkamo_adversaire');
+  document.getElementById('lobby-section').classList.remove('visible');
+  document.getElementById('nav-play-btn').style.display = 'flex';
+  document.getElementById('nav-user').style.display = 'none';
 };
 </script>
 
@@ -1070,35 +1082,39 @@ onAuthStateChanged(auth, user => {
 
   // Inviter un joueur
   window._inviterJoueur = function(uid, pseudo) {
-    // Créer une salle de jeu et envoyer l'invitation
     const code = Math.random().toString(36).substr(2, 6).toUpperCase();
     set(ref(db, 'invitations/' + uid), {
       de: _myUid, pseudo: _myPseudo, code: code, ts: Date.now()
     });
-    // Mettre à jour son statut
     set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_attente');
-    // Stocker le code pour quand l'autre accepte
     window._codePartieEnAttente = code;
     window._inviteUid = uid;
     window._invitePseudo = pseudo;
-    // Notification d'attente
+
+    // Mettre à jour le bouton
+    const btns = document.querySelectorAll('.lobby-invite-btn');
+    btns.forEach(b => { b.disabled = true; });
     const btn = event.target;
     btn.textContent = '⏳ En attente...';
-    btn.disabled = true;
-    // Écouter la réponse
+
+    // Écouter la réponse — NE PAS rediriger avant acceptation
     onValue(ref(db, 'reponsesInvitation/' + _myUid), snap => {
       const rep = snap.val();
       if (!rep) return;
       remove(ref(db, 'reponsesInvitation/' + _myUid));
       if (rep.accepte) {
-        set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
-        localStorage.setItem('alkamo_code_partie', window._codePartieEnAttente);
+        // Stocker infos pour le jeu
+        localStorage.setItem('alkamo_code_partie', code);
         localStorage.setItem('alkamo_role', 'createur');
-        localStorage.setItem('alkamo_adversaire', window._invitePseudo);
+        localStorage.setItem('alkamo_pseudo_jeu', _myPseudo);
+        localStorage.setItem('alkamo_adversaire', pseudo);
+        set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
         window.location.href = 'jeu.html';
       } else {
+        // Refusé — remettre les boutons
+        btns.forEach(b => { b.disabled = false; b.textContent = 'Inviter 🎮'; });
         btn.textContent = '❌ Refusé';
-        setTimeout(() => { btn.textContent = 'Inviter 🎮'; btn.disabled = false; }, 2000);
+        setTimeout(() => { btn.textContent = 'Inviter 🎮'; }, 2000);
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'disponible');
       }
     }, { onlyOnce: true });
@@ -1111,14 +1127,13 @@ window.accepterInvitation = function() {
   document.getElementById('invite-notif').classList.remove('show');
   const inv = _invitationEnCours;
   _invitationEnCours = null;
-  // Répondre
   set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: true, uid: _myUid });
   remove(ref(db, 'invitations/' + _myUid));
-  // Mettre le statut en partie
   set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
-  // Aller au jeu
+  // Stocker infos pour le jeu
   localStorage.setItem('alkamo_code_partie', inv.code);
   localStorage.setItem('alkamo_role', 'invite');
+  localStorage.setItem('alkamo_pseudo_jeu', _myPseudo);
   localStorage.setItem('alkamo_adversaire', inv.pseudo);
   window.location.href = 'jeu.html';
 };
@@ -1130,6 +1145,7 @@ window.refuserInvitation = function() {
   _invitationEnCours = null;
   set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: false });
   remove(ref(db, 'invitations/' + _myUid));
+  // Rester sur la page — ne rien faire d'autre
 };
 </script>
 
