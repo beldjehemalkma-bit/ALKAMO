@@ -766,6 +766,11 @@ footer span { color:var(--gl); }
       <div class="lobby-dot"></div>
       <span id="lobby-pseudo-label">Connecté en tant que —</span>
     </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <a href="jeu.html" class="lobby-invite-btn" style="text-decoration:none;padding:10px 20px">
+        🎮 Jouer en solo / ordi
+      </a>
+    </div>
     <div class="lobby-list" id="lobby-list">
       <div class="lobby-empty">Aucun autre joueur connecté pour l'instant...</div>
     </div>
@@ -919,7 +924,10 @@ window.seConnecter = async function() {
     const email = pseudoToEmail(pseudo);
     await signInWithEmailAndPassword(auth, email, pwd);
     msg.textContent = '✅ Bienvenue ' + pseudo + ' !'; msg.className = 'auth-msg ok';
-    setTimeout(() => { fermerAuth(); window.location.href = 'jeu.html'; }, 800);
+    setTimeout(() => {
+      fermerAuth();
+      document.getElementById('lobby-section').scrollIntoView({ behavior: 'smooth' });
+    }, 800);
   } catch(e) {
     msg.textContent = '❌ Pseudo ou mot de passe incorrect'; msg.className = 'auth-msg err';
   }
@@ -939,7 +947,10 @@ window.sInscrire = async function() {
     const cred = await createUserWithEmailAndPassword(auth, email, pwd);
     await updateProfile(cred.user, { displayName: pseudo });
     msg.textContent = '✅ Compte créé ! Bienvenue ' + pseudo + ' !'; msg.className = 'auth-msg ok';
-    setTimeout(() => { fermerAuth(); window.location.href = 'jeu.html'; }, 1000);
+    setTimeout(() => {
+      fermerAuth();
+      document.getElementById('lobby-section').scrollIntoView({ behavior: 'smooth' });
+    }, 1000);
   } catch(e) {
     if (e.code === 'auth/email-already-in-use') {
       msg.textContent = '❌ Ce pseudo est déjà pris !';
@@ -958,7 +969,13 @@ window.deconnexion = async function() {
 <script>
 function checkAuth(e) {
   const pseudo = localStorage.getItem('alkamo_pseudo');
-  if (pseudo) return true; // connecté → aller au jeu
+  if (pseudo) {
+    // Déjà connecté → scroller vers le salon
+    e.preventDefault();
+    document.getElementById('lobby-section').scrollIntoView({ behavior: 'smooth' });
+    return false;
+  }
+  // Pas connecté → ouvrir modal
   e.preventDefault();
   document.getElementById('auth-overlay').classList.add('open');
   return false;
