@@ -1103,13 +1103,8 @@ onAuthStateChanged(auth, user => {
       if (!rep) return;
       remove(ref(db, 'reponsesInvitation/' + _myUid));
       if (rep.accepte) {
-        // Stocker infos pour le jeu
-        localStorage.setItem('alkamo_code_partie', code);
-        localStorage.setItem('alkamo_role', 'createur');
-        localStorage.setItem('alkamo_pseudo_jeu', _myPseudo);
-        localStorage.setItem('alkamo_adversaire', pseudo);
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
-        window.location.href = 'jeu.html';
+        window.location.href = 'jeu.html?role=createur&code=' + code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(pseudo);
       } else {
         // Refusé — remettre les boutons
         btns.forEach(b => { b.disabled = false; b.textContent = 'Inviter 🎮'; });
@@ -1130,12 +1125,7 @@ window.accepterInvitation = function() {
   set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: true, uid: _myUid });
   remove(ref(db, 'invitations/' + _myUid));
   set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
-  // Stocker infos pour le jeu
-  localStorage.setItem('alkamo_code_partie', inv.code);
-  localStorage.setItem('alkamo_role', 'invite');
-  localStorage.setItem('alkamo_pseudo_jeu', _myPseudo);
-  localStorage.setItem('alkamo_adversaire', inv.pseudo);
-  window.location.href = 'jeu.html';
+  window.location.href = 'jeu.html?role=invite&code=' + inv.code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(inv.pseudo);
 };
 
 window.refuserInvitation = function() {
