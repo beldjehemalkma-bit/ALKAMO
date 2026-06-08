@@ -3626,17 +3626,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Attendre que Firebase soit prêt
   const _waitFirebase = setInterval(function() {
-    if (role === 'createur' && window.creerPartieEnLigne) {
+    if (role === 'createur' && window._creerPartieAvecCode) {
       clearInterval(_waitFirebase);
       _modeEnLigne = true;
-      // Créer la partie avec le code du lobby
-      if (window._creerPartieAvecCode) {
-        window._creerPartieAvecCode(code, pseudo);
-      } else {
-        const generatedCode = window.creerPartieEnLigne(pseudo);
-        // Utiliser le code du lobby à la place
-        window._codePartie = code;
-      }
+      window._creerPartieAvecCode(code, pseudo);
       fermerOnline();
       openMaquette(true);
     } else if (role === 'invite' && window.rejoindrePatie) {
@@ -3962,6 +3955,23 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     window._idJoueur = 'j1';
     window._estCreateur = true;
     return code;
+  };
+
+  // Créer une partie avec un code spécifique (venant du lobby)
+  window._creerPartieAvecCode = function(code, nom) {
+    set(pRef(code), {
+      code, etat: 'attente', maquette: null,
+      joueurs: { j1: { nom, score: 0 } },
+      tour: { joueurActif: 'j1', numero: 0, action: 'attente_theme', theme: null },
+      scores: { j1: 0 }, chat: {}, createdAt: Date.now()
+    });
+    window._codePartie = code;
+    window._idJoueur = 'j1';
+    window._estCreateur = true;
+    if (window.ecouterChat) window.ecouterChat(code);
+    // Afficher le code dans l'interface
+    const codeShow = document.getElementById('online-code-show');
+    if (codeShow) codeShow.textContent = code;
   };
 
   window.rejoindrePatie = function(code, nom) {
