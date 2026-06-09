@@ -850,6 +850,22 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
     <button class="maq-btn-ok" id="maq-btn-jouer" onclick="validerMaquette()" style="display:none">✅ Jouer avec cette maquette →</button>
     <button class="btn btn-out" style="width:100%;margin-top:8px" onclick="go('home')">← Retour</button>
+
+    <!-- Chat pendant la sélection de maquette (mode en ligne) -->
+    <div id="maq-chat" style="display:none;margin-top:16px;">
+      <div class="chat-hdr">💬 CHAT</div>
+      <div class="chat-log" id="maq-chat-log" style="max-height:120px;">
+        <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:8px">
+          Discutez de la maquette ici...
+        </div>
+      </div>
+      <div class="chat-input-zone">
+        <input type="text" id="maq-chat-input" class="chat-input-field"
+               placeholder="Message..." maxlength="80"
+               onkeydown="if(event.key==='Enter')envoyerMessageMaquette()">
+        <button class="chat-send-btn" onclick="envoyerMessageMaquette()">➤</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3226,11 +3242,41 @@ var _maqActive = 1;
 
 function openMaquette(enLigne) {
   _maqActive = 1;
-  // Si appelé sans paramètre (mode normal), remettre _modeEnLigne à false
   if (!enLigne) _modeEnLigne = false;
   go('maquette');
   renderMaquetteTabs();
   renderMaqGrille(_maqActive);
+  // Afficher le chat uniquement en mode en ligne
+  const maqChat = document.getElementById('maq-chat');
+  if (maqChat) maqChat.style.display = enLigne ? 'block' : 'none';
+}
+
+function envoyerMessageMaquette() {
+  const input = document.getElementById('maq-chat-input');
+  if (!input) return;
+  const txt = input.value.trim();
+  if (!txt) return;
+  input.value = '';
+  const nom = window._nomJoueur || 'Joueur';
+  // Afficher localement
+  const log = document.getElementById('maq-chat-log');
+  if (log) {
+    if (log.children.length === 1 && log.children[0].style.textAlign === 'center') log.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'chat-msg texte moi';
+    div.innerHTML = '<div class="chat-who">' + nom + '</div><div>' + txt + '</div>';
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+  // Envoyer via Firebase (réutilise le même canal chat)
+  if (window._codePartie && window._firebase_db && window._firebase_push) {
+    try {
+      window._firebase_push(
+        window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
+        { joueur: nom, texte: txt, ts: Date.now() }
+      );
+    } catch(e) {}
+  }
 }
 
 function renderMaquetteTabs() {
@@ -4138,6 +4184,22 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       logEl.scrollTop = logEl.scrollHeight;
       if (!document.getElementById('chat-panel')?.classList.contains('open'))
         document.getElementById('chat-notif')?.classList.add('show');
+      // Mettre à jour aussi le chat maquette si visible
+      const maqLog = document.getElementById('maq-chat-log');
+      const maqChat = document.getElementById('maq-chat');
+      if (maqLog && maqChat && maqChat.style.display !== 'none' && msgs) {
+        maqLog.innerHTML = '';
+        Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-10).forEach(msg => {
+          if (msg.type !== 'texte') return;
+          const moi = msg.joueur === (window._nomJoueur || '');
+          const d = document.createElement('div');
+          d.className = 'chat-msg texte' + (moi ? ' moi' : '');
+          d.innerHTML = '<div class="chat-who">' + msg.joueur + '</div><div>' +
+            (msg.texte||'').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+          maqLog.appendChild(d);
+        });
+        maqLog.scrollTop = maqLog.scrollHeight;
+      }
     });
   };
 
