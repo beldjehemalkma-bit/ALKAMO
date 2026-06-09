@@ -3640,11 +3640,17 @@ document.addEventListener('DOMContentLoaded', function() {
       window._idAdverse = 'j1';
       window.rejoindrePatie(code, pseudo);
       fermerOnline();
-      // Afficher les maquettes — l'invité voit et discute dans le chat
       openMaquette(true);
-      // Message d'info en haut
-      const attEl = document.getElementById('attente-joueurs');
-      if (attEl) attEl.textContent = pseudo + ' connecté — En attente du créateur...';
+      // Désactiver le bouton Jouer pour l'invité
+      setTimeout(function() {
+        const btn = document.getElementById('maq-btn-jouer');
+        if (btn) {
+          btn.textContent = '⏳ En attente du créateur...';
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          btn.style.cursor = 'not-allowed';
+        }
+      }, 500);
     }
   }, 300);
 });
