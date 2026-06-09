@@ -3249,6 +3249,10 @@ function openMaquette(enLigne) {
   // Afficher le chat uniquement en mode en ligne
   const maqChat = document.getElementById('maq-chat');
   if (maqChat) maqChat.style.display = enLigne ? 'block' : 'none';
+  // Si Firebase déjà prêt, activer le chat
+  if (enLigne && window._codePartie && window.ecouterChat) {
+    window.ecouterChat(window._codePartie);
+  }
 }
 
 function envoyerMessageMaquette() {
@@ -3258,24 +3262,27 @@ function envoyerMessageMaquette() {
   if (!txt) return;
   input.value = '';
   const nom = window._nomJoueur || 'Joueur';
-  // Afficher localement
-  const log = document.getElementById('maq-chat-log');
-  if (log) {
-    if (log.children.length === 1 && log.children[0].style.textAlign === 'center') log.innerHTML = '';
-    const div = document.createElement('div');
-    div.className = 'chat-msg texte moi';
-    div.innerHTML = '<div class="chat-who">' + nom + '</div><div>' + txt + '</div>';
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-  }
-  // Envoyer via Firebase (réutilise le même canal chat)
-  if (window._codePartie && window._firebase_db && window._firebase_push) {
+  // Réutiliser exactement la même fonction que le chat du jeu
+  if (window._codePartie && window._firebase_db && window._firebase_ref && window._firebase_push) {
     try {
       window._firebase_push(
         window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
-        { joueur: nom, texte: txt, ts: Date.now() }
+        { joueur: nom, texte: txt, type: 'texte', ts: Date.now() }
       );
-    } catch(e) {}
+    } catch(e) {
+      console.error('Erreur chat maquette:', e);
+    }
+  } else {
+    // Fallback : afficher localement seulement
+    const maqLog = document.getElementById('maq-chat-log');
+    if (maqLog) {
+      if (maqLog.children.length === 1 && maqLog.children[0].style.textAlign === 'center') maqLog.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'chat-msg texte moi';
+      div.innerHTML = '<div class="chat-who">' + nom + '</div><div>' + txt + '</div>';
+      maqLog.appendChild(div);
+      maqLog.scrollTop = maqLog.scrollHeight;
+    }
   }
 }
 
