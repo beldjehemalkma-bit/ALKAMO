@@ -850,22 +850,6 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
     <button class="maq-btn-ok" id="maq-btn-jouer" onclick="validerMaquette()" style="display:none">✅ Jouer avec cette maquette →</button>
     <button class="btn btn-out" style="width:100%;margin-top:8px" onclick="go('home')">← Retour</button>
-
-    <!-- Chat pendant la sélection de maquette (mode en ligne) -->
-    <div id="maq-chat" style="display:none;margin-top:16px;">
-      <div class="chat-hdr">💬 CHAT</div>
-      <div class="chat-log" id="maq-chat-log" style="max-height:120px;">
-        <div style="color:rgba(255,255,255,.3);font-size:.72rem;text-align:center;padding:8px">
-          Discutez de la maquette ici...
-        </div>
-      </div>
-      <div class="chat-input-zone">
-        <input type="text" id="maq-chat-input" class="chat-input-field"
-               placeholder="Message..." maxlength="80"
-               onkeydown="if(event.key==='Enter')envoyerMessageMaquette()">
-        <button class="chat-send-btn" onclick="envoyerMessageMaquette()">➤</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1058,7 +1042,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <div class="end-scores" id="end-sc"></div>
     <div class="end-btns" style="flex-direction:column;gap:10px;margin-top:8px">
       <button class="btn btn-p" style="width:100%;padding:14px;font-size:1rem" onclick="window.location.reload()">🎲 Rejouer</button>
-      <button class="btn btn-out" style="width:100%" onclick="window.location.href='index.html'">🏠 Retour à l'accueil</button>
+      <button class="btn btn-out" style="width:100%" onclick="window.location.href=window.location.pathname">🏠 Retour à l'accueil</button>
     </div>
   </div>
 </div>
@@ -1484,6 +1468,27 @@ const MAQUETTES = {
       {id:'C5',th:'MOT AU CHOIX',free:true,minL:8,maxL:8,bonus:10,emoji:'⭐'},
       {id:'D5',th:'POISSON ET MER',emoji:'🐟'},   {id:'E5',th:'MOT AU CHOIX',free:true,minL:4,maxL:4,bonus:10,emoji:'⭐'}
     ]
+  },
+  5: {
+    nom: "Maquette Expert", emoji: "🎓",
+    cases: [
+      {id:'A1',th:'ARCHITECTURE',emoji:'🏛'},     {id:'B1',th:'ART',emoji:'🎨'},
+      {id:'C1',th:'HISTOIRE',emoji:'📜'},          {id:'D1',th:'ASTRONOMIE',emoji:'🔭'},
+      {id:'E1',th:'MÉDECINE',emoji:'⚕'},
+      {id:'A2',th:'PHYSIQUE',emoji:'⚛'},          {id:'B2',th:'BIOLOGIE',emoji:'🧬'},
+      {id:'C2',th:'ÉCONOMIE',emoji:'💰'},          {id:'D2',th:'DROIT',emoji:'⚖'},
+      {id:'E2',th:'RELIGION',emoji:'☪'},
+      {id:'A3',th:'BOTANIQUE',emoji:'🌿'},         {id:'B3',th:'INDUSTRIE',emoji:'🏭'},
+      {id:'C3',th:'INFORMATIQUE',emoji:'💻'},      {id:'D3',th:'TOURISME',emoji:'✈'},
+      {id:'E3',th:'CULINAIRE',emoji:'🍽'},
+      {id:'A4',th:'NAVIGATION',emoji:'⚓'},        {id:'B4',th:'LITTÉRATURE',emoji:'📖'},
+      {id:'C4',th:'COMMERCE',emoji:'🛒'},          {id:'D4',th:'SPORT',emoji:'🏆'},
+      {id:'E4',th:'URBANISME',emoji:'🏘'},
+      {id:'A5',th:'MILITAIRE',emoji:'⚔'},          {id:'B5',th:'ÉNERGIE',emoji:'⚡'},
+      {id:'C5',th:'AGRONOME',emoji:'🌾'},          {id:'D5',th:'TEXTILE',emoji:'🧵'},
+      {id:'E5',th:'DIPLOMATIE',emoji:'🤝'},
+      {id:'A6',th:'THÉÂTRE',emoji:'🎭'}
+    ]
   }
 };
 
@@ -1583,7 +1588,14 @@ const DICT = {
 "PUISSANCE": ["ACIER", "AGRESSION", "ALLIANCES", "AMBITION", "ANNEXION", "ARBITRAGE", "ARGENT", "ARME", "ARMEE", "ARMÉE", "ARSENAL", "AUTORITE", "AUTORITÉ", "AVANTAGE", "BLOC", "BLOCUS", "BOMBE", "CANON", "CAPTIVITÉ", "CASTE", "CENTRALE", "CHAR", "COALITION", "COMBATTRE", "CONFLIT", "CONQUETE", "CONQUÊTE", "CONTROLE", "CONTROLER", "CONTRÔLE", "COUP", "COURONNE", "DIPLOMATE", "DIPLOMATIE", "DOMINATION", "DOMINER", "DROIT", "DÉFAITE", "DÉMOCRATIE", "EAU", "ECONOMIE", "ELAN", "EMPIRE", "ENERGIE", "ETAT", "FER", "FEU", "FLOTTE", "FORCE", "FRAGILITÉ", "FRONTIÈRE", "FUSEE", "FÉDÉRATION", "GARNISON", "GAZ", "GLOIRE", "GOUVERNER", "GUERRIÈRE", "HEGEMON", "HIERARCHIE", "HIÉRARCHIE", "HÉGÉMONIE", "IDÉOLOGIE", "IMPOSER", "INFLUENCE", "INVASION", "LEADERSHIP", "LEGITIMITE", "LIBERTÉ", "LOURDEUR", "LUTTE", "LÉGITIMER", "LÉGITIMITÉ", "MARINE", "MILITAIRE", "MISSILE", "MONARQUE", "MONOPOLE", "MORALE", "MULTITUDE", "NATION", "NEUTRALITÉ", "NOBLESSE", "OBUS", "OCCUPATION", "OPPOSANT", "ORDRE", "PACTE", "PETROLE", "PEUPLE", "POUVOIR", "PRESTIGE", "PROTOCOLE", "PUISSANT", "REGIME", "REGNE", "RIVAL", "RÉGIME", "RÉGNER", "RÉSISTANCE", "RÉVOLUTION", "SANG", "SATELLITE", "SECURITE", "SEIGNEUR", "SERVITUDE", "SOLIDARITÉ", "STRATEGIE", "STRATÉGIE", "SUJET", "SUPREMATIE", "SUPRÉMATIE", "SUZEREIN", "SÉCURITÉ", "TERRITOIRE", "TRAITE", "TRAITÉ", "TUTELLE", "TYRANNIE", "UNION", "VAPEUR", "VICTOIRE", "VIOLENCE", "ÉCONOMIE", "ÉLITE", "ÉNERGIE", "ÉQUILIBRE", "ÉTAT"],
 "PÉDAGOGIE": ["ACTIVITE", "ACTIVITÉ", "APPRENTI", "ATELIER", "AUTONOMIE", "BILAN", "CAHIER", "CALENDRIER", "CAMPUS", "CERTIFICAT", "CHERCHER", "CLASSE", "COMPETENCE", "COMPÉTENCE", "CONFIANCE", "CONNAÎTRE", "CONTENU", "CONTRÔLE", "COURS", "CRAYON", "CREATIVITE", "CRÉATIVITÉ", "CRÉER", "CURIOSITE", "CURIOSITÉ", "CURRICULUM", "CYCLE", "DEVOIR", "DIDACTIQUE", "DIPLOME", "DIPLÔME", "DISCIPLINE", "DYNAMIQUE", "DÉBAT", "DÉCOUVERTE", "DÉMARCHE", "EAU", "ECOLE", "ECOUTER", "ECRIRE", "EFFECTIF", "ELEVE", "EMPATHIE", "ENCOURAGER", "ENGAGEMENT", "ENRICHIR", "ENSEIGNER", "ERREUR", "EVALUATION", "EXAMEN", "EXEMPLE", "EXERCICE", "EXPLORER", "FACILE", "FORMATION", "GROUPE", "GUIDE", "ILLUSTRER", "INCLURE", "INDIVIDUEL", "INITIATION", "INTRODUIRE", "INTÉRÊT", "JEU", "LECON", "LECTURE", "LEÇON", "LIBERTÉ", "LIVRE", "LIVRET", "LYCÉE", "MAITRE", "MANUEL", "MATERNELLE", "MAÎTRE", "MEMOIRE", "METHODE", "MODULE", "MOTIVATION", "MÉMOIRE", "MÉTHODE", "NIVEAU", "NOTE", "OBJECTIF", "OBSERVER", "OPÉRATION", "ORAL", "PAPIER", "PEDAGOGUE", "PLANIFIER", "PRATIQUER", "PRIMAIRE", "PROCESSUS", "PROGRAMME", "PROGRÈS", "PROJET", "PÉDAGOGUE", "QUESTION", "RAPPORT", "RASSEMBLER", "RENFORCER", "RYTHME", "RÉALISER", "RÉFLÉCHIR", "RÉVISER", "SALLE", "SCOLAIRE", "SOCIAL", "STAGE", "STAGIAIRE", "STRATÉGIE", "STYLO", "SYNTHÈSE", "SÉQUENCE", "TABLEAU", "TRAVAILLER", "TUTORAT", "UTILISER", "VALIDER", "VÉRIFIER", "ÉCOUTER", "ÉCRIRE", "ÉLÈVE", "ÉNERGIE", "ÉVALUATION"],
 "SPORT ET JEU": ["ACROBATIE", "ADVERSAIRE", "AGILITÉ", "ARBITRE", "ARÈNE", "ATHLETE", "ATHLÈTE", "ATHLÉTISME", "ATTAQUE", "AVIRON", "BADMINTON", "BALLE", "BALLON", "BASKET", "BASKETBALL", "BATTE", "BIATHLON", "BOWLING", "BOXE", "BUTEUR", "CANOË", "CAPITAINE", "CARDIO", "CHAMPION", "CHANCE", "CHRONO", "CIBLE", "CINQUIÈME", "CLASSEMENT", "CLUB", "COMBAT", "CONTRE", "COULOIR", "COUP", "COUPE", "COURSE", "CROSSE", "CYCLISME", "DEFAITE", "DEFENSE", "DEMI", "DRIBBLE", "DÉFENSE", "DÉPART", "DÉTENTE", "EAU", "ENDURANCE", "EQUIPE", "ESCALADE", "ESCRIME", "FEDERATION", "FILET", "FINALE", "FINISHER", "FOOT", "FOOTBALL", "FORMULE", "FÉDÉRATION", "GARDIEN", "GOLF", "GYMNASE", "GYMNASTE", "HANDBALL", "HASARD", "HIPPISME", "HOCKEY", "INDOOR", "INNING", "JET", "JOGGING", "JOUET", "JOUEUR", "JUDO", "JUDOKA", "KARATE", "KARATÉ", "KAYAK", "LANCER", "LIGUE", "LUTTE", "MARATHON", "MATCH", "MEDAILLE", "MÉDAILLE", "NAGE", "NATATION", "OBJECTIF", "OBSTACLE", "OLYMPIADE", "OLYMPIQUE", "OUTRUNNER", "PALET", "PARCOURS", "PASSE", "PENALTY", "PISCINE", "PISTE", "PLONGEON", "PODIUM", "POINTS", "POLO", "PONGISTE", "PUGILISTE", "PUZZLE", "PÉNALTY", "RALLYE", "RAMEUR", "RANDONNÉE", "RAQUETTE", "RECORD", "REGLE", "RONDELLE", "RUGBY", "RÉGATE", "SAUT", "SCORE", "SKI", "SNOWBOARD", "SOFTBALL", "SPRINT", "SQUASH", "STADE", "STARTER", "STRATEGIE", "STRETCHING", "SUMO", "SURFEUR", "TACTIQUE", "TAEKWONDO", "TENNIS", "TENUE", "TERRAIN", "TIR", "TITRE", "TOUR", "TOURNOI", "TRIATHLON", "TRIATHLÈTE", "ULTIME", "VICTOIRE", "VITESSE", "VOLLEY", "VÉLO", "ÉQUIPE"],
-"ÉNERGIE": ["AMPERE", "AMPÈRE", "ATOME", "AUTONOME", "BARRAGE", "BATTERIE", "BIOGAZ", "BIOMASSE", "BOIS", "CABLE", "CAPTATION", "CAPTEUR", "CARBONE", "CARBURANT", "CENTRALE", "CHALEUR", "CHARBON", "CHARGE", "CHAUDIÈRE", "CIRCUIT", "COMBUSTION", "CONVERSION", "COURANT", "CÂBLE", "DYNAMO", "DÉCARBONER", "DÉCHET", "DÉCHETS", "EAU", "EFFICACITÉ", "ELECTRON", "EOLIENNE", "FEU", "FILIÈRE", "FISSION", "FLUX", "FOSSILE", "FREQUENCE", "FROID", "FUSION", "GAZ", "GENERATEUR", "GEOTHERMIE", "GÉNÉRATEUR", "GÉOTHERMIE", "HUILE", "HYDROGENE", "HYDROGÈNE", "INDUCTION", "ISOLANT", "JOULE", "KILOWATT", "LIGNE", "LUMIERE", "LUMINEUX", "LUMIÈRE", "MAGNÉTIQUE", "MARÉE", "MICRO", "MOUVEMENT", "MÈTRE", "MÉGAWATT", "NATUREL", "NUCLEAIRE", "NUCLÉAIRE", "ONDE", "OXYGENE", "PANNEAU", "PETROLE", "PILE", "PISTON", "PLASMA", "PUISSANCE", "PÉTROLE", "RADIATION", "REACTEUR", "RENDEMENT", "RESEAU", "RESISTANCE", "RESSOURCE", "ROTATION", "ROTOR", "RÉACTEUR", "RÉSEAU", "RÉSISTANCE", "SMART", "SOLAIRE", "SOLEIL", "SON", "SORTIE", "STATOR", "STOCKAGE", "TENSION", "THERMIQUE", "TRANSFERT", "TURBINE", "URANIUM", "VAPEUR", "VARIABLE", "VENT", "VOLT", "WATT", "ÉLECTRON", "ÉMANATION", "ÉMISSION", "ÉOLIENNE", "ÉQUILIBRE"]
+"ÉNERGIE": ["AMPERE", "AMPÈRE", "ATOME", "AUTONOME", "BARRAGE", "BATTERIE", "BIOGAZ", "BIOMASSE", "BOIS", "CABLE", "CAPTATION", "CAPTEUR", "CARBONE", "CARBURANT", "CENTRALE", "CHALEUR", "CHARBON", "CHARGE", "CHAUDIÈRE", "CIRCUIT", "COMBUSTION", "CONVERSION", "COURANT", "CÂBLE", "DYNAMO", "DÉCARBONER", "DÉCHET", "DÉCHETS", "EAU", "EFFICACITÉ", "ELECTRON", "EOLIENNE", "FEU", "FILIÈRE", "FISSION", "FLUX", "FOSSILE", "FREQUENCE", "FROID", "FUSION", "GAZ", "GENERATEUR", "GEOTHERMIE", "GÉNÉRATEUR", "GÉOTHERMIE", "HUILE", "HYDROGENE", "HYDROGÈNE", "INDUCTION", "ISOLANT", "JOULE", "KILOWATT", "LIGNE", "LUMIERE", "LUMINEUX", "LUMIÈRE", "MAGNÉTIQUE", "MARÉE", "MICRO", "MOUVEMENT", "MÈTRE", "MÉGAWATT", "NATUREL", "NUCLEAIRE", "NUCLÉAIRE", "ONDE", "OXYGENE", "PANNEAU", "PETROLE", "PILE", "PISTON", "PLASMA", "PUISSANCE", "PÉTROLE", "RADIATION", "REACTEUR", "RENDEMENT", "RESEAU", "RESISTANCE", "RESSOURCE", "ROTATION", "ROTOR", "RÉACTEUR", "RÉSEAU", "RÉSISTANCE", "SMART", "SOLAIRE", "SOLEIL", "SON", "SORTIE", "STATOR", "STOCKAGE", "TENSION", "THERMIQUE", "TRANSFERT", "TURBINE", "URANIUM", "VAPEUR", "VARIABLE", "VENT", "VOLT", "WATT", "ÉLECTRON", "ÉMANATION", "ÉMISSION", "ÉOLIENNE", "ÉQUILIBRE"],
+"BIOLOGIE": ["ACIDE","ADAPTATION","ADN","ALGUE","ALLELE","AMPHIBIEN","ANIMAL","ANTICORPS","ANTIGENE","ARCHEE","ARN","ATOME","AXONE","BACTERIE","BIOLOGIE","BIOMASSE","BIOME","BIOSPHERE","BIOTOPE","BOTANIQUE","BOURGEON","BOUTURER","CARNIVORE","CATALYSE","CERVEAU","CHAMPIGNON","CHROMOSOME","CHRYSALIDE","CIRCULER","CLASSE","CLONE","COEUR","CYCLE","CYTOLOGIE","DENDRITE","DIGERER","DIVISION","DOMINANT","ECOLOGIE","ECOSYSTEME","EMBRYON","ENZYME","EQUILIBRE","ESPECE","EUCARYOTE","EVOLUTION","EXCRETION","EXTINCTION","FAMILLE","FECONDER","FEUILLE","FLEUR","FOIE","GAMETE","GEN","GENE","GENETIQUE","GENOME","GENRE","GERMINER","GESTATION","GLOBULE","GLUCIDE","GLYCOLYSE","GRAINE","GRANDIR","GUERISON","HABITAT","HERBIVORE","HEREDITE","HISTOLOGIE","HORMONE","HYBRIDE","IMMUNITE","INFECTION","INFLUX","INSECTE","LARVE","LIAISON","LIPIDE","LYMPHE","MAMMIFERE","MEIOSE","MICROBE","MIGRATION","MITOSE","MOLECULE","MUSCLE","MUTATION","MYCOLOGIE","NERF","NEURONE","NICHE","NUTRITION","NYMPHE","OISEAU","OMNIVORE","ORDRE","ORGANE","ORGANISME","OVULE","OXYDATION","PARASITE","PATHOGENE","PEAU","PHLOEME","PHYLUM","PLAQUETTE","PLASMA","PLASMIDE","POISSON","POLLEN","POLLINISER","POPULATION","POUMON","PREDATEUR","PROCARYOTE","PROIE","PROPAGER","PROTEINE","PROTISTE","RACINE","REACTION","RECEPTEUR","RECESSIF","REDUCTION","REGULATION","REIN","REPTILE","RESEAU","RESISTANCE","RESPIRER","RIBOSOME","SANG","SELECTION","SEQUENCER","SEVE","SIGNAL","SPORE","SQUELETTE","STIMULUS","STOMATE","SYMBIOSE","SYNAPSE","SYNTHESE","TAXONOMIE","TIGE","TISSU","TOLERANCE","VACCIN","VEGETAL","VIEILLIR","VIROLOGIE","VIRUS","XYLEME","ZOOLOGIE","ZYGOTE","ALCOOL","AMINE","AZOTE","BASE","CALCIUM","CARBONE","CATION","CHLORE","COMPOSE","CRISTAL","CUIVRE","ELECTRON","ELEMENT","ESTER","FER","FLUOR","FUSION","GAZ","GEL","HYDRATE","ION","IODE","ISOTOPE","LITHIUM","MASSE","MELANGE","METAL","NEUTRE","NITRATE","OXYDE","OXYGENE","PEPTIDE","PHOSPHORE","POLYMERE","POTASSIUM","PROTON","SEL","SILICIUM","SODIUM","SOUFRE","SULFATE","VALENCE","VAPEUR","ZINC"],
+"CULINAIRE": ["ABRICOT","AGNEAU","AIL","ALIMENT","AMIDON","ANCHOIS","ANETH","AROME","ASPERGE","ASSIETTE","AUBERGINE","AVOCAT","BANANE","BARBECUE","BASILIC","BECHAMEL","BEIGNET","BEURRE","BISCUIT","BISTROT","BOEUF","BOL","BOUDIN","BOUILLI","BOUILLON","BRAISE","BRIOCHE","BROCHE","BROCHETTE","BROCOLI","CALMAR","CANARD","CANTINE","CARI","CAROTTE","CARTE","CASSEROLE","CASSOULET","CELERI","CEREALE","CERISE","CHAUDRON","CHEF","CIDRE","CITRON","COMMANDE","COMPOTE","CONDIMENT","CONFITURE","CONSOMME","CORIANDRE","COULIS","COUPERET","COURGETTE","COUSCOUS","COUTEAU","CREME","CREPE","CREVETTE","CRUDITE","CUIRE","CUISEUR","CUISINE","CUISINIER","CUISINIERE","CUISSON","CULINAIRE","CUMIN","CURRY","DEGUSTER","DESSERT","EMULSION","EPICE","EPLUCHER","FARCE","FARINE","FEVE","FONDUE","FOUR","FOURCHETTE","FRAISE","FRICOT","FRIRE","FRIT","FRITE","FRITURE","FRUIT","FUMET","GALETTE","GANACHE","GARNITURE","GATEAU","GELATINE","GELEE","GIBIER","GLACE","GOURMET","GRATIN","GRIL","GROSEILLE","HACHIS","HARICOT","HOMARD","HOUMOUS","HUILE","HUITRE","JAMBON","JARRET","JUS","LAPIN","LARD","LARDON","LEGUME","LENTILLE","LEVURE","LOUCHE","MANGUE","MANIOC","MARINADE","MARMITE","MARMITON","MASALA","MAYONNAISE","MELON","MENAGERE","MENU","MERINGUE","METS","MIRIN","MIXEUR","MORUE","MOULE","MOUSSAKA","MOUSSE","MOUTON","NAVET","NOIX","NOUILLE","NOURRITURE","OEUF","OIGNON","OMELETTE","PAELLA","PANISSE","PARMESAN","PATATE","PATE","PATISSERIE","PATISSIER","PECHE","PERSIL","PETRIN","PIMENT","PIPERADE","PIZZA","PLAT","POELE","POIRE","POIREAU","POIS","POISSON","POIVRE","POLENTA","POMME","POPOTE","PORC","POTAGE","PUDDING","PUREE","QUICHE","RACLETTE","RADIS","RAISIN","RECETTE","RECHAUD","RECIPIENT","REPAS","RESTAURANT","RIS","RIZ","ROBOT","ROGNON","ROTI","ROTISSOIRE","ROUX","SAFRAN","SALADE","SALADIER","SARDINE","SARRIETTE","SAUCE","SAUCISSE","SAUCISSON","SAUMON","SAUTE","SAVEUR","SEL","SEMOULE","SERVEUR","SERVICE","SIROP","SOJA","SORBET","SOUPE","SPATULE","SUCRE","TABLIER","TAJINE","TAPAS","TARTARE","TARTE","TERRINE","TERROIR","THON","TOMATE","TORTILLA","TRAITEUR","TURBOT","VEAU","VELOUTE","VIANDE","WOK","ZESTE","APPETIT","AROMATE","BLANCHIR","BRUNIR","CARAMEL","CHOCOLAT","CONFIT","CROQUANT","DORER","FONDANT","GLACER","GRILLER","INFUSION","MACERER","MIJOTER","NAPPER","PANER","POCHER","REDUIRE","RISSOLER","ROTIR","TAMISER"],
+"MILITAIRE": ["ACADEMIE","ADJUDANT","AERODROME","AERONEF","ALLIANCE","ALLIE","AMIRAL","AMIRAUTE","ARMEE","ARMEMENT","ARMISTICE","ARSENAL","ARTILLERIE","ARTILLEUR","ASPIRANT","ASSAUT","ATTENTAT","ATTAQUE","AVIATEUR","AVIATION","AVION","BARRICADE","BASE","BATAILLE","BATAILLON","BAZOOKA","BLINDAGE","BLINDE","BLOCUS","BOMBE","BOUCLIER","BRAVOURE","BRIGADE","BUNKER","CALIBRE","CAMP","CAMPAGNE","CANON","CAPITAINE","CAPITULER","CAPORAL","CARTOUCHE","CASERNE","CASQUE","CAVALERIE","CHAR","CHASSEUR","CHEF","CITADELLE","CLAIRON","COLONEL","COMBAT","COMMANDO","COMPAGNIE","CONFLIT","CONQUETE","CONSCRIT","CONVOI","COURAGE","CROISEUR","CUIRASSE","DAGUE","DEBARQUER","DECORATION","DEFAITE","DEFENDRE","DEFENSE","DEPLOYER","DESERTER","DESERTEUR","DESTROYER","DICTATEUR","DICTATURE","DIVISION","DRONE","ECLAIREUR","ELITE","EMBUSCADE","EMEUTE","ENCEINTE","ENGIN","ENNEMI","EPEE","ESCADRE","ESCADRILLE","ESCADRON","ESPION","ETENDARD","EXERCICE","EXPEDITION","EXPLOIT","FANFARE","FANTASSIN","FLECHE","FORT","FORTIFIER","FOSSE","FREGATE","FRONT","FUSIL","GARDE","GARNISON","GENDARME","GENERAL","GENIE","GRADE","GRENADE","GUERILLA","GUERRE","GUERRIER","HARKI","HELICO","HIERARCHIE","HONNEUR","INFANTERIE","INSURGE","INVASION","JUNTE","LANCE","LEGION","LIBERATION","LIEUTENANT","LOGISTIQUE","MAJOR","MANOEUVRE","MARECHAL","MARINE","MARTIAL","MEDAILLE","MERCENAIRE","MILICE","MILICIEN","MINE","MISSILE","MISSION","MOBILISER","MORTIER","MUNITION","MUTINERIE","NEUTRALITE","OBUS","OFFENSIVE","OFFICIER","OPERATION","OTAGE","OTAN","PAIX","PARACHUTE","PARTISAN","PATROUILLE","PILLAGE","PILOTE","PISTOLET","POSTE","POUDRE","PRISONNIER","RADAR","RAID","RECRUE","REDDITION","REGIMENT","REMPART","RENFORT","RESISTANCE","RETRAITE","REVOLVER","ROQUETTE","SABOTAGE","SABRE","SAPEUR","SATELLITE","SECTION","SENTINELLE","SERGENT","SIEGE","SNIPER","SOLDAT","SOLDE","SOUTIEN","STRATEGE","STRATEGIE","TACTIQUE","TANK","TERRORISTE","TORPILLE","TRAITE","TRANCHEE","TREVE","TROUPE","UNIFORME","UNITE","VETERAN","VICTOIRE","VOLONTAIRE","ACIER","CANONNADE","CHAMP","ESCARMOUCHE","HALLEBARDE","MITRAILLE","MOUSQUET","PARAPET","POIGNARD","SABRER","TRIDENT"],
+"AGRONOME": ["ABATTOIR","AGRONOME","AGRONOMIE","AGRICULTURE","AMENDEMENT","ANALYSE","APICULTURE","ARGILE","ARROSAGE","ASSOLEMENT","AVOINE","AZOTE","BARRAGE","BETAIL","BETTERAVE","BINAGE","BIOLOGIQUE","BLE","BOCAGE","BOUTURER","BOVIN","CALCIUM","CANAL","CAPRIN","CARENCE","CEREALE","CHARRUE","CLIMAT","COLZA","COMPOST","CUEILLETTE","DESHERBER","DRAINAGE","ELEVAGE","EMBALLAGE","ENGRAIS","EPANDEUR","EROSION","ETABLE","FAUCHEUSE","FERMIER","FERTILISER","FILIERE","FOIN","FONGICIDE","FOURRAGE","FUMIER","GELEE","GESTATION","GRAINE","GRANGE","GREFFER","GRELE","HAIE","HANGAR","HARICOT","HERBICIDE","HERSAGE","HUMUS","HYBRIDE","INSECTICIDE","INSEMINER","IRRIGATION","JACHERE","LABOUR","LENTILLE","LIMON","MAIS","MALADIE","MARAICHAGE","MARCHE","METEO","MILLET","MOISSON","NAPPE","ORGE","OVIN","PARCELLE","PATURE","PAYSAN","PESTICIDE","PHOSPHORE","POIS","POMPE","PORCHERIE","PORCIN","POTASSIUM","POULAILLER","PRODUCTION","RAVAGEUR","RECOLTE","RENDEMENT","REPIQUAGE","RIZ","ROTATION","SABLE","SECHAGE","SECHERESSE","SEIGLE","SEMENCE","SEMIS","SEMOIR","SERRE","SEVRAGE","SILO","SOJA","SOL","SORGHO","STOCKAGE","SUBVENTION","TERRE","TOMATE","TOURBE","TRACTEUR","TRAITEMENT","TRI","TROUPEAU","TUNNEL","TUYAU","VARIETE","VENDANGE","VIGNE","VOLAILLE","ABREUVOIR","ANDAIN","BUTTAGE","ENSILAGE","FENAISON","GREFFAGE","SARCLAGE","TAILLE","BOURGEON","PALISSAGE","ARTICHAUT","ASPERGE","AUBERGINE","BASILIC","BROCOLI","CHOU","CIBOULETTE","CITRON","COURGETTE","FENOUIL","FRAISE","HERBE","LAITUE","LAVANDE","MENTHE","MELON","OIGNON","ORANGE","PANAIS","PECHE","PERSIL","PIMENT","POIREAU","POIVRON","POMME","RADIS","RAISIN","ROMARIN","TOMATE","TOURNESOL","VACHE","VERGER","FARINE","GRAIN","MEUNIER","MOULIN","PAILLE","PRAIRIE","VITICULTURE"],
+"TEXTILE": ["ACETATE","ACRYLIQUE","AIGUILLE","ALPAGA","ANGORA","APPRET","ASSEMBLAGE","BAMBOU","BIAIS","BLANCHIR","BOBINE","BOUTON","BOUTIQUE","BOUTIS","BRODER","BRODERIE","BRODEUR","CACHEMIRE","CALANDRAGE","CANETTE","CANEVAS","CEINTURE","CHANVRE","CHAPEAU","CHAUSSETTE","CHEMISE","CISEAU","CONFECTION","CORSAGE","COTON","COUDRE","COUTURE","COUTURIER","CRAVATE","CROCHET","DENIM","DENTELLE","DETACHAGE","DRAP","DOUBLURE","ECHARPE","ELASTHANNE","EMPIECEMENT","ENTOILAGE","EPINGLE","ETOFFE","FAUFILER","FAUFILURE","FERMETURE","FESTONNER","FEUTRE","FEUTRAGE","FIBRE","FIL","FILAGE","FILASSE","FILATURE","FILER","FINITION","FLANELLE","FILE","FOULARD","FRONCER","GALONS","GANSE","GAZE","HABIT","IMPRESSION","JACQUARD","JERSEY","JUPE","JUTE","KAPOK","KEVLAR","LACET","LAINE","LAINAGE","LAVAGE","LIN","LINGERIE","LISIERE","LYCRA","MAILLE","MANCHON","MANTEAU","MARQUE","MATIERE","MECHE","MERCERIE","METIER","METRE","MICROFIBRE","MODAL","MODE","MODELISTE","MODISTE","MOHAIR","MOLLETON","MOUSSELINE","NAVETTE","NOEUD","NYLON","ORGANZA","ORNEMENT","OURLET","PANTALON","PASSEPOIL","PATCHWORK","PATRON","PEIGNE","PELUCHE","PIQUAGE","PIQURE","PINCER","PLIER","PLISSER","POLYESTER","PRESSING","PULL","RAMIE","REPASSAGE","REPRISE","RIDEAU","ROBE","ROULEAU","RUBAN","SATIN","SECHAGE","SOIE","SOIERIE","STOPPAGE","STYLE","STYLISTE","SURJET","SURJETER","SURPIQURE","SURFIL","TAFFETAS","TAILLEUR","TALON","TEINDRE","TEINTURE","TEXTILE","TISSAGE","TISSER","TISSU","TISSERAND","TRESSE","TRESSAGE","TRESSER","TRICOT","TRICOTAGE","TRICOTER","TUNIQUE","TULLE","VELCRO","VELOURS","VESTE","VISCOSE","VOILE","ZIP","BOUTONNIERE","FRONCES","GABARIT","MOTIF","RAGLAN","RIVET","VOLANT"],
+"DIPLOMATIE": ["ACCORD","ADHERER","ADRESSE","AFFAIRES","AGENT","AGREMENT","AIDER","ALLIANCE","AMBASSADE","AMNISTIE","APPEL","ARBITRAGE","ARTIFICE","ASILE","ASSEMBLEE","ASTUCE","ATTACHE","BANQUET","BLOCUS","BOYCOTT","CARRIERE","CHAMBRE","CHEF","CITOYEN","CIVILITE","COALITION","COMITE","COMMISSION","COMMUNISME","CONFERENCE","CONFIANCE","CONFLIT","CONSEIL","CONSEILLER","CONSUL","CONSULAT","CONVENTION","COOPERER","DEBAT","DECRET","DEFIANCE","DELEGATION","DELEGUE","DEMARCHE","DEMOCRATIE","DESARMER","DETENTE","DEXTERITE","DIALOGUE","DIALOGUER","DIPLOMATE","DIPLOMATIE","DIPLOME","DIRIGEANT","DISCOURS","DISCRETION","DOIGTE","DROIT","ECONOMIE","EGALITE","ELECTION","EMBARGO","ENTENTE","ENTREGENT","ENVOYE","ESPION","ETAT","ETIQUETTE","FASCISME","FINESSE","FMI","FORUM","FRONTIERE","GOUVERNER","GUERRE","HABILETE","HONNEUR","IDEOLOGIE","IMMUNITE","INFLUENCE","INTEGRER","INTERET","JEU","JUSTICE","LAICITE","LEGATION","LIBERTE","LOI","MANDAT","MANOEUVRE","MEDIATEUR","MEDIATION","MESURE","MINISTERE","MINISTRE","MISSION","MONARCHIE","NATION","NEGOCIER","NEUTRALITE","NONCE","NORMALISER","NOTE","OCDE","OMC","OMS","ONU","OPPOSITION","OTAN","PACTE","PAIX","PARLEMENT","PARTI","PASSEPORT","POLITIQUE","POUVOIR","PRECAUTION","PRESEANCE","PRESIDENT","PRESSION","PROCLAMER","PROTOCOLE","PRUDENCE","PUISSANCE","RANG","RAPPORT","RAPPROCHER","RATIFIER","RECEPTION","REFERENDUM","REFORME","REFUGIE","REGIME","REGLE","RELATION","REPUBLIQUE","RESERVE","RESOLUTION","RETENUE","RETICENCE","REUNION","ROUERIE","RUPTURE","SANCTION","SCRUTIN","SECRETAIRE","SECURITE","SENAT","SESSION","SIGNER","SOCIALISME","SOIN","SOMMET","SOUPLE","STABILITE","STRATEGE","STRATEGIE","SUFFRAGE","TACT","TACTIQUE","TERRITOIRE","TITRE","TRAITE","ULTIMATUM","UNESCO","VETO","VISA","VISITE","VOTE","CHARTE","CONGRES","STATUT","GEOPOLITIQUE"],
+"THEATRE": ["ART","BAL","JEU","ACTE","DANSE","DECOR","DRAME","FARCE","LIEU","LOGE","MIME","MISE","NOEUD","OPERA","PROSE","ROLE","SALLE","SCENE","TEXTE","TOILE","ABSURDE","ACCORD","ACROBATE","ACTEUR","ACTION","ACTRICE","AFFICHE","AGORA","ALLURE","AMBITUS","AMBULANT","APART","APPLAUDIR","ARENE","ARIA","ARIETTE","ARLEQUIN","AUBADE","AUDITION","AUDITORIUM","AVANT","BALCON","BALLADE","BALLERINE","BALLET","BAROQUE","BARYTON","BATIMENT","BEMOL","BILLET","BOUFFES","BOUFFON","BRAVO","BROADWAY","BRUIT","BUNRAKU","BURLESQUE","BUTO","CABARET","CABOTIN","CAMPAGNE","CANTATE","CANTATRICE","CANTIQUE","CASINO","CASTING","CAVATINE","CENSURE","CHANSON","CHANT","CHANTER","CHANTEUR","CHAPITEAU","CHOEUR","CHORAL","CHORISTE","CHUTE","CINEMA","CINTRES","CIRQUE","CLASSIQUE","CLAVECIN","CLIMAX","CLOWN","COMEDIE","COMEDIEN","COMEDIENNE","COMIQUE","COMPAGNIE","COMPOSER","COMPTINE","CONCERT","COR","CORBEILLE","COSTUMES","COULISSE","COUR","CRITIQUE","DANSER","DANSEUR","DANSEUSE","DEBUT","DECORATEUR","DECORS","DENOUEMENT","DESSOUS","DESSUS","DIALOGUE","DIDASCALIE","DIONYSOS","DIRECTEUR","DRAMATIQUE","DRAMATURGE","ECLAIRAGE","ENTRACTE","EQUILIBRE","EXPOSITION","FADO","FAUTEUIL","FESTIVAL","FEUILLETON","FICTION","FIGURANT","FIGURATION","FLUTE","FORUM","FOSSE","FOYER","FUNAMBULE","GAITE","GRADIN","GUIGNOL","GYMNASE","HARMONIE","HARPE","HUMOUR","HYMNE","IMPROMPTU","INTERMEDE","INTONATION","INTRIGUE","JARDIN","JONGLEUR","JOUER","KABUKI","LIED","LIEDER","LIVRET","LOINTAIN","LORGNETTE","LYRE","LYRIQUE","MACHINISTE","MASQUE","MELODIE","MELODISTE","MELODRAME","METTEUR","MIRACLE","MODAL","MONODIE","MONOLOGUE","MOTET","MUSICAL","MUSIQUE","MYSTERE","NATIONAL","NOTES","OPERETTE","ORATORIO","ORCHESTRE","OVATION","PANTOMIME","PAROLE","PARTERRE","PARTITION","PERIPETIE","PERSONNAGE","PIANO","PIECE","PLACE","PLANCHES","PLATEAU","POEME","POESIE","POETE","POULAILLER","PRATICABLE","PREMIERE","PRESSE","PROGRAMME","PROSODIE","PSAUME","PUBLIC","QUARTE","QUATUOR","RAMPE","RANG","RAPPEL","RECITAL","RECITATIF","REFRAIN","REGIE","REGISSEUR","RELACHE","REPERTOIRE","REPETITION","REPLIQUE","REVUE","RIDEAU","ROMAN","ROMANCE","ROMANTIQUE","RYTHME","SATIRE","SAYNETE","SCENARIO","SCENIQUE","SERVICE","SIFFLET","SOLILOQUE","SON","SONATE","SONATINE","SONORE","SONORITE","SOUBRETTE","SOUFFLEUR","SPECTACLE","SPECTATEUR","STALLE","STROPHE","SUAVE","TEMPO","TENOR","THEATRE","THEME","TIRADE","TONAL","TONALITE","TOURNEE","TRAGEDIE","TRAGEDIEN","TRAGIQUE","TRETEAUX","TROUPE","UNISSON","VAUDEVILLE","VEDETTE","VERDURE","VIOLON","VOCAL","VOIX","ACCLAMER","BIS","EPOPEE","FABLE","GESTE","IMPROVISER","INCARNER","MASCARADE","NARRER","PATHOS","RECITER"]
 };
 
 // Dico français basique pour cases libres
@@ -2974,7 +2986,7 @@ function openDico() {
   document.getElementById('dico-level2').style.display = 'none';
   var btns = document.getElementById('dico-maq-btns');
   btns.innerHTML = '';
-  [1,2,3,4].forEach(function(n) {
+  [1,2,3,4,5].forEach(function(n) {
     var b = document.createElement('button');
     b.className = 'dico-btn-th';
     b.textContent = MAQUETTES[n].emoji + ' ' + MAQUETTES[n].nom;
@@ -3242,37 +3254,11 @@ var _maqActive = 1;
 
 function openMaquette(enLigne) {
   _maqActive = 1;
+  // Si appelé sans paramètre (mode normal), remettre _modeEnLigne à false
   if (!enLigne) _modeEnLigne = false;
   go('maquette');
   renderMaquetteTabs();
   renderMaqGrille(_maqActive);
-  // Afficher le chat uniquement en mode en ligne
-  const maqChat = document.getElementById('maq-chat');
-  if (maqChat) maqChat.style.display = enLigne ? 'block' : 'none';
-}
-
-function envoyerMessageMaquette() {
-  const input = document.getElementById('maq-chat-input');
-  if (!input) return;
-  const txt = input.value.trim();
-  if (!txt) return;
-  // Copier le texte dans le vrai champ de chat et envoyer
-  const chatInput = document.getElementById('chat-input');
-  if (chatInput) {
-    chatInput.value = txt;
-    input.value = '';
-    envoyerMessage();
-  } else {
-    input.value = '';
-    // Fallback direct Firebase
-    if (window._codePartie && window._firebase_db && window._firebase_ref && window._firebase_push) {
-      const nom = window._nomJoueur || 'Joueur';
-      window._firebase_push(
-        window._firebase_ref(window._firebase_db, 'parties/' + window._codePartie + '/chat'),
-        { joueur: nom, texte: txt, type: 'texte', ts: Date.now() }
-      );
-    }
-  }
 }
 
 function renderMaquetteTabs() {
@@ -3280,7 +3266,7 @@ function renderMaquetteTabs() {
   var row = document.getElementById('maq-cards-row');
   if (!row) return;
   row.innerHTML = '';
-  [1,2,3,4].forEach(function(n) {
+  [1,2,3,4,5].forEach(function(n) {
     var m = MAQUETTES[n];
     var themes = m.cases.filter(c => !c.free).slice(0,4).map(c => c.emoji + ' ' + c.th.split(' ')[0]).join('<br>');
     var card = document.createElement('div');
@@ -3644,59 +3630,6 @@ function onlineDemarrer() {
   openMaquette(true);
 }
 
-// ── Démarrage automatique depuis le lobby (URL params) ──
-document.addEventListener('DOMContentLoaded', function() {
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  const role   = params.get('role');
-  const pseudo = params.get('pseudo');
-  const adv    = params.get('adv');
-
-  if (!code || !role || !pseudo) return; // pas venu du lobby
-
-  // Nettoyer l'URL sans recharger
-  window.history.replaceState({}, '', 'jeu.html');
-
-  window._nomJoueur  = pseudo;
-  window._nomAdverse = adv || '';
-
-  // Attendre que Firebase soit prêt
-  let _tries = 0;
-  const _waitFirebase = setInterval(function() {
-    _tries++;
-    if (_tries > 50) { clearInterval(_waitFirebase); return; } // max 15s
-
-    if (role === 'createur' && window._creerPartieAvecCode) {
-      clearInterval(_waitFirebase);
-      _modeEnLigne = true;
-      _maqActive = 1; // Maquette par défaut
-      CASES = MAQUETTES[1].cases;
-      window._creerPartieAvecCode(code, pseudo);
-      fermerOnline();
-      // Aller directement à la sélection de maquette pour le créateur
-      openMaquette(true);
-
-    } else if (role === 'invite' && window.rejoindrePatie) {
-      clearInterval(_waitFirebase);
-      _modeEnLigne = true;
-      window._idAdverse = 'j1';
-      window.rejoindrePatie(code, pseudo);
-      fermerOnline();
-      openMaquette(true);
-      // Désactiver le bouton Jouer pour l'invité
-      setTimeout(function() {
-        const btn = document.getElementById('maq-btn-jouer');
-        if (btn) {
-          btn.textContent = '⏳ En attente du créateur...';
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
-        }
-      }, 500);
-    }
-  }, 300);
-});
-
 
 
 // ════════════════════════════════════════
@@ -4004,23 +3937,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     return code;
   };
 
-  // Créer une partie avec un code spécifique (venant du lobby)
-  window._creerPartieAvecCode = function(code, nom) {
-    set(pRef(code), {
-      code, etat: 'attente', maquette: null,
-      joueurs: { j1: { nom, score: 0 } },
-      tour: { joueurActif: 'j1', numero: 0, action: 'attente_theme', theme: null },
-      scores: { j1: 0 }, chat: {}, createdAt: Date.now()
-    });
-    window._codePartie = code;
-    window._idJoueur = 'j1';
-    window._estCreateur = true;
-    if (window.ecouterChat) window.ecouterChat(code);
-    // Afficher le code dans l'interface
-    const codeShow = document.getElementById('online-code-show');
-    if (codeShow) codeShow.textContent = code;
-  };
-
   window.rejoindrePatie = function(code, nom) {
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
@@ -4180,22 +4096,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       logEl.scrollTop = logEl.scrollHeight;
       if (!document.getElementById('chat-panel')?.classList.contains('open'))
         document.getElementById('chat-notif')?.classList.add('show');
-      // Mettre à jour aussi le chat maquette si visible
-      const maqLog = document.getElementById('maq-chat-log');
-      const maqChat = document.getElementById('maq-chat');
-      if (maqLog && maqChat && maqChat.style.display !== 'none' && msgs) {
-        maqLog.innerHTML = '';
-        Object.values(msgs).sort((a,b) => a.ts - b.ts).slice(-10).forEach(msg => {
-          if (msg.type !== 'texte') return;
-          const moi = msg.joueur === (window._nomJoueur || '');
-          const d = document.createElement('div');
-          d.className = 'chat-msg texte' + (moi ? ' moi' : '');
-          d.innerHTML = '<div class="chat-who">' + msg.joueur + '</div><div>' +
-            (msg.texte||'').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
-          maqLog.appendChild(d);
-        });
-        maqLog.scrollTop = maqLog.scrollHeight;
-      }
     });
   };
 
@@ -4269,7 +4169,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 
 function retourAccueil() {
   stopBgMusic();
-  window.location.href = 'index.html';
+  window.location.href = window.location.pathname;
 }
 
 function retourMaquette() {
