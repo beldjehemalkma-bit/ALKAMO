@@ -213,7 +213,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5
   <div class="dico-stats" id="dico-stats">
     <div class="dico-stat"><div class="dico-stat-n">5</div><div class="dico-stat-l">Maquettes</div></div>
     <div class="dico-stat"><div class="dico-stat-n">105</div><div class="dico-stat-l">Thèmes</div></div>
-    <div class="dico-stat"><div class="dico-stat-n">+79 023</div><div class="dico-stat-l">Mots français</div></div>
+    <div class="dico-stat"><div class="dico-stat-n" id="total-mots-dico">+79 023</div><div class="dico-stat-l">Mots français</div></div>
   </div>
 </div>
 
@@ -1524,5 +1524,39 @@ document.getElementById('search-univ').addEventListener('keydown', function(e) {
 });
 </script>
 
+<script>
+// Comptage dynamique depuis dictionnaire.json (structure par maquette/thème)
+fetch('dictionnaire.json')
+  .then(r => r.json())
+  .then(data => {
+    let total = 0;
+    if (Array.isArray(data)) {
+      total = data.length;
+    } else {
+      // Mettre à jour le total général
+      Object.values(data).forEach(themes => {
+        Object.values(themes).forEach(mots => { total += mots.length; });
+      });
+      // Mettre à jour chaque compteur de thème
+      Object.values(data).forEach(themes => {
+        Object.entries(themes).forEach(([theme, mots]) => {
+          // Chercher l'élément theme-count correspondant à ce thème
+          const themeEls = document.querySelectorAll('.theme-name');
+          themeEls.forEach(el => {
+            if (el.textContent.trim() === theme) {
+              const countEl = el.closest('.theme-header, .theme-head, .theme-card')
+                ?.querySelector('.theme-count');
+              if (countEl) countEl.textContent = mots.length + ' mots';
+            }
+          });
+        });
+      });
+    }
+    const fmt = '+' + total.toLocaleString('fr-FR');
+    const el = document.getElementById('total-mots-dico');
+    if (el) el.textContent = fmt;
+  })
+  .catch(() => {});
+</script>
 </body>
 </html>
