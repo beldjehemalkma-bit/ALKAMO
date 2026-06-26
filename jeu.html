@@ -2406,6 +2406,22 @@ function evalWordSync(word) {
       if (nm.endsWith('RICE') && words.some(w => norm(w) === nm.slice(0,-4) + 'EUR')) return true;
       // 8. Féminin en -IERE (CUISINIERE → CUISINIER)
       if (nm.endsWith('IERE') && words.some(w => norm(w) === nm.slice(0,-1))) return true;
+      // 9. Pluriel en -AUX → singulier en -AL (ANIMAUX → ANIMAL)
+      if (nm.endsWith('AUX') && words.some(w => norm(w) === nm.slice(0,-3) + 'AL')) return true;
+      // 10. Féminin en -EUSE → masculin en -EUX (CHANCEUSE → CHANCEUX)
+      if (nm.endsWith('EUSE') && words.some(w => norm(w) === nm.slice(0,-4) + 'EUX')) return true;
+      // 11. Féminin pluriel en -EUSES → masculin en -EUX (CHANCEUSES → CHANCEUX)
+      if (nm.endsWith('EUSES') && words.some(w => norm(w) === nm.slice(0,-5) + 'EUX')) return true;
+      // 12. Féminin en -TRICE → masculin en -TEUR (DIRECTRICE → DIRECTEUR)
+      if (nm.endsWith('TRICE') && words.some(w => norm(w) === nm.slice(0,-5) + 'TEUR')) return true;
+      // 13. Féminin en -IENNE → masculin en -IEN (ITALIENNE → ITALIEN)
+      if (nm.endsWith('IENNE') && words.some(w => norm(w) === nm.slice(0,-5) + 'IEN')) return true;
+      // 14. Féminin en -ONNE → masculin en -ON (CHAMPIONNE → CHAMPION)
+      if (nm.endsWith('ONNE') && words.some(w => norm(w) === nm.slice(0,-4) + 'ON')) return true;
+      // 15. Féminin pluriel en -IENNES → masculin en -IEN (ITALIENNES → ITALIEN)
+      if (nm.endsWith('IENNES') && words.some(w => norm(w) === nm.slice(0,-6) + 'IEN')) return true;
+      // 16. Pluriel en -AUX → singulier en -EAU (BATEAUX → BATEAU)
+      if (nm.endsWith('AUX') && words.some(w => norm(w) === nm.slice(0,-1))) return true;
       return false;
     }
     
