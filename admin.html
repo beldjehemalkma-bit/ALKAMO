@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALKAMO — Administration</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --purple: #7F77DD;
+  --emerald: #1D9E75;
+  --gold: #C8A020;
+  --dark: #1a1a2e;
+  --darker: #0f0f1e;
+  --text: #e8e8f0;
+  --muted: rgba(255,255,255,0.45);
+  --card: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --red: #e74c3c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--darker); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+/* LOGIN */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 20px;
+}
+.login-box {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 400px;
+  text-align: center;
+}
+.logo { font-size: 2rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 8px; }
+.logo span:nth-child(odd) { color: var(--purple); }
+.logo span:nth-child(even) { color: var(--emerald); }
+.login-title { color: var(--gold); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 32px; }
+.login-box input[type=password] {
+  width: 100%; padding: 14px 16px; border-radius: 10px;
+  background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+  color: var(--text); font-size: 1rem; text-align: center; letter-spacing: 4px;
+  margin-bottom: 16px; outline: none;
+  transition: border-color 0.2s;
+}
+.login-box input[type=password]:focus { border-color: var(--purple); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 28px; border-radius: 10px; font-size: 0.95rem; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.2s; width: 100%; }
+.btn-primary { background: linear-gradient(135deg, var(--purple), var(--emerald)); color: white; }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-danger { background: rgba(231,76,60,0.15); border: 1px solid var(--red); color: var(--red); }
+.btn-danger:hover { background: rgba(231,76,60,0.25); }
+.btn-gold { background: rgba(200,160,32,0.15); border: 1px solid var(--gold); color: var(--gold); }
+.btn-gold:hover { background: rgba(200,160,32,0.25); }
+.login-error { color: var(--red); font-size: 0.85rem; margin-top: 10px; min-height: 20px; }
+
+/* ADMIN PAGE */
+#admin-screen { display: none; }
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 64px;
+  background: rgba(10,8,24,0.95); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { font-size: 1.3rem; font-weight: 800; letter-spacing: 2px; }
+.nav-logo span:nth-child(odd) { color: var(--purple); }
+.nav-logo span:nth-child(even) { color: var(--emerald); }
+.nav-title { color: var(--gold); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+.nav-right { display: flex; gap: 12px; align-items: center; }
+.btn-sm { padding: 8px 16px; font-size: 0.82rem; border-radius: 8px; width: auto; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; margin-bottom: 32px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 12px 24px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  transition: all 0.2s; margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; margin-bottom: 20px;
+}
+.card-title {
+  font-size: 0.85rem; font-weight: 700; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-box { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+.stat-n { font-size: 1.8rem; font-weight: 800; color: var(--gold); }
+.stat-l { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+/* MAQUETTES */
+.maq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.maq-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.maq-name { font-weight: 700; font-size: 1rem; margin-bottom: 8px; }
+.maq-detail { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+.maq-count { font-size: 1.4rem; font-weight: 800; color: var(--gold); margin-top: 8px; }
+
+/* CONVERTISSEUR */
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 40px 24px; text-align: center; cursor: pointer;
+  transition: all 0.2s; position: relative; margin-bottom: 20px;
+}
+.drop-zone:hover, .drop-zone.active { border-color: var(--purple); background: rgba(127,119,221,0.05); }
+.drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.drop-text { color: var(--muted); font-size: 0.9rem; }
+.drop-text strong { color: var(--text); }
+
+/* THEMES TABLE */
+.theme-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.theme-table th { text-align: left; padding: 10px 14px; color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.theme-table td { padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.theme-table tr:hover td { background: rgba(255,255,255,0.03); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+.badge-purple { background: rgba(127,119,221,0.15); color: var(--purple); }
+.badge-emerald { background: rgba(29,158,117,0.15); color: var(--emerald); }
+.badge-gold { background: rgba(200,160,32,0.15); color: var(--gold); }
+.badge-red { background: rgba(231,76,60,0.15); color: var(--red); }
+
+/* DOUBLONS */
+.doublon-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.doublon-mot { font-weight: 700; color: var(--text); }
+.doublon-themes { font-size: 0.82rem; color: var(--muted); }
+
+/* MOT DE PASSE */
+.pwd-form { display: flex; flex-direction: column; gap: 14px; max-width: 360px; }
+.pwd-form label { font-size: 0.82rem; color: var(--muted); margin-bottom: 4px; display: block; }
+.pwd-form input { padding: 12px 14px; border-radius: 8px; background: rgba(255,255,255,0.07); border: 1px solid var(--border); color: var(--text); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+.pwd-form input:focus { border-color: var(--purple); }
+
+/* ALERT */
+.alert { padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; margin-top: 12px; }
+.alert-success { background: rgba(29,158,117,0.15); border: 1px solid var(--emerald); color: #5fdfb0; }
+.alert-error { background: rgba(231,76,60,0.15); border: 1px solid var(--red); color: #ff8080; }
+.alert-info { background: rgba(127,119,221,0.15); border: 1px solid var(--purple); color: #b0acff; }
+
+.hidden { display: none; }
+.loading { color: var(--muted); font-size: 0.9rem; padding: 20px; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN DE CONNEXION -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo"><span>A</span><span>L</span><span>K</span><span>A</span><span>M</span><span>O</span></div>
+    <div class="login-title">⚙️ Administration</div>
+    <input type="password" id="pwd-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter') login()">
+    <button class="btn btn-primary" onclick="login()">🔐 Accéder</button>
+    <div class="login-error" id="login-error"></div>
+    <p style="margin-top:24px;font-size:0.78rem;color:var(--muted)">
+      <a href="index.html" style="color:var(--purple);text-decoration:none">← Retour au site</a>
+    </p>
+  </div>
+</div>
+
+<!-- ÉCRAN ADMIN -->
+<div id="admin-screen">
+  <nav>
+    <div class="nav-logo"><span>A</span><span>L</span><span>K</span><span>A</span><span>M</span><span>O</span></div>
+    <div class="nav-title">⚙️ Panneau d'administration</div>
+    <div class="nav-right">
+      <a href="index.html" class="btn btn-gold btn-sm">← Site</a>
+      <button class="btn btn-danger btn-sm" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('stats')">📊 Statistiques</div>
+      <div class="tab" onclick="showTab('convertisseur')">🔄 Convertisseur</div>
+      <div class="tab" onclick="showTab('doublons')">🔍 Doublons</div>
+      <div class="tab" onclick="showTab('qualite')">✅ Contrôle qualité</div>
+      <div class="tab" onclick="showTab('parametres')">⚙️ Paramètres</div>
+    </div>
+
+    <!-- TAB STATS -->
+    <div id="tab-stats" class="tab-content active">
+      <div id="stats-loading" class="loading">⏳ Chargement des statistiques...</div>
+      <div id="stats-content" class="hidden">
+        <div class="stats-grid" id="stats-global"></div>
+        <div class="card">
+          <div class="card-title">📋 Détail par maquette</div>
+          <div class="maq-grid" id="maq-grid"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📝 Tous les thèmes</div>
+          <table class="theme-table">
+            <thead><tr><th>Maquette</th><th>Thème</th><th>Mots</th></tr></thead>
+            <tbody id="themes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB CONVERTISSEUR -->
+    <div id="tab-convertisseur" class="tab-content">
+      <div class="card">
+        <div class="card-title">📂 Importer le fichier Excel</div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".xlsx,.xls">
+          <div class="drop-icon">📂</div>
+          <div class="drop-text"><strong>Cliquez ou déposez</strong> votre fichier ALKAMO_dictionnaire.xlsx</div>
+        </div>
+        <div id="conv-alert"></div>
+      </div>
+      <div class="card hidden" id="conv-recap">
+        <div class="card-title">📊 Récapitulatif</div>
+        <div class="stats-grid" id="conv-stats"></div>
+        <div id="conv-maq"></div>
+      </div>
+      <div class="card hidden" id="conv-download">
+        <div class="card-title">⬇️ Télécharger</div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px">
+          Le fichier est prêt. Téléchargez-le et uploadez-le sur GitHub.
+        </p>
+        <button class="btn btn-primary" onclick="downloadJSON()">⬇️ Télécharger dictionnaire.json</button>
+        <div id="dl-alert"></div>
+      </div>
+    </div>
+
+    <!-- TAB DOUBLONS -->
+    <div id="tab-doublons" class="tab-content">
+      <div class="card">
+        <div class="card-title">🔍 Mots présents dans plusieurs thèmes</div>
+        <div id="doublons-loading" class="loading">⏳ Analyse en cours...</div>
+        <div id="doublons-content" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- TAB QUALITE -->
+    <div id="tab-qualite" class="tab-content">
+      <div class="card">
+        <div class="card-title">✅ Mots suspects</div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px">
+          Mots trop courts (≤2 lettres), avec chiffres, ou avec caractères non-français.
+        </p>
+        <div id="qualite-loading" class="loading">⏳ Analyse en cours...</div>
+        <div id="qualite-content" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- TAB PARAMETRES -->
+    <div id="tab-parametres" class="tab-content">
+      <div class="card">
+        <div class="card-title">🔑 Changer le mot de passe</div>
+        <div class="pwd-form">
+          <div>
+            <label>Mot de passe actuel</label>
+            <input type="password" id="pwd-actuel" placeholder="••••••••">
+          </div>
+          <div>
+            <label>Nouveau mot de passe</label>
+            <input type="password" id="pwd-nouveau" placeholder="••••••••">
+          </div>
+          <div>
+            <label>Confirmer le nouveau mot de passe</label>
+            <input type="password" id="pwd-confirm" placeholder="••••••••">
+          </div>
+          <button class="btn btn-primary" onclick="changerPwd()" style="margin-top:4px">💾 Enregistrer</button>
+          <div id="pwd-alert"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// MOT DE PASSE
+// ═══════════════════════════════════════════
+const DEFAULT_PWD = 'collo51';
+function getPwd() { return localStorage.getItem('alkamo_admin_pwd') || DEFAULT_PWD; }
+
+function login() {
+  const val = document.getElementById('pwd-input').value;
+  if (val === getPwd()) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('login-error').textContent = '❌ Mot de passe incorrect';
+    document.getElementById('pwd-input').value = '';
+  }
+}
+
+function logout() {
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+function changerPwd() {
+  const actuel = document.getElementById('pwd-actuel').value;
+  const nouveau = document.getElementById('pwd-nouveau').value;
+  const confirm = document.getElementById('pwd-confirm').value;
+  const alertEl = document.getElementById('pwd-alert');
+  if (actuel !== getPwd()) {
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Mot de passe actuel incorrect</div>'; return;
+  }
+  if (nouveau.length < 4) {
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Nouveau mot de passe trop court (min. 4 caractères)</div>'; return;
+  }
+  if (nouveau !== confirm) {
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Les mots de passe ne correspondent pas</div>'; return;
+  }
+  localStorage.setItem('alkamo_admin_pwd', nouveau);
+  document.getElementById('pwd-actuel').value = '';
+  document.getElementById('pwd-nouveau').value = '';
+  document.getElementById('pwd-confirm').value = '';
+  alertEl.innerHTML = '<div class="alert alert-success">✅ Mot de passe modifié avec succès</div>';
+}
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const tabs = ['stats','convertisseur','doublons','qualite','parametres'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// CHARGEMENT DICO
+// ═══════════════════════════════════════════
+let dicoData = null;
+const MAQUETTE_COLORS = { M1: '#7F77DD', M2: '#1D9E75', M3: '#C8A020', M4: '#E05050', M5: '#888' };
+
+function initAdmin() {
+  fetch('dictionnaire.json')
+    .then(r => r.json())
+    .then(data => {
+      dicoData = data;
+      afficherStats(data);
+      analyserDoublons(data);
+      analyserQualite(data);
+    })
+    .catch(() => {
+      document.getElementById('stats-loading').textContent = '❌ Impossible de charger dictionnaire.json';
+    });
+}
+
+function afficherStats(data) {
+  let totalMots = 0, totalThemes = 0;
+  const maquettes = {};
+  for (const [maq, themes] of Object.entries(data)) {
+    const t = Object.values(themes).reduce((a, m) => a + m.length, 0);
+    totalMots += t;
+    totalThemes += Object.keys(themes).length;
+    maquettes[maq] = { total: t, themes: Object.keys(themes).length, detail: themes };
+  }
+
+  document.getElementById('stats-global').innerHTML = `
+    <div class="stat-box"><div class="stat-n">5</div><div class="stat-l">Maquettes</div></div>
+    <div class="stat-box"><div class="stat-n">${totalThemes}</div><div class="stat-l">Thèmes</div></div>
+    <div class="stat-box"><div class="stat-n">${totalMots.toLocaleString('fr-FR')}</div><div class="stat-l">Mots total</div></div>
+  `;
+
+  document.getElementById('maq-grid').innerHTML = Object.entries(maquettes).map(([maq, d]) => `
+    <div class="maq-card">
+      <div class="maq-name" style="color:${MAQUETTE_COLORS[maq]}">${maq}</div>
+      <div class="maq-detail">${d.themes} thèmes</div>
+      <div class="maq-count">${d.total.toLocaleString('fr-FR')}</div>
+    </div>
+  `).join('');
+
+  let rows = '';
+  for (const [maq, themes] of Object.entries(data)) {
+    for (const [theme, mots] of Object.entries(themes)) {
+      rows += `<tr>
+        <td><span class="badge badge-purple">${maq}</span></td>
+        <td>${theme}</td>
+        <td><strong>${mots.length}</strong></td>
+      </tr>`;
+    }
+  }
+  document.getElementById('themes-tbody').innerHTML = rows;
+  document.getElementById('stats-loading').classList.add('hidden');
+  document.getElementById('stats-content').classList.remove('hidden');
+}
+
+function analyserDoublons(data) {
+  const motThemes = {};
+  for (const [maq, themes] of Object.entries(data)) {
+    for (const [theme, mots] of Object.entries(themes)) {
+      for (const mot of mots) {
+        if (!motThemes[mot]) motThemes[mot] = [];
+        motThemes[mot].push(`${maq}/${theme}`);
+      }
+    }
+  }
+  const doublons = Object.entries(motThemes).filter(([,t]) => t.length > 1).sort((a,b) => b[1].length - a[1].length);
+  const el = document.getElementById('doublons-content');
+  if (doublons.length === 0) {
+    el.innerHTML = '<div class="alert alert-success">✅ Aucun doublon détecté</div>';
+  } else {
+    el.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">${doublons.length} mots présents dans plusieurs thèmes :</p>` +
+      doublons.slice(0, 100).map(([mot, themes]) => `
+        <div class="doublon-item">
+          <span class="doublon-mot">${mot}</span>
+          <span class="doublon-themes">${themes.join(' · ')}</span>
+          <span class="badge badge-gold">${themes.length}×</span>
+        </div>
+      `).join('') +
+      (doublons.length > 100 ? `<p style="color:var(--muted);text-align:center;margin-top:12px;font-size:0.85rem">... et ${doublons.length - 100} autres</p>` : '');
+  }
+  document.getElementById('doublons-loading').classList.add('hidden');
+  el.classList.remove('hidden');
+}
+
+function analyserQualite(data) {
+  const suspects = [];
+  const lettreFr = /^[A-ZÀÂÄÉÈÊËÎÏÔÙÛÜÇŒÆ\-']+$/;
+  for (const [maq, themes] of Object.entries(data)) {
+    for (const [theme, mots] of Object.entries(themes)) {
+      for (const mot of mots) {
+        const raisons = [];
+        if (mot.length <= 2) raisons.push('trop court');
+        if (/\d/.test(mot)) raisons.push('contient un chiffre');
+        if (!lettreFr.test(mot)) raisons.push('caractère non-français');
+        if (mot.length > 10) raisons.push('plus de 10 lettres');
+        if (raisons.length > 0) suspects.push({ mot, maq, theme, raisons });
+      }
+    }
+  }
+  const el = document.getElementById('qualite-content');
+  if (suspects.length === 0) {
+    el.innerHTML = '<div class="alert alert-success">✅ Aucun mot suspect détecté</div>';
+  } else {
+    el.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px">${suspects.length} mots suspects :</p>
+    <table class="theme-table">
+      <thead><tr><th>Mot</th><th>Maquette</th><th>Thème</th><th>Raison</th></tr></thead>
+      <tbody>` +
+      suspects.map(s => `<tr>
+        <td><strong>${s.mot}</strong></td>
+        <td><span class="badge badge-purple">${s.maq}</span></td>
+        <td>${s.theme}</td>
+        <td>${s.raisons.map(r => `<span class="badge badge-red">${r}</span>`).join(' ')}</td>
+      </tr>`).join('') +
+      '</tbody></table>';
+  }
+  document.getElementById('qualite-loading').classList.add('hidden');
+  el.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════
+// CONVERTISSEUR EXCEL → JSON
+// ═══════════════════════════════════════════
+const STRUCTURE = {
+  M1: ['VÊTEMENT','CHASSE ET PECHE','LANGUE','MAMMIFÈRE','TRANSPORT','ÉCONOMIE','SPORT','RELIGION','ÉCOLE','OUTIL ET MÉTIER','POLITIQUE','MUSIQUE','MINÉRAL','MESURE ET INSTRUMENT','ARTISANAT','FRUIT','ARBRE','MÉDECINE','BÂTIMENT','PHYSIQUE'],
+  M2: ['MARINE','CHIMIE','COUTURE','GRAMMAIRE','FLEUR','INDUSTRIE','MÉTIER','ANIMAL','CUISINE','INSTITUTION','OUTIL','PÉDAGOGIE','JEU','ART ET MUSIQUE','ASTRONOMIE','ALIMENT','BOTANIQUE','ÉNERGIE','PUISSANCE','ANATOMIE'],
+  M3: ['JEU ET SPORT','TEMPS ET MÉTÉO','INFORMATIQUE','MATHÉMATIQUES','AGRICULTURE','ART','NAVIGATION','FAUNE ET FLORE','GUERRE','ADMINISTRATION','FAMILLE','PHYSIQUE ET CHIMIE','PAYS ET CAPITALES','MÉDECINE ET ANATOMIE','COMMERCE','DROIT ET JUSTICE','LITTÉRATURE','TOURISME','URBANISME','MER ET OCÉAN'],
+  M4: ['CONCEPT ET IDÉE','ÉMOTION','COULEUR','PHYSIQUE','CUISINE ET GASTRO','CORPS HUMAIN','CULTURE','ARCHÉOLOGIE','INSECTE ET REPTILE','HISTOIRE','LITTÉRATURE','CÉLÉBRITÉ','BRAVOURE','TECHNOLOGIE','MÉTÉO ET CLIMAT','ARCHITECTURE','DÉCORATION','MONTAGNE ET DÉSERT','POISSON ET MER','MARKETING'],
+  M5: ['ARCHITECTURE','ART','HISTOIRE','ASTRONOMIE','MÉDECINE','COMMUNICATION','THÉÂTRE','ÉCONOMIE','DROIT','RELIGION','CONCEPT ET IDÉE','INDUSTRIE','HUMANITÉ','TOURISME','CULINAIRE','NAVIGATION','LITTÉRATURE','COMMERCE','SPORT','URBANISME','MILITAIRE','ÉNERGIE','AGRONOMIE','TEXTILE','DIPLOMATIE']
+};
+
+let convJsonData = null;
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('active'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function showAlert(id, msg, type) {
+  document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.match(/\.xlsx?$/i)) { showAlert('conv-alert', '❌ Format non supporté. Utilisez un fichier .xlsx', 'error'); return; }
+  showAlert('conv-alert', '⏳ Lecture en cours...', 'info');
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const result = {};
+      let totalMots = 0;
+      for (const [maq, themes] of Object.entries(STRUCTURE)) {
+        const ws = wb.Sheets[maq + '_mots'];
+        if (!ws) { showAlert('conv-alert', `❌ Feuille "${maq}_mots" introuvable`, 'error'); return; }
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        result[maq] = {};
+        themes.forEach((theme, colIdx) => {
+          const mots = [];
+          for (let r = 2; r < rows.length; r++) {
+            const val = rows[r][colIdx];
+            if (val && typeof val === 'string' && val.trim()) mots.push(val.trim().toUpperCase());
+          }
+          result[maq][theme] = mots;
+          totalMots += mots.length;
+        });
+      }
+      convJsonData = result;
+      showAlert('conv-alert', `✅ Fichier lu — ${totalMots.toLocaleString('fr-FR')} mots`, 'success');
+      afficherConvRecap(result, totalMots);
+    } catch(err) { showAlert('conv-alert', '❌ Erreur : ' + err.message, 'error'); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function afficherConvRecap(data, totalMots) {
+  const nb = Object.keys(data).length;
+  const nbT = Object.values(data).reduce((a,t) => a + Object.keys(t).length, 0);
+  document.getElementById('conv-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-n">${nb}</div><div class="stat-l">Maquettes</div></div>
+    <div class="stat-box"><div class="stat-n">${nbT}</div><div class="stat-l">Thèmes</div></div>
+    <div class="stat-box"><div class="stat-n">${totalMots.toLocaleString('fr-FR')}</div><div class="stat-l">Mots</div></div>
+  `;
+  document.getElementById('conv-maq').innerHTML = Object.entries(data).map(([maq, themes]) => {
+    const t = Object.values(themes).reduce((a,m) => a + m.length, 0);
+    return `<div class="doublon-item">
+      <span class="doublon-mot" style="color:${MAQUETTE_COLORS[maq]}">${maq}</span>
+      <span class="doublon-themes">${Object.keys(themes).length} thèmes</span>
+      <span class="badge badge-gold">${t.toLocaleString('fr-FR')} mots</span>
+    </div>`;
+  }).join('');
+  document.getElementById('conv-recap').classList.remove('hidden');
+  document.getElementById('conv-download').classList.remove('hidden');
+}
+
+function downloadJSON() {
+  if (!convJsonData) return;
+  const blob = new Blob([JSON.stringify(convJsonData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'dictionnaire.json'; a.click();
+  URL.revokeObjectURL(url);
+  showAlert('dl-alert', '✅ dictionnaire.json téléchargé ! Uploadez-le sur GitHub.', 'success');
+}
+</script>
+</body>
+</html>
