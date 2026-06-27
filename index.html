@@ -1159,8 +1159,9 @@ fetch('dictionnaire.json')
     if (el1) el1.textContent = fmt;
     if (el2) el2.textContent = fmt;
     if (el3) el3.textContent = fmt;
+    console.log('Dictionnaire chargé:', total, 'mots');
   })
-  .catch(() => {});
+  .catch(e => console.error('Erreur chargement dictionnaire.json:', e));
 </script>
 </body>
 </html>
