@@ -587,7 +587,7 @@ footer span { color:var(--gl); }
     <li><a href="dictionnaire.html">📚 Dictionnaire</a></li>
     <li><a href="guide.html">📖 Guide</a></li>
   </ul>
-  <a href="jeu.html" class="nav-cta" id="nav-play-btn" onclick="return checkAuth(event)">🎮 Jouer</a>
+  <a href="admin.html" style="background:rgba(200,160,32,0.12);border:1px solid rgba(200,160,32,0.35);color:#C8A020;padding:8px 14px;border-radius:8px;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-decoration:none;margin-right:8px">⚙️ ADMIN</a><a href="jeu.html" class="nav-cta" id="nav-play-btn" onclick="return checkAuth(event)">🎮 Jouer</a>
   <div class="nav-user" id="nav-user" style="display:none">
     <div class="nav-user-dot"></div>
     <span id="nav-pseudo">—</span>
@@ -626,7 +626,7 @@ footer span { color:var(--gl); }
       <div class="stat-l">Thèmes</div>
     </div>
     <div class="stat-badge">
-      <div class="stat-n" id="total-mots-stat">+79 023</div>
+      <div class="stat-n">+79 023</div>
       <div class="stat-l">Mots acceptés</div>
     </div>
     <div class="stat-badge">
@@ -666,7 +666,7 @@ footer span { color:var(--gl); }
     <div class="feat-card">
       <div class="feat-icon" style="background:rgba(83,74,183,.2)">📚</div>
       <h3>Dictionnaire intégré</h3>
-      <p>Un dictionnaire de <span id="total-mots-p1">+79 023</span> mots intégré directement dans le jeu — consultez, vérifiez, apprenez !</p>
+      <p>Un dictionnaire de +79 023 mots intégré directement dans le jeu — consultez, vérifiez, apprenez !</p>
     </div>
     <div class="feat-card">
       <div class="feat-icon" style="background:rgba(29,158,117,.2)">⏱️</div>
@@ -725,7 +725,7 @@ footer span { color:var(--gl); }
     <div class="gal-item" style="background:rgba(200,160,32,.08)">
       <div class="gal-placeholder">
         <span>📚</span>
-        <p>Le dictionnaire intégré<br><span id="total-mots-p2">+79 023</span> mots français</p>
+        <p>Le dictionnaire intégré<br>+79 023 mots français</p>
       </div>
     </div>
     <!-- Score -->
@@ -1139,29 +1139,5 @@ window.refuserInvitation = function() {
 };
 </script>
 
-<script>
-// Comptage dynamique depuis dictionnaire.json (structure par maquette/thème)
-fetch('dictionnaire.json')
-  .then(r => r.json())
-  .then(data => {
-    let total = 0;
-    if (Array.isArray(data)) {
-      total = data.length;
-    } else {
-      Object.values(data).forEach(themes => {
-        Object.values(themes).forEach(mots => { total += mots.length; });
-      });
-    }
-    const fmt = '+' + total.toLocaleString('fr-FR');
-    const el1 = document.getElementById('total-mots-stat');
-    const el2 = document.getElementById('total-mots-p1');
-    const el3 = document.getElementById('total-mots-p2');
-    if (el1) el1.textContent = fmt;
-    if (el2) el2.textContent = fmt;
-    if (el3) el3.textContent = fmt;
-    console.log('Dictionnaire chargé:', total, 'mots');
-  })
-  .catch(e => console.error('Erreur chargement dictionnaire.json:', e));
-</script>
 </body>
 </html>
