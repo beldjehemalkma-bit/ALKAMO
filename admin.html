@@ -150,6 +150,26 @@ nav {
 
 .hidden { display: none; }
 .loading { color: var(--muted); font-size: 0.9rem; padding: 20px; text-align: center; }
+
+/* STATS - Style dictionnaire */
+.maq-tabs-admin{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.maq-tab-admin{padding:10px 22px;border-radius:50px;border:2px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);
+  cursor:pointer;font-weight:600;font-size:.88rem;transition:all .2s}
+.maq-tab-admin:hover{border-color:rgba(200,160,32,.4);color:#C8A020}
+.maq-tab-admin.active{color:#fff;border-color:currentColor}
+.maq-section-admin{display:none}
+.maq-section-admin.active{display:block}
+.themes-grid-admin{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.theme-card-admin{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;overflow:hidden;transition:all .2s}
+.theme-card-admin:hover{transform:translateY(-2px);border-color:rgba(200,160,32,.2)}
+.theme-head-admin{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:10px}
+.theme-name-admin{font-weight:800;font-size:.88rem}
+.theme-count-admin{font-size:.75rem;color:rgba(255,255,255,.4);white-space:nowrap}
+.maq-total-admin{text-align:right;color:rgba(255,255,255,.3);font-size:.82rem;margin-top:12px}
+.maq-total-admin strong{color:#C8A020}
+@media(max-width:640px){.themes-grid-admin{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -195,15 +215,9 @@ nav {
       <div id="stats-content" class="hidden">
         <div class="stats-grid" id="stats-global"></div>
         <div class="card">
-          <div class="card-title">📋 Détail par maquette</div>
-          <div class="maq-grid" id="maq-grid"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">📝 Tous les thèmes</div>
-          <table class="theme-table">
-            <thead><tr><th>Maquette</th><th>Thème</th><th>Mots</th></tr></thead>
-            <tbody id="themes-tbody"></tbody>
-          </table>
+          <div class="card-title">📋 Thèmes par maquette</div>
+          <div class="maq-tabs-admin" id="maq-tabs-admin"></div>
+          <div id="maq-sections-admin"></div>
         </div>
       </div>
     </div>
@@ -358,14 +372,24 @@ function initAdmin() {
     });
 }
 
+// Couleurs des thèmes par maquette (même palette que dictionnaire.html)
+const THEME_COLORS = [
+  '#FF6B6B','#4ECDC4','#FFD93D','#6C5CE7','#FF9F43',
+  '#A29BFE','#55EFC4','#FD79A8','#74B9FF','#81ECEC',
+  '#FDCB6E','#E17055','#00B894','#0984E3','#6D4C41',
+  '#26C6DA','#AB47BC','#66BB6A','#EF5350','#42A5F5'
+];
+
+const MAQ_LABELS = {
+  M1: '🎯 Maquette N°1', M2: '🌟 Maquette N°2',
+  M3: '🏆 Maquette N°3', M4: '💫 Maquette N°4', M5: '🎓 Maquette Expert'
+};
+
 function afficherStats(data) {
   let totalMots = 0, totalThemes = 0;
-  const maquettes = {};
-  for (const [maq, themes] of Object.entries(data)) {
-    const t = Object.values(themes).reduce((a, m) => a + m.length, 0);
-    totalMots += t;
+  for (const themes of Object.values(data)) {
+    totalMots += Object.values(themes).reduce((a, m) => a + m.length, 0);
     totalThemes += Object.keys(themes).length;
-    maquettes[maq] = { total: t, themes: Object.keys(themes).length, detail: themes };
   }
 
   document.getElementById('stats-global').innerHTML = `
@@ -374,27 +398,56 @@ function afficherStats(data) {
     <div class="stat-box"><div class="stat-n">${totalMots.toLocaleString('fr-FR')}</div><div class="stat-l">Mots total</div></div>
   `;
 
-  document.getElementById('maq-grid').innerHTML = Object.entries(maquettes).map(([maq, d]) => `
-    <div class="maq-card">
-      <div class="maq-name" style="color:${MAQUETTE_COLORS[maq]}">${maq}</div>
-      <div class="maq-detail">${d.themes} thèmes</div>
-      <div class="maq-count">${d.total.toLocaleString('fr-FR')}</div>
-    </div>
-  `).join('');
+  // Tabs maquettes
+  const tabsEl = document.getElementById('maq-tabs-admin');
+  const sectionsEl = document.getElementById('maq-sections-admin');
+  tabsEl.innerHTML = '';
+  sectionsEl.innerHTML = '';
 
-  let rows = '';
-  for (const [maq, themes] of Object.entries(data)) {
-    for (const [theme, mots] of Object.entries(themes)) {
-      rows += `<tr>
-        <td><span class="badge badge-purple">${maq}</span></td>
-        <td>${theme}</td>
-        <td><strong>${mots.length}</strong></td>
-      </tr>`;
-    }
-  }
-  document.getElementById('themes-tbody').innerHTML = rows;
+  Object.entries(data).forEach(([maq, themes], maqIdx) => {
+    const color = MAQUETTE_COLORS[maq];
+    const label = MAQ_LABELS[maq];
+    const totalMaq = Object.values(themes).reduce((a, m) => a + m.length, 0);
+
+    // Tab
+    const tab = document.createElement('button');
+    tab.className = 'maq-tab-admin' + (maqIdx === 0 ? ' active' : '');
+    tab.style.cssText = maqIdx === 0 ? `color:${color};border-color:${color}` : '';
+    tab.textContent = label;
+    tab.onclick = () => showMaqAdmin(maq, color, tab);
+    tabsEl.appendChild(tab);
+
+    // Section
+    const section = document.createElement('div');
+    section.id = 'maq-section-' + maq;
+    section.className = 'maq-section-admin' + (maqIdx === 0 ? ' active' : '');
+
+    const cards = Object.entries(themes).map(([theme, mots], i) => `
+      <div class="theme-card-admin">
+        <div class="theme-head-admin">
+          <div class="theme-name-admin" style="color:${THEME_COLORS[i % THEME_COLORS.length]}">${theme}</div>
+          <div class="theme-count-admin">${mots.length} mots</div>
+        </div>
+      </div>
+    `).join('');
+
+    section.innerHTML = `
+      <div class="themes-grid-admin">${cards}</div>
+      <div class="maq-total-admin">${Object.keys(themes).length} thèmes · Total : <strong>${totalMaq.toLocaleString('fr-FR')} mots</strong></div>
+    `;
+    sectionsEl.appendChild(section);
+  });
+
   document.getElementById('stats-loading').classList.add('hidden');
   document.getElementById('stats-content').classList.remove('hidden');
+}
+
+function showMaqAdmin(maq, color, clickedTab) {
+  document.querySelectorAll('.maq-tab-admin').forEach(t => { t.classList.remove('active'); t.style.cssText = ''; });
+  document.querySelectorAll('.maq-section-admin').forEach(s => s.classList.remove('active'));
+  clickedTab.classList.add('active');
+  clickedTab.style.cssText = `color:${color};border-color:${color}`;
+  document.getElementById('maq-section-' + maq).classList.add('active');
 }
 
 function analyserDoublons(data) {
