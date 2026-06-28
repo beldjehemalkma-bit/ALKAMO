@@ -1525,27 +1525,25 @@ document.getElementById('search-univ').addEventListener('keydown', function(e) {
 </script>
 
 <script>
-// Comptage dynamique depuis dictionnaire_themes.json
+// Comptage dynamique depuis dictionnaire.json (source unique de vérité)
 function normTheme(s) {
   return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 }
-fetch('dictionnaire_themes.json')
+fetch('dictionnaire.json')
   .then(r => r.json())
   .then(data => {
-    // Construire map normalisé → count (somme sur toutes maquettes)
     const themeMap = {};
     let total = 0;
+    // Calculer total brut et max par thème pour les compteurs
     Object.values(data).forEach(themes => {
       Object.entries(themes).forEach(([theme, mots]) => {
+        total += mots.length;
         const key = normTheme(theme);
-        // Prendre le max si thème apparaît dans plusieurs maquettes
         if (!themeMap[key] || mots.length > themeMap[key]) {
           themeMap[key] = mots.length;
         }
       });
     });
-    // Total = somme des mots uniques par thème (max par thème)
-    Object.values(themeMap).forEach(n => total += n);
     // Mettre à jour chaque compteur de thème
     document.querySelectorAll('.theme-name').forEach(el => {
       const key = normTheme(el.textContent);
