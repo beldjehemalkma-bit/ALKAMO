@@ -1526,6 +1526,9 @@ document.getElementById('search-univ').addEventListener('keydown', function(e) {
 
 <script>
 // Comptage dynamique depuis dictionnaire.json (structure par maquette/thème)
+function norm(s) {
+  return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+}
 fetch('dictionnaire.json')
   .then(r => r.json())
   .then(data => {
@@ -1533,23 +1536,22 @@ fetch('dictionnaire.json')
     if (Array.isArray(data)) {
       total = data.length;
     } else {
-      // Mettre à jour le total général
-      Object.values(data).forEach(themes => {
-        Object.values(themes).forEach(mots => { total += mots.length; });
-      });
-      // Mettre à jour chaque compteur de thème
+      // Calculer total et construire map normalisé → count
+      const themeMap = {};
       Object.values(data).forEach(themes => {
         Object.entries(themes).forEach(([theme, mots]) => {
-          // Chercher l'élément theme-count correspondant à ce thème
-          const themeEls = document.querySelectorAll('.theme-name');
-          themeEls.forEach(el => {
-            if (el.textContent.trim() === theme) {
-              const countEl = el.closest('.theme-header, .theme-head, .theme-card')
-                ?.querySelector('.theme-count');
-              if (countEl) countEl.textContent = mots.length + ' mots';
-            }
-          });
+          total += mots.length;
+          themeMap[norm(theme)] = mots.length;
         });
+      });
+      // Mettre à jour chaque compteur de thème avec correspondance normalisée
+      document.querySelectorAll('.theme-name').forEach(el => {
+        const key = norm(el.textContent);
+        if (themeMap[key] !== undefined) {
+          const countEl = el.parentElement?.querySelector('.theme-count')
+            || el.closest('.theme-head, .theme-card')?.querySelector('.theme-count');
+          if (countEl) countEl.textContent = themeMap[key] + ' mots';
+        }
       });
     }
     const fmt = '+' + total.toLocaleString('fr-FR');
