@@ -1525,35 +1525,37 @@ document.getElementById('search-univ').addEventListener('keydown', function(e) {
 </script>
 
 <script>
-// Comptage dynamique depuis dictionnaire.json (structure par maquette/thème)
-function norm(s) {
+// Comptage dynamique depuis dictionnaire_themes.json
+function normTheme(s) {
   return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 }
-fetch('dictionnaire.json')
+fetch('dictionnaire_themes.json')
   .then(r => r.json())
   .then(data => {
+    // Construire map normalisé → count (somme sur toutes maquettes)
+    const themeMap = {};
     let total = 0;
-    if (Array.isArray(data)) {
-      total = data.length;
-    } else {
-      // Calculer total et construire map normalisé → count
-      const themeMap = {};
-      Object.values(data).forEach(themes => {
-        Object.entries(themes).forEach(([theme, mots]) => {
-          total += mots.length;
-          themeMap[norm(theme)] = mots.length;
-        });
-      });
-      // Mettre à jour chaque compteur de thème avec correspondance normalisée
-      document.querySelectorAll('.theme-name').forEach(el => {
-        const key = norm(el.textContent);
-        if (themeMap[key] !== undefined) {
-          const countEl = el.parentElement?.querySelector('.theme-count')
-            || el.closest('.theme-head, .theme-card')?.querySelector('.theme-count');
-          if (countEl) countEl.textContent = themeMap[key] + ' mots';
+    Object.values(data).forEach(themes => {
+      Object.entries(themes).forEach(([theme, mots]) => {
+        const key = normTheme(theme);
+        // Prendre le max si thème apparaît dans plusieurs maquettes
+        if (!themeMap[key] || mots.length > themeMap[key]) {
+          themeMap[key] = mots.length;
         }
       });
-    }
+    });
+    // Total = somme des mots uniques par thème (max par thème)
+    Object.values(themeMap).forEach(n => total += n);
+    // Mettre à jour chaque compteur de thème
+    document.querySelectorAll('.theme-name').forEach(el => {
+      const key = normTheme(el.textContent);
+      if (themeMap[key] !== undefined) {
+        const countEl = el.parentElement?.querySelector('.theme-count')
+          || el.closest('.theme-head, .theme-card')?.querySelector('.theme-count');
+        if (countEl) countEl.textContent = themeMap[key] + ' mots';
+      }
+    });
+    // Mettre à jour le total global
     const fmt = '+' + total.toLocaleString('fr-FR');
     const el = document.getElementById('total-mots-dico');
     if (el) el.textContent = fmt;
