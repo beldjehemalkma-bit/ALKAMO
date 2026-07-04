@@ -1626,8 +1626,9 @@ const DICO_FR = new Set(['ABLE','ABRI','ABSENT','ABSOLU','ABUS','ACCORD','ACHAT'
 function inDico(w) {
   const n = norm(w);
   const wUpper = w.toUpperCase();
-  // 1. Chercher exact dans DICO_LIBRE
+  // 1. Chercher exact dans DICO_LIBRE (avec ou sans accents)
   if (DICO_LIBRE.has(wUpper)) return true;
+  if ([...DICO_LIBRE].some(m => norm(m) === n)) return true;
   // 2. Recherche sans accents dans DICO_LIBRE + formes flexionnelles
   const ns = n.endsWith('S') ? n.slice(0,-1) : n + 'S';
   const ne = n.endsWith('E') ? n.slice(0,-1) : n + 'E';
