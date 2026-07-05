@@ -1071,6 +1071,19 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   </div>
 </div>
 
+
+<!-- Modal Défi adversaire -->
+<div class="ov" id="m-defi">
+  <div class="modal">
+    <h2 id="defi-titre">🤔 Mot non reconnu</h2>
+    <p id="defi-msg"></p>
+    <div class="mbtns">
+      <button class="btn btn-out" onclick="defiRefuser()">❌ Refuser</button>
+      <button class="btn btn-p" onclick="defiAccepter()">✅ Accepter</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Joker -->
 <div class="ov" id="m-joker">
   <div class="modal">
@@ -2523,10 +2536,8 @@ function confirmerMot() {
       if (valide) {
         _confirmerMotFinalize(word, pIdx);
       } else {
-        snd('err');
-        log('❌ "' + word + '" absent du dictionnaire', 'bad');
-        G.word = []; G.changeSel = []; G.changeMode = false;
-        renderAll();
+        // Mot non reconnu → proposer défi à l'adversaire
+        ouvrirDefi(word, pIdx);
       }
     });
     return;
@@ -2547,8 +2558,9 @@ function _confirmerMotFinalize(word, pIdx) {
     setTimeout(() => sndDeal(newL.length), 300);
     showFloat('+' + ev.score); snd('ok');
   } else {
-    // Mot rejeté : les lettres restent dans le chevalet
-    snd('err');
+    // Mot rejeté → proposer défi à l'adversaire
+    ouvrirDefi(word, pIdx);
+    return;
   }
   G.word = []; G.changeSel = []; G.changeMode = false;
   renderAll(); // forcer le rafraîchissement des scores
@@ -4346,6 +4358,39 @@ document.addEventListener('DOMContentLoaded', function() {
     try { snd('win'); } catch(e) {}
   });
 });
+
+// ─── Défi adversaire ─────────────────────────────────────────
+function ouvrirDefi(word, pIdx) {
+  G._defiWord = word;
+  G._defiPIdx = pIdx;
+  const adversaire = G.players.find((p, i) => i !== pIdx);
+  const nomAdv = adversaire ? adversaire.name : 'l\'adversaire';
+  document.getElementById('defi-titre').textContent = '🤔 Mot non reconnu';
+  document.getElementById('defi-msg').innerHTML =
+    '<strong style="color:var(--gold-light)">"' + word + '"</strong> n\'est pas dans le dictionnaire.<br><br>' +
+    '<span style="color:rgba(255,255,255,.8)">' + nomAdv + ', acceptez-vous ce mot ?</span>';
+  snd('err');
+  openModal('m-defi');
+}
+
+function defiAccepter() {
+  closeModal('m-defi');
+  const word = G._defiWord;
+  const pIdx = G._defiPIdx;
+  log('✅ "' + word + '" accepté par l\'adversaire !', 'ok');
+  _confirmerMotFinalize(word, pIdx);
+}
+
+function defiRefuser() {
+  closeModal('m-defi');
+  const word = G._defiWord;
+  log('❌ "' + word + '" refusé par l\'adversaire. Tour perdu.', 'bad');
+  G.word = []; G.changeSel = []; G.changeMode = false;
+  renderAll();
+  // Passer au joueur suivant
+  nextTurn();
+}
+
 </script>
 
 </body>
