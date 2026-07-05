@@ -4377,7 +4377,11 @@ function defiAccepter() {
   closeModal('m-defi');
   const word = G._defiWord;
   const pIdx = G._defiPIdx;
+  if (pIdx === undefined || pIdx === null) { console.error('defiAccepter: pIdx invalide', pIdx); return; }
+  if (!G.players || !G.players[pIdx]) { console.error('defiAccepter: joueur introuvable', pIdx, G.players); return; }
   const p = G.players[pIdx];
+  if (!word) { console.error('defiAccepter: word vide'); return; }
+  console.log('defiAccepter: word=', word, 'pIdx=', pIdx, 'joueur=', p.name);
   // Calculer le score manuellement sans vérifier le dictionnaire
   const ev = evalWordSync(word);
   const score = ev.score > 0 ? ev.score : (word.length * 2); // score par longueur si evalWordSync retourne 0
