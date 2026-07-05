@@ -4377,8 +4377,32 @@ function defiAccepter() {
   closeModal('m-defi');
   const word = G._defiWord;
   const pIdx = G._defiPIdx;
-  log('✅ "' + word + '" accepté par l\'adversaire !', 'ok');
-  _confirmerMotFinalize(word, pIdx);
+  const p = G.players[pIdx];
+  // Calculer le score manuellement sans vérifier le dictionnaire
+  const ev = evalWordSync(word);
+  const score = ev.score > 0 ? ev.score : (word.length * 2); // score par longueur si evalWordSync retourne 0
+  p.score += score;
+  G.word.map(w => w.idx).sort((a,b) => b-a).forEach(i => p.letters.splice(i, 1));
+  const newL = drawL(10 - p.letters.length);
+  p.letters.push(...newL);
+  setTimeout(() => sndDeal(newL.length), 300);
+  showFloat('+' + score); snd('ok');
+  G.passCount = 0;
+  G.themeHistory.unshift({
+    theme: G.curCase && G.curCase.free ? '★ MOT LIBRE' : (G.curCase && G.curCase.th ? G.curCase.th : '?'),
+    player: p.name, word: word, pts: score
+  });
+  G.word = []; G.changeSel = []; G.changeMode = false;
+  G.previousCaseId = null;
+  renderAll();
+  renderHistPanel();
+  log('✅ "' + word + '" accepté par l\'adversaire — +' + score + ' pts !', 'ok');
+  if (p.letters.length === 0) { endGame(); return; }
+  if (G.letterBag.length === 0 && G.phase === 'normal') {
+    G.phase = 'final';
+    log('⚠ Cagnotte épuisée — phase finale !', 'inf');
+  }
+  nextTurn();
 }
 
 function defiRefuser() {
