@@ -2534,7 +2534,7 @@ function confirmerMot() {
     log('🔍 Vérification de "' + word + '" en cours...', 'info');
     verifierWiktionnaire(word).then(valide => {
       if (valide) {
-        _confirmerMotFinalize(word, pIdx);
+        _confirmerMotFinalize(word, pIdx, true);
       } else {
         // MOT AU CHOIX : rejet définitif, pas de défi possible
         snd('err');
@@ -2549,10 +2549,11 @@ function confirmerMot() {
   _confirmerMotFinalize(word, pIdx);
 }
 
-function _confirmerMotFinalize(word, pIdx) {
+function _confirmerMotFinalize(word, pIdx, forceValid) {
   const p = G.players[pIdx]; // récupérer le joueur par index
   const ev = evalWordSync(word);
-  if (ev.valid && ev.score > 0) {
+  // forceValid = mot validé par Wiktionnaire ou défi accepté → ignorer ev.valid
+  if ((forceValid || ev.valid) && ev.score > 0) {
     // Mot accepté : déduire les lettres et repiocher
     p.score += ev.score;
     G.word.map(w => w.idx).sort((a,b) => b-a).forEach(i => p.letters.splice(i, 1));
