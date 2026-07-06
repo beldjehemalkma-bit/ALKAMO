@@ -2561,9 +2561,17 @@ function _confirmerMotFinalize(word, pIdx) {
     setTimeout(() => sndDeal(newL.length), 300);
     showFloat('+' + ev.score); snd('ok');
   } else {
-    // Mot rejeté → proposer défi à l'adversaire
-    ouvrirDefi(word, pIdx);
-    return;
+    // Mot rejeté → défi seulement pour les cases à thème, pas MOT AU CHOIX
+    if (G.curCase && !G.curCase.free) {
+      ouvrirDefi(word, pIdx);
+      return;
+    } else {
+      snd('err');
+      log('❌ "' + word + '" non reconnu dans le dictionnaire.', 'bad');
+      G.word = []; G.changeSel = []; G.changeMode = false;
+      renderAll();
+      return;
+    }
   }
   G.word = []; G.changeSel = []; G.changeMode = false;
   renderAll(); // forcer le rafraîchissement des scores
