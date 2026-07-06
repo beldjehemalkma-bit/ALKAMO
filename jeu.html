@@ -4401,11 +4401,6 @@ function defiAccepter() {
   renderAll();
   renderHistPanel();
   log('✅ "' + word + '" accepté par l\'adversaire — +' + score + ' pts !', 'ok');
-  if (p.letters.length === 0) { endGame(); return; }
-  if (G.letterBag.length === 0 && G.phase === 'normal') {
-    G.phase = 'final';
-    log('⚠ Cagnotte épuisée — phase finale !', 'inf');
-  }
   nextTurn();
 }
 
