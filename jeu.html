@@ -3841,18 +3841,26 @@ function traiterActionDistante(action) {
   } else if (action.type === 'echanger') {
     log(action.nom + ' echange', '');
   } else if (action.type === 'maq_propose') {
-    // L'adversaire propose une maquette — fermer l'écran d'attente et afficher la maquette
     const maq = action.data.maquette;
     _maqActive = maq;
-    // Fermer toutes les modals et aller à l'écran maquette
+    // Forcer fermeture overlay
+    const ma = document.getElementById('m-attente');
+    if (ma) ma.setAttribute('style', 'display:none!important;z-index:-1!important;visibility:hidden!important;');
     fermerAttenteEtAller('maquette');
-    setTimeout(() => { selectMaq(maq); }, 150);
-    const nomMaq = MAQUETTES[maq]?.nom || ('Maquette ' + (maq+1));
-    document.getElementById('maq-defi-proposition').style.display = 'block';
-    document.getElementById('maq-btn-jouer').style.display = 'none';
-    document.getElementById('maq-defi-attente').style.display = 'none';
-    document.getElementById('maq-defi-msg').textContent = action.nom + ' propose : ' + nomMaq + ' — Acceptez-vous ?';
-    log('📋 ' + action.nom + ' propose la ' + nomMaq, 'inf');
+    // Attendre DOM puis afficher proposition
+    setTimeout(() => {
+      selectMaq(maq);
+      const nomMaq = (typeof MAQUETTES !== 'undefined' && MAQUETTES[maq]) ? (MAQUETTES[maq].nom || 'Maquette '+(maq+1)) : 'Maquette '+(maq+1);
+      const propEl = document.getElementById('maq-defi-proposition');
+      const btnEl  = document.getElementById('maq-btn-jouer');
+      const attEl  = document.getElementById('maq-defi-attente');
+      const msgEl  = document.getElementById('maq-defi-msg');
+      if (propEl) propEl.style.cssText = 'display:block!important;';
+      if (btnEl)  btnEl.style.display  = 'none';
+      if (attEl)  attEl.style.display  = 'none';
+      if (msgEl)  msgEl.textContent    = (action.nom||"L'adversaire") + ' propose : ' + nomMaq + ' — Acceptez-vous ?';
+      log('📋 ' + (action.nom||"L'adversaire") + ' propose la ' + nomMaq, 'inf');
+    }, 500);
   } else if (action.type === 'maq_accepte') {
     // L'adversaire a accepté → lancer la partie
     document.getElementById('maq-defi-attente').style.display = 'none';
