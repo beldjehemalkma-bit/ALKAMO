@@ -3815,6 +3815,11 @@ function traiterActionDistante(action) {
     log(action.nom + ' passe', '');
   } else if (action.type === 'echanger') {
     log(action.nom + ' echange', '');
+  } else if (action.type === 'lobby_chat') {
+    // Message chat lobby reçu de l'adversaire
+    if (action.joueur !== window._idJoueur) {
+      _afficherMsgLobby(action.nom || 'Adversaire', action.data.texte || '');
+    }
   } else if (action.type === 'maq_propose') {
     const maq = action.data.maquette;
     _maqActive = maq;
@@ -4134,7 +4139,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       const dern = liste[liste.length - 1];
       if (!dern) return;
       // Laisser passer les actions de maquette même avant démarrage
-      const avantPartie = ['maq_propose','maq_accepte','maq_refuse','defi_demande','defi_reponse'];
+      const avantPartie = ['maq_propose','maq_accepte','maq_refuse','defi_demande','defi_reponse','lobby_chat'];
       if (!window._partieDemar && !avantPartie.includes(dern.type)) return;
       if (typeof traiterActionDistante === 'function') {
         // Pour maq_propose, forcer la fermeture de l'overlay avant
@@ -4358,13 +4363,24 @@ function _executerFinPartie() {
 
 <!-- ══ ÉCRAN ATTENTE ══ -->
 <div class="ov" id="m-attente" style="z-index:700;display:none">
-  <div class="modal" style="text-align:center;padding:32px 24px;max-width:320px">
-    <div style="font-size:2.5rem;margin-bottom:12px">⏳</div>
-    <div style="font-size:1.1rem;font-weight:900;color:#FAD060;margin-bottom:8px;letter-spacing:1px">EN ATTENTE</div>
-    <div id="attente-msg" style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:16px">
+  <div class="modal" style="text-align:center;padding:24px;max-width:420px;width:95%">
+    <div style="font-size:2rem;margin-bottom:8px">⏳</div>
+    <div style="font-size:1.1rem;font-weight:900;color:#FAD060;margin-bottom:6px;letter-spacing:1px">EN ATTENTE</div>
+    <div id="attente-msg" style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:8px">
       Connecté ! En attente du démarrage par le créateur...
     </div>
-    <div id="attente-joueurs" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px"></div>
+    <div id="attente-joueurs" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:10px"></div>
+    <!-- Chat lobby -->
+    <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;margin-bottom:10px;text-align:left">
+      <div style="font-size:.8rem;color:#FAD060;margin-bottom:6px;font-weight:700">💬 Concertez-vous sur la maquette</div>
+      <div id="lobby-chat-msgs" style="height:120px;overflow-y:auto;font-size:.8rem;color:rgba(255,255,255,.8);margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
+      <div style="display:flex;gap:6px">
+        <input id="lobby-chat-input" type="text" placeholder="Votre message..." maxlength="80"
+          style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 8px;color:#fff;font-size:.8rem;outline:none"
+          onkeydown="if(event.key==='Enter') envoyerMsgLobby()">
+        <button onclick="envoyerMsgLobby()" style="background:#534AB7;border:none;border-radius:6px;padding:6px 12px;color:#fff;cursor:pointer;font-size:.8rem">Envoyer</button>
+      </div>
+    </div>
     <div style="display:flex;gap:8px;justify-content:center">
       <div style="width:8px;height:8px;border-radius:50%;background:#534AB7;animation:pulse 1s infinite"></div>
       <div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;animation:pulse 1s .3s infinite"></div>
@@ -4449,6 +4465,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ─── Défi adversaire ─────────────────────────────────────────
+function envoyerMsgLobby() {
+  const input = document.getElementById('lobby-chat-input');
+  const msg = input ? input.value.trim() : '';
+  if (!msg) return;
+  input.value = '';
+  const nom = window._nomJoueur || 'Joueur';
+  // Afficher localement
+  _afficherMsgLobby(nom, msg);
+  // Envoyer via Firebase
+  if (window.publierAction && window._codePartie) {
+    window.publierAction(window._codePartie, 'lobby_chat', { texte: msg, nom: nom });
+  }
+}
+
+function _afficherMsgLobby(nom, texte) {
+  const box = document.getElementById('lobby-chat-msgs');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;';
+  el.innerHTML = '<span style="color:#FAD060;font-weight:700">' + nom + '</span> : ' + texte;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
 function fermerAttenteEtAller(ecran) {
   ['m-attente','m-val','m-joker'].forEach(id => {
     const el = document.getElementById(id);
