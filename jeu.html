@@ -850,6 +850,17 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
       <div class="maq-grid" id="maq-grid"></div>
     </div>
 
+    <!-- Chat maquette pour le créateur -->
+    <div id="maq-chat-zone" style="display:none;background:rgba(255,255,255,.05);border-radius:10px;padding:10px;margin-bottom:10px;text-align:left">
+      <div style="font-size:.8rem;color:#FAD060;margin-bottom:6px;font-weight:700">💬 Concertez-vous sur la maquette</div>
+      <div id="lobby-chat-msgs" style="height:100px;overflow-y:auto;font-size:.8rem;color:rgba(255,255,255,.8);margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
+      <div style="display:flex;gap:6px">
+        <input id="lobby-chat-input" type="text" placeholder="Votre message..." maxlength="80"
+          style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 8px;color:#fff;font-size:.8rem;outline:none"
+          onkeydown="if(event.key==='Enter') envoyerMsgLobby()">
+        <button onclick="envoyerMsgLobby()" style="background:#534AB7;border:none;border-radius:6px;padding:6px 12px;color:#fff;cursor:pointer;font-size:.8rem">Envoyer</button>
+      </div>
+    </div>
     <button class="maq-btn-ok" id="maq-btn-jouer" onclick="validerMaquette()" style="display:none">✅ Jouer avec cette maquette →</button>
     <div id="maq-defi-attente" style="display:none;text-align:center;color:var(--gold-light);font-size:.95rem;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;margin-top:8px;">⏳ Proposition envoyée — en attente de l'adversaire...</div>
     <div id="maq-defi-proposition" class="maq-defi-hidden" style="background:rgba(83,74,183,.15);border:1px solid rgba(83,74,183,.4);border-radius:12px;padding:16px;margin-top:8px;text-align:center;">
@@ -3338,6 +3349,9 @@ function renderMaquetteTabs() {
       renderMaqGrille(n);
       document.getElementById('maq-detail').style.display = 'block';
       document.getElementById('maq-btn-jouer').style.display = 'block';
+      // Afficher chat seulement en mode en ligne
+      const chatZone = document.getElementById('maq-chat-zone');
+      if (chatZone) chatZone.style.display = window._modeEnLigne ? 'block' : 'none';
     };
     row.appendChild(card);
   });
@@ -4480,13 +4494,14 @@ function envoyerMsgLobby() {
 }
 
 function _afficherMsgLobby(nom, texte) {
-  const box = document.getElementById('lobby-chat-msgs');
-  if (!box) return;
-  const el = document.createElement('div');
-  el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;';
-  el.innerHTML = '<span style="color:#FAD060;font-weight:700">' + nom + '</span> : ' + texte;
-  box.appendChild(el);
-  box.scrollTop = box.scrollHeight;
+  // Mettre à jour tous les chats lobby (créateur et invité)
+  document.querySelectorAll('#lobby-chat-msgs').forEach(box => {
+    const el = document.createElement('div');
+    el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;';
+    el.innerHTML = '<span style="color:#FAD060;font-weight:700">' + nom + '</span> : ' + texte;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  });
 }
 
 function fermerAttenteEtAller(ecran) {
