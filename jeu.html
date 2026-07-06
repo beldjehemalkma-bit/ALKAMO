@@ -3369,37 +3369,10 @@ function renderMaqGrille(n) {
 
 function validerMaquette() {
   CASES = MAQUETTES[_maqActive].cases;
-  if (_modeEnLigne && window._estCreateur) {
-    // Mode en ligne créateur : proposer la maquette à l'adversaire
-    if (window.publierAction && window._codePartie) {
-      window.publierAction(window._codePartie, 'maq_propose', { maquette: _maqActive });
-      document.getElementById('maq-btn-jouer').style.display = 'none';
-      document.getElementById('maq-defi-attente').style.display = 'block';
-      log('📋 Maquette ' + (_maqActive+1) + ' proposée — en attente de l\'adversaire...', 'inf');
-    }
-  } else if (_modeEnLigne && !window._estCreateur) {
-    // Mode en ligne invité : démarrer directement (il a accepté)
+  if (_modeEnLigne) {
     startGameEnLigne();
   } else {
     go('setup');
-  }
-}
-
-function maqDefiAccepter() {
-  const _p=document.getElementById('maq-defi-proposition'); if(_p){_p.classList.add('maq-defi-hidden');_p.classList.remove('maq-defi-visible');}
-  if (window.publierAction && window._codePartie) {
-    window.publierAction(window._codePartie, 'maq_accepte', { maquette: _maqActive });
-  }
-  startGameEnLigne();
-}
-
-function maqDefiRefuser() {
-  const _p=document.getElementById('maq-defi-proposition'); if(_p){_p.classList.add('maq-defi-hidden');_p.classList.remove('maq-defi-visible');}
-  // Remettre le bouton pour choisir une autre maquette
-  document.getElementById('maq-btn-jouer').style.display = 'block';
-  log('💬 Proposez une autre maquette...', 'inf');
-  if (window.publierAction && window._codePartie) {
-    window.publierAction(window._codePartie, 'maq_refuse', {});
   }
 }
 
