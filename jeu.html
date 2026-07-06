@@ -4122,7 +4122,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(ref(db, 'parties/' + code + '/scores'), { [idJoueur]: score });
   };
 
-  function _ecouterPartie(code) {
+  window._ecouterPartie = function _ecouterPartie(code) {
     onValue(pRef(code), snap => {
       const d = snap.val();
       if (!d) return;
