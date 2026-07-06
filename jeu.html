@@ -775,6 +775,8 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 .chat-send-btn:hover{opacity:.85;}
 .chat-msg.texte{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#E8F4FF;padding:5px 8px;}
 .chat-msg.texte.moi{background:rgba(83,74,183,.2);border-color:rgba(83,74,183,.4);color:#C8C4FF;text-align:right;}
+.maq-defi-hidden { display: none !important; }
+.maq-defi-visible { display: block !important; }
 </style>
 </head>
 <body>
@@ -850,7 +852,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
     <button class="maq-btn-ok" id="maq-btn-jouer" onclick="validerMaquette()" style="display:none">✅ Jouer avec cette maquette →</button>
     <div id="maq-defi-attente" style="display:none;text-align:center;color:var(--gold-light);font-size:.95rem;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;margin-top:8px;">⏳ Proposition envoyée — en attente de l'adversaire...</div>
-    <div id="maq-defi-proposition" style="display:none;background:rgba(83,74,183,.15);border:1px solid rgba(83,74,183,.4);border-radius:12px;padding:16px;margin-top:8px;text-align:center;">
+    <div id="maq-defi-proposition" class="maq-defi-hidden" style="background:rgba(83,74,183,.15);border:1px solid rgba(83,74,183,.4);border-radius:12px;padding:16px;margin-top:8px;text-align:center;">
       <p id="maq-defi-msg" style="color:#fff;margin-bottom:12px;"></p>
       <div style="display:flex;gap:10px;justify-content:center;">
         <button class="btn btn-out" onclick="maqDefiRefuser()">❌ Proposer une autre</button>
@@ -3384,7 +3386,7 @@ function validerMaquette() {
 }
 
 function maqDefiAccepter() {
-  document.getElementById('maq-defi-proposition').style.display = 'none';
+  const _p=document.getElementById('maq-defi-proposition'); if(_p){_p.classList.add('maq-defi-hidden');_p.classList.remove('maq-defi-visible');}
   if (window.publierAction && window._codePartie) {
     window.publierAction(window._codePartie, 'maq_accepte', { maquette: _maqActive });
   }
@@ -3392,7 +3394,7 @@ function maqDefiAccepter() {
 }
 
 function maqDefiRefuser() {
-  document.getElementById('maq-defi-proposition').style.display = 'none';
+  const _p=document.getElementById('maq-defi-proposition'); if(_p){_p.classList.add('maq-defi-hidden');_p.classList.remove('maq-defi-visible');}
   // Remettre le bouton pour choisir une autre maquette
   document.getElementById('maq-btn-jouer').style.display = 'block';
   log('💬 Proposez une autre maquette...', 'inf');
@@ -3855,7 +3857,7 @@ function traiterActionDistante(action) {
       const btnEl  = document.getElementById('maq-btn-jouer');
       const attEl  = document.getElementById('maq-defi-attente');
       const msgEl  = document.getElementById('maq-defi-msg');
-      if (propEl) propEl.style.cssText = 'display:block!important;';
+      if (propEl) { propEl.classList.remove('maq-defi-hidden'); propEl.classList.add('maq-defi-visible'); }
       if (btnEl)  btnEl.style.display  = 'none';
       if (attEl)  attEl.style.display  = 'none';
       if (msgEl)  msgEl.textContent    = (action.nom||"L'adversaire") + ' propose : ' + nomMaq + ' — Acceptez-vous ?';
