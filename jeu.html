@@ -3844,12 +3844,12 @@ function traiterActionDistante(action) {
     // L'adversaire propose une maquette — fermer l'écran d'attente et afficher la maquette
     const maq = action.data.maquette;
     _maqActive = maq;
-    // Fermer la modal d'attente
+    // Fermer la modal d'attente complètement
     const ma = document.getElementById('m-attente');
-    if (ma) ma.style.display = 'none';
+    if (ma) { ma.style.display = 'none'; ma.style.zIndex = '0'; }
     // Aller à l'écran de choix de maquette
     go('maquette');
-    selectMaq(maq);
+    setTimeout(() => { selectMaq(maq); }, 100);
     const nomMaq = MAQUETTES[maq]?.nom || ('Maquette ' + (maq+1));
     document.getElementById('maq-defi-proposition').style.display = 'block';
     document.getElementById('maq-btn-jouer').style.display = 'none';
