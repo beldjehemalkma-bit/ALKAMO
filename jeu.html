@@ -3349,9 +3349,9 @@ function renderMaquetteTabs() {
       renderMaqGrille(n);
       document.getElementById('maq-detail').style.display = 'block';
       document.getElementById('maq-btn-jouer').style.display = 'block';
-      // Afficher chat si en ligne ou si deux joueurs détectés
+      // Afficher chat toujours en mode en ligne
       const chatZone = document.getElementById('maq-chat-zone');
-      if (chatZone) chatZone.style.display = (window._modeEnLigne || window._codePartie) ? 'block' : 'none';
+      if (chatZone) chatZone.style.display = 'block';
     };
     row.appendChild(card);
   });
