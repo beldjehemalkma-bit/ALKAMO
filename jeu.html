@@ -4376,6 +4376,14 @@ function ouvrirDefi(word, pIdx) {
   G._defiWord = word;
   G._defiPIdx = pIdx;
   const adversaire = G.players.find((p, i) => i !== pIdx);
+  // Si l'adversaire est un bot → rejet direct, pas de défi
+  if (adversaire && adversaire.isBot) {
+    snd('err');
+    log('❌ "' + word + '" non reconnu — l\'ordinateur refuse automatiquement.', 'bad');
+    G.word = []; G.changeSel = []; G.changeMode = false;
+    renderAll();
+    return;
+  }
   const nomAdv = adversaire ? adversaire.name : 'l\'adversaire';
   document.getElementById('defi-titre').textContent = '🤔 Mot non reconnu';
   document.getElementById('defi-msg').innerHTML =
