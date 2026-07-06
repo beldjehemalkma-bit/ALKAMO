@@ -611,5 +611,16 @@ function downloadJSON() {
   showAlert('dl-alert', '✅ dictionnaire.json téléchargé ! Uploadez-le sur GitHub.', 'success');
 }
 </script>
+<script>
+// Vider le champ mot de passe au chargement pour empêcher l'autocomplétion
+window.addEventListener('load', function() {
+  const pwd = document.getElementById('pwd-input');
+  if (pwd) {
+    pwd.value = '';
+    pwd.setAttribute('readonly', true);
+    setTimeout(function() { pwd.removeAttribute('readonly'); }, 100);
+  }
+});
+</script>
 </body>
 </html>
