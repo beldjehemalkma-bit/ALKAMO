@@ -3970,6 +3970,25 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
+  // Nettoyage automatique des parties de plus de 24h
+  function nettoyerVieuxParties() {
+    const il_y_a_24h = Date.now() - (24 * 60 * 60 * 1000);
+    get(ref(db, 'parties')).then(snap => {
+      if (!snap.exists()) return;
+      const parties = snap.val();
+      Object.entries(parties).forEach(([code, data]) => {
+        if (data.createdAt && data.createdAt < il_y_a_24h) {
+          set(ref(db, 'parties/' + code), null);
+        } else if (!data.createdAt) {
+          // Supprimer les parties sans timestamp (très anciennes)
+          set(ref(db, 'parties/' + code), null);
+        }
+      });
+    }).catch(() => {});
+  }
+  // Lancer le nettoyage au démarrage
+  setTimeout(nettoyerVieuxParties, 3000);
+
   window.creerPartieEnLigne = function(nom) {
     const code = genCode();
     set(pRef(code), {
