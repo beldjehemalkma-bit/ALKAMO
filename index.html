@@ -963,8 +963,9 @@ window.sInscrire = async function() {
 };
 
 window.deconnexion = async function() {
-  if (_myUid) {
-    try { await remove(ref(db, 'lobby/' + _myUid)); } catch(e) {}
+  const uid = localStorage.getItem('alkamo_uid');
+  if (uid) {
+    try { await remove(ref(db, 'lobby/' + uid)); } catch(e) {}
   }
   await signOut(auth);
   localStorage.removeItem('alkamo_pseudo');
