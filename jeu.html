@@ -2536,8 +2536,11 @@ function confirmerMot() {
       if (valide) {
         _confirmerMotFinalize(word, pIdx);
       } else {
-        // Mot non reconnu → proposer défi à l'adversaire
-        ouvrirDefi(word, pIdx);
+        // MOT AU CHOIX : rejet définitif, pas de défi possible
+        snd('err');
+        log('❌ "' + word + '" n\'existe pas dans le vocabulaire français.', 'bad');
+        G.word = []; G.changeSel = []; G.changeMode = false;
+        renderAll();
       }
     });
     return;
