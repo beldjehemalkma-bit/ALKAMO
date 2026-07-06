@@ -179,7 +179,7 @@ nav {
   <div class="login-box">
     <div class="logo"><span>A</span><span>L</span><span>K</span><span>A</span><span>M</span><span>O</span></div>
     <div class="login-title">⚙️ Administration</div>
-    <input type="password" id="pwd-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter') login()">
+    <input type="password" id="pwd-input" placeholder="Mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter') login()">
     <button class="btn btn-primary" onclick="login()">🔐 Accéder</button>
     <div class="login-error" id="login-error"></div>
     <p style="margin-top:24px;font-size:0.78rem;color:var(--muted)">
