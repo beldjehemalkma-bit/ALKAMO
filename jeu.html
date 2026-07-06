@@ -4076,6 +4076,31 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
     _ecouterPartie(code);
+    // Écoute immédiate des propositions de maquette
+    onValue(ref(db, 'parties/' + code + '/actions'), snap => {
+      if (window._partieDemar) return;
+      const actions = snap.val();
+      if (!actions) return;
+      const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
+      const dern = liste[liste.length - 1];
+      if (!dern || dern.type !== 'maq_propose') return;
+      // Cacher l'overlay d'attente
+      const ma = document.getElementById('m-attente');
+      if (ma) { ma.style.cssText = 'display:none!important;z-index:-1!important;visibility:hidden!important;'; }
+      // Aller à l'écran maquette
+      if (typeof go === 'function') go('maquette');
+      setTimeout(() => {
+        if (typeof selectMaq === 'function') selectMaq(dern.data.maquette || 0);
+        const maq = dern.data.maquette || 0;
+        const nomMaq = (typeof MAQUETTES !== 'undefined' && MAQUETTES[maq]) ? MAQUETTES[maq].nom : ('Maquette ' + (maq+1));
+        const propEl = document.getElementById('maq-defi-proposition');
+        const msgEl = document.getElementById('maq-defi-msg');
+        const btnEl = document.getElementById('maq-btn-jouer');
+        if (propEl) propEl.style.display = 'block';
+        if (btnEl) btnEl.style.display = 'none';
+        if (msgEl) msgEl.textContent = (dern.nom || 'L'adversaire') + ' propose : ' + nomMaq + ' — Acceptez-vous ?';
+      }, 200);
+    });
   };
 
   window.demarrerPartieFirebase = function(code, maquette) {
