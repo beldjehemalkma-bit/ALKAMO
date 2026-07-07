@@ -1693,6 +1693,11 @@ let setupCfg = { n: 2, mode: 'pvp' };
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('s-' + id).classList.add('active');
+  // Afficher chat lobby sur écran maquette
+  if (id === 'maquette') {
+    const chatZone = document.getElementById('maq-chat-zone');
+    if (chatZone) chatZone.style.display = 'block';
+  }
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
