@@ -4224,24 +4224,21 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     push(ref(db, 'parties/' + code + '/lobby_chat'), data);
   };
 
-  // Écouter /lobby_chat
+  // Écouter /lobby_chat - mise à jour complète à chaque changement
   window._ecouterLobbyChat = function(code) {
     onValue(ref(db, 'parties/' + code + '/lobby_chat'), snap => {
       const msgs = snap.val();
-      if (!msgs) return;
-      const liste = Object.values(msgs).sort((a,b) => a.ts - b.ts);
-      // Afficher seulement les nouveaux messages
-      const box1 = document.getElementById('lobby-chat-msgs');
-      if (box1) {
-        box1.innerHTML = '';
-        liste.forEach(m => {
+      document.querySelectorAll('#lobby-chat-msgs').forEach(box => {
+        box.innerHTML = '';
+        if (!msgs) return;
+        Object.values(msgs).sort((a,b) => (a.ts||0) - (b.ts||0)).forEach(m => {
           const el = document.createElement('div');
-          el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;';
+          el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;margin-bottom:2px;';
           el.innerHTML = '<span style="color:#FAD060;font-weight:700">' + (m.nom||'?') + '</span> : ' + (m.texte||'');
-          box1.appendChild(el);
+          box.appendChild(el);
         });
-        box1.scrollTop = box1.scrollHeight;
-      }
+        box.scrollTop = box.scrollHeight;
+      });
     });
   };
 
