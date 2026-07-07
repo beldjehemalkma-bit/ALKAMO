@@ -3692,7 +3692,7 @@ function onlineRejoindre() {
     window.rejoindrePatie(code, nom);
     fermerOnline();
     const ma = document.getElementById('m-attente');
-    if (ma) ma.style.display = 'flex';
+    if (ma) { ma.style.display = 'flex'; ma.dataset.code = code; }
     const attEl = document.getElementById('attente-joueurs');
     if (attEl) attEl.textContent = nom + ' connecté — En attente du créateur...';
     fermerOnline();
@@ -4525,12 +4525,12 @@ function envoyerMsgLobby() {
   const nom = window._nomJoueur || 'Joueur';
   _afficherMsgLobby(nom, msg);
   // Écrire dans /lobby_chat séparé des actions
-  console.log('envoyerMsgLobby: code=', window._codePartie, 'push=', typeof window._pushLobbyChat, 'msg=', msg);
-  if (window._pushLobbyChat && window._codePartie) {
-    window._pushLobbyChat(window._codePartie, { texte: msg, nom: nom, ts: Date.now() });
-    console.log('Message envoyé dans Firebase');
-  } else {
-    console.error('ERREUR: _pushLobbyChat ou _codePartie manquant', window._pushLobbyChat, window._codePartie);
+  // Récupérer le code depuis window ou depuis la modal
+  const codeEnvoi = window._codePartie || 
+    document.getElementById('m-attente')?.dataset?.code ||
+    document.getElementById('maq-chat-zone')?.dataset?.code;
+  if (window._pushLobbyChat && codeEnvoi) {
+    window._pushLobbyChat(codeEnvoi, { texte: msg, nom: nom, ts: Date.now() });
   }
 }
 
