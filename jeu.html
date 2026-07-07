@@ -3697,6 +3697,8 @@ function onlineRejoindre() {
     if (attEl) attEl.textContent = nom + ' connecté — En attente du créateur...';
     fermerOnline();
     openMaquette(true);
+    // Afficher aussi l'écran maquette pour l'invité (en dessous de la modal)
+    go('maquette');
   }
 }
 function onlineDemarrer() {
