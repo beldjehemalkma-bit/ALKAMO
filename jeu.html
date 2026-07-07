@@ -3353,7 +3353,7 @@ function renderMaquetteTabs() {
       renderMaquetteTabs();
       renderMaqGrille(n);
       document.getElementById('maq-detail').style.display = 'block';
-      document.getElementById('maq-btn-jouer').style.display = 'block';
+      _showBtnJouer();
       // Afficher chat toujours en mode en ligne
       const chatZone = document.getElementById('maq-chat-zone');
       if (chatZone) chatZone.style.display = 'block';
@@ -3363,7 +3363,7 @@ function renderMaquetteTabs() {
   // Afficher le détail si une maquette est déjà sélectionnée
   if (_maqActive) {
     document.getElementById('maq-detail').style.display = 'block';
-    document.getElementById('maq-btn-jouer').style.display = 'block';
+    _showBtnJouer();
   }
 }
 
@@ -3384,6 +3384,13 @@ function renderMaqGrille(n) {
       '<div class="maq-cell-th">' + label + '</div>';
     grid.appendChild(d);
   });
+}
+
+function _showBtnJouer() {
+  // N'afficher le bouton que pour le créateur ou en mode solo
+  if (!window._modeEnLigne || window._estCreateur) {
+    _showBtnJouer();
+  }
 }
 
 function validerMaquette() {
@@ -3883,7 +3890,7 @@ function traiterActionDistante(action) {
   } else if (action.type === 'maq_refuse') {
     // L'adversaire refuse → remettre le bouton
     document.getElementById('maq-defi-attente').style.display = 'none';
-    document.getElementById('maq-btn-jouer').style.display = 'block';
+    _showBtnJouer();
     log('❌ Maquette refusée — proposez-en une autre.', 'bad');
   } else if (action.type === 'defi_demande') {
     // L'adversaire demande un défi → afficher la modal chez nous
