@@ -3419,6 +3419,7 @@ function startGameEnLigne() {
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive);
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
+    setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
     if (window.ecouterChat) window.ecouterChat(code);
   }
   // Les deux joueurs écoutent la fin de partie
@@ -4083,6 +4084,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
     _ecouterPartie(code);
+    setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
   };
 
   window.demarrerPartieFirebase = function(code, maquette) {
@@ -4212,6 +4214,32 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       const avantPartie = ['lobby_chat','maq_propose','maq_accepte','maq_refuse','defi_demande','defi_reponse'];
       if (!window._partieDemar && !avantPartie.includes(dern.type)) return;
       if (typeof traiterActionDistante === 'function') traiterActionDistante(dern);
+    });
+  };
+
+  // Push message dans /lobby_chat
+  window._pushLobbyChat = function(code, data) {
+    push(ref(db, 'parties/' + code + '/lobby_chat'), data);
+  };
+
+  // Écouter /lobby_chat
+  window._ecouterLobbyChat = function(code) {
+    onValue(ref(db, 'parties/' + code + '/lobby_chat'), snap => {
+      const msgs = snap.val();
+      if (!msgs) return;
+      const liste = Object.values(msgs).sort((a,b) => a.ts - b.ts);
+      // Afficher seulement les nouveaux messages
+      const box1 = document.getElementById('lobby-chat-msgs');
+      if (box1) {
+        box1.innerHTML = '';
+        liste.forEach(m => {
+          const el = document.createElement('div');
+          el.style.cssText = 'background:rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;';
+          el.innerHTML = '<span style="color:#FAD060;font-weight:700">' + (m.nom||'?') + '</span> : ' + (m.texte||'');
+          box1.appendChild(el);
+        });
+        box1.scrollTop = box1.scrollHeight;
+      }
     });
   };
 
@@ -4488,7 +4516,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── Défi adversaire ─────────────────────────────────────────
 function envoyerMsgLobby() {
-  // Lire depuis tous les champs chat lobby (m-attente et maq-chat-zone)
   let msg = '';
   let inputUsed = null;
   document.querySelectorAll('#lobby-chat-input').forEach(inp => {
@@ -4498,8 +4525,9 @@ function envoyerMsgLobby() {
   if (inputUsed) inputUsed.value = '';
   const nom = window._nomJoueur || 'Joueur';
   _afficherMsgLobby(nom, msg);
-  if (window.publierAction && window._codePartie) {
-    window.publierAction(window._codePartie, 'lobby_chat', { texte: msg, nom: nom });
+  // Écrire dans /lobby_chat séparé des actions
+  if (window._pushLobbyChat && window._codePartie) {
+    window._pushLobbyChat(window._codePartie, { texte: msg, nom: nom, ts: Date.now() });
   }
 }
 
