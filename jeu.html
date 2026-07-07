@@ -4485,14 +4485,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── Défi adversaire ─────────────────────────────────────────
 function envoyerMsgLobby() {
-  const input = document.getElementById('lobby-chat-input');
-  const msg = input ? input.value.trim() : '';
+  // Lire depuis tous les champs chat lobby (m-attente et maq-chat-zone)
+  let msg = '';
+  let inputUsed = null;
+  document.querySelectorAll('#lobby-chat-input').forEach(inp => {
+    if (inp.value.trim()) { msg = inp.value.trim(); inputUsed = inp; }
+  });
   if (!msg) return;
-  input.value = '';
+  if (inputUsed) inputUsed.value = '';
   const nom = window._nomJoueur || 'Joueur';
-  // Afficher localement
   _afficherMsgLobby(nom, msg);
-  // Envoyer via Firebase
   if (window.publierAction && window._codePartie) {
     window.publierAction(window._codePartie, 'lobby_chat', { texte: msg, nom: nom });
   }
