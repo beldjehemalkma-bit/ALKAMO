@@ -4525,8 +4525,12 @@ function envoyerMsgLobby() {
   const nom = window._nomJoueur || 'Joueur';
   _afficherMsgLobby(nom, msg);
   // Écrire dans /lobby_chat séparé des actions
+  console.log('envoyerMsgLobby: code=', window._codePartie, 'push=', typeof window._pushLobbyChat, 'msg=', msg);
   if (window._pushLobbyChat && window._codePartie) {
     window._pushLobbyChat(window._codePartie, { texte: msg, nom: nom, ts: Date.now() });
+    console.log('Message envoyé dans Firebase');
+  } else {
+    console.error('ERREUR: _pushLobbyChat ou _codePartie manquant', window._pushLobbyChat, window._codePartie);
   }
 }
 
