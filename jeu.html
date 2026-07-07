@@ -4205,10 +4205,13 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     });
     onValue(ref(db, 'parties/' + code + '/actions'), snap => {
       const actions = snap.val();
-      if (!actions || !window._partieDemar) return;
+      if (!actions) return;
       const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
       const dern = liste[liste.length - 1];
-      if (dern && typeof traiterActionDistante === 'function') traiterActionDistante(dern);
+      if (!dern) return;
+      const avantPartie = ['lobby_chat','maq_propose','maq_accepte','maq_refuse','defi_demande','defi_reponse'];
+      if (!window._partieDemar && !avantPartie.includes(dern.type)) return;
+      if (typeof traiterActionDistante === 'function') traiterActionDistante(dern);
     });
   };
 
