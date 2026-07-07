@@ -4072,6 +4072,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     window._codePartie = code;
     window._idJoueur = 'j1';
     window._estCreateur = true;
+    // Écouter le lobby chat immédiatement
+    setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 300);
     return code;
   };
 
