@@ -3389,6 +3389,11 @@ function renderMaqGrille(n) {
 function validerMaquette() {
   CASES = MAQUETTES[_maqActive].cases;
   if (_modeEnLigne) {
+    // Seul le créateur peut lancer la partie
+    if (!window._estCreateur) {
+      log('⏳ Attendez que le créateur lance la partie.', 'inf');
+      return;
+    }
     startGameEnLigne();
   } else {
     go('setup');
