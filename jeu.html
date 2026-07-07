@@ -3694,11 +3694,18 @@ function onlineRejoindre() {
     fermerOnline();
     openMaquette(true);
     go('maquette');
-    // Cacher le bouton jouer pour l'invité
+    // Cacher le bouton jouer pour l'invité - remplacer par message d'attente
     setTimeout(() => {
       const btnJouer = document.getElementById('maq-btn-jouer');
-      if (btnJouer) btnJouer.style.display = 'none';
-    }, 100);
+      if (btnJouer) {
+        btnJouer.style.display = 'none';
+        // Ajouter message d'attente à la place
+        const waitMsg = document.createElement('div');
+        waitMsg.style.cssText = 'text-align:center;color:rgba(255,255,255,.5);font-size:.85rem;padding:12px;background:rgba(255,255,255,.05);border-radius:10px;margin-top:8px;';
+        waitMsg.textContent = '⏳ En attente du créateur pour lancer la partie...';
+        btnJouer.parentNode.insertBefore(waitMsg, btnJouer.nextSibling);
+      }
+    }, 200);
   }
 }
 function onlineDemarrer() {
