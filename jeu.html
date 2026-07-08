@@ -3787,13 +3787,20 @@ function syncTour(tour, joueurs, scores) {
   window._joueurActifId = tour.joueurActif;
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
-  if (scores && window._idAdverse && scores[window._idAdverse] !== undefined) {
-    window._scoreAdverse = scores[window._idAdverse];
-    // Mettre à jour le score adverse affiché
-    if (typeof G !== 'undefined' && G.players && G.players.length > 1) {
-      G.players[1].score = window._scoreAdverse;
-      // Rafraîchir l'affichage des scores
-      if (typeof renderAll === 'function') renderAll();
+  if (scores) {
+    // Trouver le score adverse parmi tous les scores
+    const myId = window._idJoueur;
+    const advId = window._idAdverse || Object.keys(scores).find(id => id !== myId);
+    if (advId && scores[advId] !== undefined) {
+      if (!window._idAdverse) window._idAdverse = advId;
+      window._scoreAdverse = scores[advId];
+      if (typeof G !== 'undefined' && G.players && G.players.length > 1) {
+        G.players[1].score = window._scoreAdverse;
+      }
+    }
+    // Mettre à jour notre propre score si disponible
+    if (myId && scores[myId] !== undefined && typeof G !== 'undefined' && G.players) {
+      G.players[0].score = scores[myId];
     }
   }
 
