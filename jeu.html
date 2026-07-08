@@ -3787,22 +3787,8 @@ function syncTour(tour, joueurs, scores) {
   window._joueurActifId = tour.joueurActif;
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
-  if (scores) {
-    // Trouver le score adverse parmi tous les scores
-    const myId = window._idJoueur;
-    const advId = window._idAdverse || Object.keys(scores).find(id => id !== myId);
-    if (advId && scores[advId] !== undefined) {
-      if (!window._idAdverse) window._idAdverse = advId;
-      window._scoreAdverse = scores[advId];
-      if (typeof G !== 'undefined' && G.players && G.players.length > 1) {
-        G.players[1].score = window._scoreAdverse;
-      }
-    }
-    // Mettre à jour notre propre score si disponible
-    if (myId && scores[myId] !== undefined && typeof G !== 'undefined' && G.players) {
-      G.players[0].score = scores[myId];
-    }
-  }
+  if (scores && window._idAdverse && scores[window._idAdverse] !== undefined)
+    window._scoreAdverse = scores[window._idAdverse];
 
   afficherIndicateurTour();
 
@@ -4234,11 +4220,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
             if (typeof renderAll === 'function') renderAll();
           }
         }
-        if (window._idAdverse && d.scores && d.scores[window._idAdverse] !== undefined) {
+        if (window._idAdverse && d.scores && d.scores[window._idAdverse] !== undefined)
           window._scoreAdverse = d.scores[window._idAdverse];
-          // Rafraîchir le badge de score adverse
-          if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
-        }
       }
       if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
     });
