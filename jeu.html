@@ -3387,19 +3387,12 @@ function renderMaqGrille(n) {
 }
 
 function _showBtnJouer() {
-  // Cacher le bouton seulement pour l'invité en mode en ligne
-  const estInvite = window._modeEnLigne && window._estCreateur === false;
-  document.getElementById('maq-btn-jouer').style.display = estInvite ? 'none' : 'block';
+  document.getElementById('maq-btn-jouer').style.display = 'block';
 }
 
 function validerMaquette() {
   CASES = MAQUETTES[_maqActive].cases;
   if (_modeEnLigne) {
-    // Seul le créateur peut lancer la partie
-    if (!window._estCreateur) {
-      log('⏳ Attendez que le créateur lance la partie.', 'inf');
-      return;
-    }
     startGameEnLigne();
   } else {
     go('setup');
