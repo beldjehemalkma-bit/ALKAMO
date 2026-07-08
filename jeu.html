@@ -3848,10 +3848,6 @@ function traiterActionDistante(action) {
       log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
       G.themeHistory && G.themeHistory.unshift({ theme: action.data.theme||'?', player: action.nom, word: mot, pts });
       if (typeof renderHistPanel === 'function') renderHistPanel();
-      // Mettre à jour le score adverse affiché
-      window._scoreAdverse = (window._scoreAdverse || 0) + pts;
-      if (G.players && G.players.length > 1) G.players[1].score = window._scoreAdverse;
-      if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
     } else { log(action.nom + ' : mot refuse', 'bad'); }
   } else if (action.type === 'passer') {
     log(action.nom + ' passe', '');
