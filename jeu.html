@@ -2606,12 +2606,13 @@ function _confirmerMotFinalize(word, pIdx) {
     setTimeout(() => sndDeal(newL.length), 300);
     showFloat('+' + ev.score); snd('ok');
   } else {
-    // Mot rejeté → défi pour cases à thème, rejet direct pour MOT LIBRE
+    // Mot rejeté → défi pour cases à thème
     if (G.curCase && !G.curCase.free) {
       ouvrirDefi(word, pIdx);
       return;
     }
     snd('err');
+    log('❌ "' + word + '" non reconnu.', 'bad');
   }
   G.word = []; G.changeSel = []; G.changeMode = false;
   renderAll(); // forcer le rafraîchissement des scores
