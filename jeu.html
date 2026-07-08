@@ -3791,6 +3791,7 @@ function syncTour(tour, joueurs, scores) {
     window._scoreAdverse = scores[window._idAdverse];
 
   afficherIndicateurTour();
+  if (typeof renderScores === 'function') renderScores();
 
   if (estMonTour()) {
     if (!G.timer) startTimer();
@@ -3848,6 +3849,11 @@ function traiterActionDistante(action) {
       log(action.nom + ' joue "' + mot + '" +' + pts + ' pts', 'ok');
       G.themeHistory && G.themeHistory.unshift({ theme: action.data.theme||'?', player: action.nom, word: mot, pts });
       if (typeof renderHistPanel === 'function') renderHistPanel();
+      // Forcer rafraîchissement du badge score adverse ET du panneau VS principal
+      setTimeout(() => {
+        if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
+        if (typeof renderScores === 'function') renderScores();
+      }, 200);
     } else { log(action.nom + ' : mot refuse', 'bad'); }
   } else if (action.type === 'passer') {
     log(action.nom + ' passe', '');
