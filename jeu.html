@@ -4234,8 +4234,11 @@ function ajouterMsgTexteLocal(who, texte, moi) {
             if (typeof renderAll === 'function') renderAll();
           }
         }
-        if (window._idAdverse && d.scores && d.scores[window._idAdverse] !== undefined)
+        if (window._idAdverse && d.scores && d.scores[window._idAdverse] !== undefined) {
           window._scoreAdverse = d.scores[window._idAdverse];
+          // Rafraîchir le badge de score adverse
+          if (typeof afficherIndicateurTour === 'function') afficherIndicateurTour();
+        }
       }
       if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
     });
