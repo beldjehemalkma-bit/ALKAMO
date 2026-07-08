@@ -3393,6 +3393,11 @@ function _showBtnJouer() {
 function validerMaquette() {
   CASES = MAQUETTES[_maqActive].cases;
   if (_modeEnLigne) {
+    if (window._estCreateur === false) {
+      // Invité : informer via chat et ne pas lancer
+      log('⏳ Attendez que le créateur lance la partie.', 'inf');
+      return;
+    }
     startGameEnLigne();
   } else {
     go('setup');
