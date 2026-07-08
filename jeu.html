@@ -3792,6 +3792,8 @@ function syncTour(tour, joueurs, scores) {
     // Mettre à jour le score adverse affiché
     if (typeof G !== 'undefined' && G.players && G.players.length > 1) {
       G.players[1].score = window._scoreAdverse;
+      // Rafraîchir l'affichage des scores
+      if (typeof renderAll === 'function') renderAll();
     }
   }
 
