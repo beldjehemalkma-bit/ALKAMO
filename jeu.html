@@ -3787,8 +3787,13 @@ function syncTour(tour, joueurs, scores) {
   window._joueurActifId = tour.joueurActif;
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
-  if (scores && window._idAdverse && scores[window._idAdverse] !== undefined)
+  if (scores && window._idAdverse && scores[window._idAdverse] !== undefined) {
     window._scoreAdverse = scores[window._idAdverse];
+    // Mettre à jour le score adverse affiché
+    if (typeof G !== 'undefined' && G.players && G.players.length > 1) {
+      G.players[1].score = window._scoreAdverse;
+    }
+  }
 
   afficherIndicateurTour();
 
