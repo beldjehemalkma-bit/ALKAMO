@@ -3438,6 +3438,8 @@ function startGameEnLigne() {
   }
   // Les deux joueurs écoutent la fin de partie
   if (window.ecouterFinPartie) window.ecouterFinPartie(code);
+  // Les deux joueurs écoutent les défis (mot non reconnu)
+  if (window.ecouterDefis) window.ecouterDefis(code);
 
   drawCase(true);
   go('game');
@@ -4243,6 +4245,49 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     }, 3000);
   }
 
+  // ══ DÉFI (mot non reconnu) — synchronisation entre les 2 navigateurs ══
+  window.signalerDefi = function(code, word) {
+    const r = push(ref(db, 'parties/' + code + '/defis'), {
+      word, idAuteur: window._idJoueur || 'j1', ts: Date.now()
+    });
+    return r.key;
+  };
+
+  window.repondreDefi = function(code, key, accepte) {
+    update(ref(db, 'parties/' + code + '/defis/' + key), {
+      reponse: accepte ? 'accepte' : 'refuse'
+    });
+  };
+
+  window.ecouterDefis = function(code) {
+    onValue(ref(db, 'parties/' + code + '/defis'), snap => {
+      const defis = snap.val();
+      if (!defis) return;
+      Object.entries(defis).forEach(([key, d]) => {
+        if (d.idAuteur === window._idJoueur) {
+          // C'est mon propre défi : j'attends la réponse de l'adversaire
+          if (d.reponse) {
+            window._defisVus = window._defisVus || {};
+            if (!window._defisVus[key]) {
+              window._defisVus[key] = true;
+              if (typeof traiterReponseDefi === 'function') traiterReponseDefi(d.reponse === 'accepte');
+            }
+          }
+        } else {
+          // Défi envoyé par l'adversaire : c'est à MOI de valider ou refuser
+          if (!d.reponse) {
+            window._defisAffiches = window._defisAffiches || {};
+            if (!window._defisAffiches[key]) {
+              window._defisAffiches[key] = true;
+              window._defiKeyEnCours = key;
+              if (typeof afficherDefiDistant === 'function') afficherDefiDistant(d.word);
+            }
+          }
+        }
+      });
+    });
+  };
+
   window.signalerFinPartie = function(code, nom) {
     update(pRef(code), { 
       etat: 'terminee',
@@ -4461,6 +4506,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function ouvrirDefi(word, pIdx) {
   G._defiWord = word;
   G._defiPIdx = pIdx;
+
+  if (_modeEnLigne && window._codePartie && window.signalerDefi) {
+    // Mode en ligne : le mot est envoyé à l'ADVERSAIRE via Firebase.
+    // C'est son navigateur à lui qui affichera la fenêtre de validation,
+    // pas le mien. On attend simplement sa réponse ici.
+    window._defiKeyMoi = window.signalerDefi(window._codePartie, word);
+    log('⏳ "' + word + '" envoyé à l\'adversaire pour validation...', 'inf');
+    return;
+  }
+
   const adversaire = G.players.find((p, i) => i !== pIdx);
   if (adversaire && adversaire.isBot) {
     snd('err');
@@ -4478,37 +4533,99 @@ function ouvrirDefi(word, pIdx) {
   openModal('m-defi');
 }
 
+// Affiche la fenêtre de défi CHEZ L'ADVERSAIRE (mot proposé par l'autre joueur en ligne)
+function afficherDefiDistant(word) {
+  G._defiWord = word;
+  G._defiEnLigne = true;
+  document.getElementById('defi-titre').textContent = '🤔 Mot non reconnu';
+  document.getElementById('defi-msg').innerHTML =
+    '<strong style="color:var(--gold-light)">"' + word + '"</strong> n\'est pas dans le dictionnaire.<br><br>' +
+    '<span style="color:rgba(255,255,255,.8)">' + (window._nomAdverse || "L'adversaire") + ' propose ce mot. Acceptez-vous ?</span>';
+  snd('err');
+  openModal('m-defi');
+}
+
 function defiAccepter() {
   closeModal('m-defi');
-  const word = G._defiWord;
-  const pIdx = G._defiPIdx;
-  if (pIdx === undefined || !G.players || !G.players[pIdx]) return;
-  const p = G.players[pIdx];
-  const ev = evalWordSync(word);
-  const score = ev.score > 0 ? ev.score : (word.length * 2);
-  p.score += score;
-  G.word.map(w => w.idx).sort((a,b) => b-a).forEach(i => p.letters.splice(i, 1));
-  const newL = drawL(10 - p.letters.length);
-  p.letters.push(...newL);
-  setTimeout(() => sndDeal(newL.length), 300);
-  showFloat('+' + score); snd('ok');
-  G.passCount = 0;
-  G.themeHistory.unshift({
-    theme: G.curCase && G.curCase.free ? '★ MOT LIBRE' : (G.curCase && G.curCase.th ? G.curCase.th : '?'),
-    player: p.name, word: word, pts: score
-  });
-  G.word = []; G.changeSel = []; G.changeMode = false;
-  G.previousCaseId = null;
-  renderAll(); renderHistPanel();
-  log('✅ "' + word + '" accepté — +' + score + ' pts !', 'ok');
-  nextTurn();
+  if (G._defiEnLigne) {
+    // Je suis l'adversaire en ligne : j'envoie juste ma décision, je ne touche pas à mon propre jeu
+    if (window._codePartie && window._defiKeyEnCours && window.repondreDefi) {
+      window.repondreDefi(window._codePartie, window._defiKeyEnCours, true);
+    }
+    G._defiEnLigne = false;
+    window._defiKeyEnCours = null;
+    return;
+  }
+  traiterReponseDefi(true);
 }
 
 function defiRefuser() {
   closeModal('m-defi');
-  log('❌ "' + G._defiWord + '" refusé. Tour perdu.', 'bad');
+  if (G._defiEnLigne) {
+    if (window._codePartie && window._defiKeyEnCours && window.repondreDefi) {
+      window.repondreDefi(window._codePartie, window._defiKeyEnCours, false);
+    }
+    G._defiEnLigne = false;
+    window._defiKeyEnCours = null;
+    return;
+  }
+  traiterReponseDefi(false);
+}
+
+// Applique la décision (locale ou reçue via Firebase) sur le joueur AUTEUR du mot
+function traiterReponseDefi(accepte) {
+  const word = G._defiWord;
+  const pIdx = G._defiPIdx !== undefined ? G._defiPIdx : 0;
+  const p = G.players && G.players[pIdx];
+  if (!p) return;
+
+  let score = 0;
+  if (accepte) {
+    const ev = evalWordSync(word);
+    score = ev.score > 0 ? ev.score : (word.length * 2);
+    p.score += score;
+    G.word.map(w => w.idx).sort((a,b) => b-a).forEach(i => p.letters.splice(i, 1));
+    const newL = drawL(10 - p.letters.length);
+    p.letters.push(...newL);
+    setTimeout(() => sndDeal(newL.length), 300);
+    showFloat('+' + score); snd('ok');
+    G.passCount = 0;
+    G.themeHistory.unshift({
+      theme: G.curCase && G.curCase.free ? '★ MOT LIBRE' : (G.curCase && G.curCase.th ? G.curCase.th : '?'),
+      player: p.name, word: word, pts: score
+    });
+    log('✅ "' + word + '" accepté — +' + score + ' pts !', 'ok');
+  } else {
+    log('❌ "' + word + '" refusé. Tour perdu.', 'bad');
+  }
+
   G.word = []; G.changeSel = []; G.changeMode = false;
-  renderAll();
+  G.previousCaseId = null;
+  renderAll(); renderHistPanel();
+
+  if (p.letters.length === 0) { endGame(); return; }
+  if (G.letterBag.length === 0 && G.phase === 'normal') {
+    G.phase = 'final';
+    log('⚠ Cagnotte épuisée — phase finale !', 'inf');
+  }
+
+  const themePubLie = G.curCase ? (G.curCase.free ? 'MOT LIBRE' : G.curCase.th) : '?';
+  const caseIdPubLie = G.curCase ? G.curCase.id : null;
+
+  drawCase(false);
+
+  if (_modeEnLigne && window._codePartie) {
+    if (accepte && window.publierAction) {
+      window.publierAction(window._codePartie, 'valider', { mot: word, pts: score, theme: themePubLie });
+    }
+    if (accepte && window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
+    stopTimer();
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    }
+    return;
+  }
+
   nextTurn();
 }
 </script>
