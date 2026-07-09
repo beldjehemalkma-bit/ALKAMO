@@ -4456,6 +4456,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
 <script>
 function ouvrirDefi(word, pIdx) {
   G._defiWord = word;
@@ -4463,15 +4464,15 @@ function ouvrirDefi(word, pIdx) {
   const adversaire = G.players.find((p, i) => i !== pIdx);
   if (adversaire && adversaire.isBot) {
     snd('err');
-    log('❌ "' + word + '" non reconnu — l'ordinateur refuse automatiquement.', 'bad');
+    log('❌ "' + word + '" non reconnu — ordinateur refuse.', 'bad');
     G.word = []; G.changeSel = []; G.changeMode = false;
     renderAll();
     return;
   }
-  const nomAdv = adversaire ? adversaire.name : 'l'adversaire';
+  const nomAdv = adversaire ? adversaire.name : "l'adversaire";
   document.getElementById('defi-titre').textContent = '🤔 Mot non reconnu';
   document.getElementById('defi-msg').innerHTML =
-    '<strong style="color:var(--gold-light)">"' + word + '"</strong> n'est pas dans le dictionnaire.<br><br>' +
+    '<strong style="color:var(--gold-light)">"' + word + '"</strong> n\'est pas dans le dictionnaire.<br><br>' +
     '<span style="color:rgba(255,255,255,.8)">' + nomAdv + ', acceptez-vous ce mot ?</span>';
   snd('err');
   openModal('m-defi');
@@ -4498,8 +4499,7 @@ function defiAccepter() {
   });
   G.word = []; G.changeSel = []; G.changeMode = false;
   G.previousCaseId = null;
-  renderAll();
-  renderHistPanel();
+  renderAll(); renderHistPanel();
   log('✅ "' + word + '" accepté — +' + score + ' pts !', 'ok');
   nextTurn();
 }
@@ -4512,5 +4512,6 @@ function defiRefuser() {
   nextTurn();
 }
 </script>
+
 </body>
 </html>
