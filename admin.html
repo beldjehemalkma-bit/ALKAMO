@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALKAMO — Administration</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --purple: #7F77DD;
@@ -254,6 +255,8 @@ nav {
           Le fichier est prêt. Téléchargez-le et uploadez-le sur GitHub.
         </p>
         <button class="btn btn-primary" onclick="downloadJSON()">⬇️ Télécharger dictionnaire.json</button>
+        <button class="btn btn-gold" onclick="genererPDFDictionnaire()" style="margin-top:10px">📄 Générer le PDF du dictionnaire</button>
+        <div id="pdf-alert"></div>
         <div id="dl-alert"></div>
       </div>
     </div>
@@ -610,6 +613,205 @@ function downloadJSON() {
   URL.revokeObjectURL(url);
   showAlert('dl-alert', '✅ dictionnaire.json téléchargé ! Uploadez-le sur GitHub.', 'success');
 }
+
+// ═══════════════════════════════════════════
+// GÉNÉRATEUR PDF DU DICTIONNAIRE LEXICAL
+// ═══════════════════════════════════════════
+function genererPDFDictionnaire() {
+  if (!convJsonData) { showAlert('pdf-alert', '❌ Importez d\'abord un fichier Excel.', 'error'); return; }
+  if (!window.jspdf) { showAlert('pdf-alert', '❌ Librairie PDF non chargée (vérifiez votre connexion).', 'error'); return; }
+  showAlert('pdf-alert', '⏳ Génération du PDF en cours (peut prendre une minute)...', 'info');
+  setTimeout(function() {
+    try {
+      buildDictionnairePDF(convJsonData);
+      showAlert('pdf-alert', '✅ PDF généré et téléchargé ! Uploadez-le sur GitHub.', 'success');
+    } catch (err) {
+      showAlert('pdf-alert', '❌ Erreur : ' + err.message, 'error');
+    }
+  }, 50);
+}
+
+function buildDictionnairePDF(data) {
+  var jsPDFctor = window.jspdf.jsPDF;
+  var PW = 110, PH = 220, MARGIN = 11, CW = PW - 2 * MARGIN;
+  var NAVY = [14, 11, 42], GOLD = [200, 160, 32], GOLDLIGHT = [250, 208, 96], PURPLE = [83, 74, 183],
+      TEAL = [29, 158, 117], WHITE = [255, 255, 255], LGREY = [201, 198, 218], FAINT = [139, 135, 168];
+  var LINEF = [58, 54, 107];
+  var doc = new jsPDFctor({ unit: 'mm', format: [PW, PH] });
+  var pageNum = 1;
+  var y = MARGIN;
+
+  function bg(special) {
+    doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]); doc.rect(0, 0, PW, PH, 'F');
+    var stripColor = special ? GOLD : PURPLE;
+    doc.setFillColor(stripColor[0], stripColor[1], stripColor[2]); doc.rect(0, 0, PW, 3, 'F');
+    if (!special) {
+      doc.setDrawColor(LINEF[0], LINEF[1], LINEF[2]); doc.setLineWidth(0.2);
+      doc.line(MARGIN, PH - 9, PW - MARGIN, PH - 9);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(FAINT[0], FAINT[1], FAINT[2]);
+      doc.text('ALKAMO \u2014 Dictionnaire Lexical \u00b7 ' + pageNum + ' \u00b7', PW / 2, PH - 6, { align: 'center' });
+    }
+  }
+  function addPageBg(special) {
+    doc.addPage([PW, PH]); pageNum++; bg(special); y = MARGIN;
+  }
+  bg(true);
+
+  function wrapText(text, startY, opts) {
+    opts = opts || {};
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(LGREY[0], LGREY[1], LGREY[2]);
+    var indent = opts.indent || 0;
+    var lines = doc.splitTextToSize(text, CW - indent);
+    var yy = startY;
+    for (var i = 0; i < lines.length; i++) {
+      if (yy > PH - MARGIN - 6) { addPageBg(true); yy = MARGIN; }
+      doc.text(lines[i], MARGIN + indent, yy);
+      yy += 4.3;
+    }
+    return yy;
+  }
+  function wrapCenterText(text, startY, maxW, lh) {
+    var lines = doc.splitTextToSize(text, maxW);
+    var yy = startY;
+    for (var i = 0; i < lines.length; i++) { doc.text(lines[i], PW / 2, yy, { align: 'center' }); yy += lh; }
+    return yy;
+  }
+  function drawThemeBlock(label, words, startY) {
+    var yy = startY;
+    var barH = 6.5;
+    if (yy + barH + 12 > PH - MARGIN) { addPageBg(false); yy = MARGIN; }
+    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]); doc.rect(MARGIN, yy, 7, barH, 'F');
+    doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]); doc.rect(MARGIN + 7, yy, CW - 7, barH, 'F');
+    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]); doc.setLineWidth(0.4);
+    doc.line(MARGIN, yy + barH, MARGIN + CW, yy + barH);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    doc.text(label.charAt(0).toUpperCase(), MARGIN + 3.5, yy + barH / 2 + 1.2, { align: 'center' });
+    doc.setFontSize(9.5);
+    doc.text(label, MARGIN + 9, yy + barH / 2 + 1.2);
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7); doc.setTextColor(FAINT[0], FAINT[1], FAINT[2]);
+    doc.text(words.length + ' mots', MARGIN + CW - 2, yy + barH / 2 + 1.2, { align: 'right' });
+    yy += barH + 3;
+
+    var nCols = 3, colW = CW / nCols, rowH = 3.3;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(LGREY[0], LGREY[1], LGREY[2]);
+    var idx = 0;
+    while (idx < words.length) {
+      var availH = (PH - MARGIN) - yy;
+      var rowsAvail = Math.floor(availH / rowH);
+      if (rowsAvail < 3) { addPageBg(false); yy = MARGIN; continue; }
+      var wordsThisPage = Math.min(words.length - idx, rowsAvail * nCols);
+      var rowsThisPage = Math.ceil(wordsThisPage / nCols);
+      var cols = [];
+      for (var c = 0; c < nCols; c++) {
+        cols.push(words.slice(idx + c * rowsThisPage, idx + (c + 1) * rowsThisPage));
+      }
+      for (var r = 0; r < rowsThisPage; r++) {
+        for (var c2 = 0; c2 < nCols; c2++) {
+          var w = cols[c2][r];
+          if (w) doc.text(w, MARGIN + c2 * colW, yy + r * rowH + 2.4);
+        }
+      }
+      yy += rowsThisPage * rowH + 1;
+      idx += wordsThisPage;
+      if (idx < words.length) { addPageBg(false); yy = MARGIN; }
+    }
+    yy += 5;
+    return yy;
+  }
+
+  // ---------- COVER ----------
+  y = 30;
+  doc.setFillColor(PURPLE[0], PURPLE[1], PURPLE[2]); doc.rect(PW / 2 - 9, y, 8, 8, 'F');
+  doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]); doc.rect(PW / 2 + 1, y, 8, 8, 'F');
+  doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]); doc.setLineWidth(0.3);
+  doc.rect(PW / 2 - 9, y, 8, 8); doc.rect(PW / 2 + 1, y, 8, 8);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.text('A', PW / 2 - 5, y + 5.5, { align: 'center' });
+  doc.text('L', PW / 2 + 5, y + 5.5, { align: 'center' });
+  y += 13;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  doc.text('ALKAMO', PW / 2, y, { align: 'center' }); y += 5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
+  doc.text('\u00b7 \u00b7 \u00b7', PW / 2, y, { align: 'center' }); y += 20;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  doc.text('DICTIONNAIRE', PW / 2, y, { align: 'center' }); y += 10;
+  doc.setFontSize(30);
+  doc.text('LEXICAL', PW / 2, y, { align: 'center' }); y += 8;
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(11); doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.text('Le r\u00e9pertoire officiel des mots ALKAMO', PW / 2, y, { align: 'center' }); y += 14;
+  doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]); doc.setLineWidth(0.3);
+  doc.line(PW / 2 - 18, y, PW / 2 + 18, y); y += 8;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  doc.text('+ de 70 000 mots', PW / 2, y, { align: 'center' }); y += 6;
+
+  // ---------- Build entries from convJsonData ----------
+  var entries = [];
+  for (var maq in data) {
+    var mnum = maq.replace('M', '');
+    for (var theme in data[maq]) {
+      var words = data[maq][theme].slice().sort();
+      entries.push({ name: theme, maquette: mnum, words: words });
+    }
+  }
+  var nameCounts = {};
+  entries.forEach(function (e) { nameCounts[e.name] = (nameCounts[e.name] || 0) + 1; });
+  var dupNames = {};
+  Object.keys(nameCounts).forEach(function (n) { if (nameCounts[n] > 1) dupNames[n] = true; });
+  entries.sort(function (a, b) {
+    if (a.name < b.name) return -1;
+    if (a.name > b.name) return 1;
+    return a.maquette - b.maquette;
+  });
+  var totalWords = entries.reduce(function (a, e) { return a + e.words.length; }, 0);
+  var nThemes = entries.length;
+
+  y = wrapCenterText('r\u00e9partis en ' + nThemes + ' th\u00e8mes (5 maquettes) \u2014 liste appel\u00e9e \u00e0 \u00eatre enrichie', y, CW - 6, 4);
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.setTextColor(FAINT[0], FAINT[1], FAINT[2]);
+  y += 12;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.text('Class\u00e9s par ordre alphab\u00e9tique de th\u00e8me', PW / 2, y, { align: 'center' });
+
+  // ---------- PREFACE ----------
+  addPageBg(true);
+  y = MARGIN + 4;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  doc.text('Pr\u00e9face', PW / 2, y, { align: 'center' }); y += 10;
+  doc.setFont('helvetica', 'bolditalic'); doc.setFontSize(11); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  y = wrapCenterText('\u00ab L\u00e0 o\u00f9 les murs enferment, na\u00eet le jeu du mot qu\'il faut \u00bb', y, CW - 10, 5);
+  y += 6;
+  y = wrapText("Le principe d'ALKAMO repose sur le champ lexical : pour chaque th\u00e8me du plateau, les joueurs doivent former un mot appartenant au r\u00e9seau de sens qui l'entoure \u2014 synonymes, mots de m\u00eame famille, m\u00eame domaine ou m\u00eame notion.", y);
+  y += 3;
+  y = wrapText("Ce dictionnaire rassemble, th\u00e8me par th\u00e8me et par ordre alphab\u00e9tique, l'ensemble des mots actuellement reconnus par le jeu pour chacun des champs lexicaux d'ALKAMO.", y);
+  y += 3;
+  y = wrapText("Cette liste n'est pas exhaustive. Elle est appel\u00e9e \u00e0 \u00eatre r\u00e9guli\u00e8rement enrichie, corrig\u00e9e et compl\u00e9t\u00e9e au fil des parties et des retours des joueurs.", y);
+  y += 3;
+  y = wrapText("ALKAMO compte 5 maquettes (4 maquettes de 20 th\u00e8mes, plus la maquette Expert de 25 th\u00e8mes), soit 105 th\u00e8mes au total. Certains th\u00e8mes reviennent sur plusieurs maquettes ; chaque occurrence poss\u00e8de sa propre liste de mots et est pr\u00e9sent\u00e9e s\u00e9par\u00e9ment ci-apr\u00e8s, avec l'indication de sa maquette d'origine.", y);
+  y += 6;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(GOLDLIGHT[0], GOLDLIGHT[1], GOLDLIGHT[2]);
+  doc.text('Quelques expressions du jeu', MARGIN, y); y += 6;
+  var expressions = [
+    ['Labourer', 'former le mot exact inscrit sur le tapis central (bonus \u00d7 2)'],
+    ['Cagnotte L', 'la r\u00e9serve commune des lettres'],
+    ['Cagnotte T', 'la r\u00e9serve commune des plaques th\u00e8mes'],
+    ['Super Mot', 'mot form\u00e9 avec les 10 lettres du chevalet (+20 pts)'],
+    ['D\u00e9fi', "contestation d'un mot jou\u00e9 par un adversaire"]
+  ];
+  expressions.forEach(function (pair) {
+    y = wrapText('\u2022  ' + pair[0] + ' : ' + pair[1], y, { indent: 4 });
+    y += 1.5;
+  });
+
+  // ---------- THEMES A-Z ----------
+  addPageBg(false);
+  y = MARGIN;
+  entries.forEach(function (e) {
+    var label = dupNames[e.name] ? (e.name + ' \u00b7 Maquette ' + e.maquette) : e.name;
+    y = drawThemeBlock(label, e.words, y);
+  });
+
+  doc.save('ALKAMO_Dictionnaire_Lexical.pdf');
+}
+
 </script>
 <script>
 // Vider le champ mot de passe au chargement pour empêcher l'autocomplétion
