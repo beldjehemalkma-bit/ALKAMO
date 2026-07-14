@@ -46,6 +46,11 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5
   margin: 20px 0;
   flex-wrap: wrap;
 }
+.dico-pdf-btn{display:inline-flex;align-items:center;gap:8px;margin:18px 0 4px;
+  padding:11px 24px;border-radius:50px;text-decoration:none;font-weight:600;font-size:.9rem;
+  color:var(--dk);background:linear-gradient(135deg,var(--gl),var(--g));
+  box-shadow:0 4px 16px rgba(200,160,32,.25);transition:all .2s}
+.dico-pdf-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(200,160,32,.4)}
 .dico-choix-btn {
   padding: 12px 28px;
   border-radius: 50px;
@@ -176,6 +181,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 5
 <div class="dico-hero">
   <h1>Dictionnaire <span>ALKAMO</span></h1>
   <p>Consultez et vérifiez tous les mots acceptés dans chaque thème</p>
+  <a href="ALKAMO_Dictionnaire_Lexical.pdf" target="_blank" class="dico-pdf-btn">📖 Consulter le dictionnaire complet (PDF)</a>
 
   <!-- Choix du dictionnaire -->
   <div class="dico-choix">
