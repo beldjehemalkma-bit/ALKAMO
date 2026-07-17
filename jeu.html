@@ -848,6 +848,19 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
       <div class="maq-grid" id="maq-grid"></div>
     </div>
 
+    <div id="maq-duree-zone" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;margin-bottom:10px;text-align:left">
+      <div style="font-size:.8rem;color:#FAD060;margin-bottom:6px;font-weight:700">⏱ Durée de la partie</div>
+      <div class="duree-row">
+        <button class="duree-btn" onclick="setDuree(30)">30 min</button>
+        <button class="duree-btn" onclick="setDuree(45)">45 min</button>
+        <button class="duree-btn on" onclick="setDuree(60)">1h00</button>
+        <button class="duree-btn" onclick="setDuree(90)">1h30</button>
+        <button class="duree-btn" onclick="setDuree(120)">2h00</button>
+        <input class="duree-input" id="duree-libre-maq" type="number" min="10" max="240"
+          placeholder="min" title="Durée libre en minutes"
+          oninput="setDureeLibre(this.value)">
+      </div>
+    </div>
     <div id="maq-chat-zone" style="display:none;background:rgba(255,255,255,.05);border-radius:10px;padding:10px;margin-bottom:10px;text-align:left">
       <div style="font-size:.8rem;color:#FAD060;margin-bottom:6px;font-weight:700">💬 Concertez-vous sur la maquette</div>
       <div id="lobby-chat-msgs" style="height:100px;overflow-y:auto;font-size:.8rem;color:rgba(255,255,255,.8);margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
@@ -3432,7 +3445,7 @@ function startGameEnLigne() {
   window._finPartieRecu = false;
 
   if (estJ1 && window.demarrerPartieFirebase) {
-    window.demarrerPartieFirebase(code, _maqActive);
+    window.demarrerPartieFirebase(code, _maqActive, _dureePartie);
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
@@ -4050,9 +4063,9 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
   };
 
-  window.demarrerPartieFirebase = function(code, maquette) {
+  window.demarrerPartieFirebase = function(code, maquette, duree) {
     update(pRef(code), {
-      etat: 'en_cours', maquette,
+      etat: 'en_cours', maquette, duree: duree || 60,
       'tour/joueurActif': 'j1', 'tour/numero': 1,
       'tour/action': 'attente_theme', 'tour/theme': null,
       finPartie: null
@@ -4095,6 +4108,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         window._idAdverse = 'j1';
         window._nomAdverse = d.joueurs && d.joueurs.j1 ? d.joueurs.j1.nom : 'Joueur 1';
         _maqActive = d.maquette;
+        if (d.duree) _dureePartie = d.duree;
         if (typeof startGameEnLigne === 'function') startGameEnLigne();
         if (typeof showChatBtn === 'function') showChatBtn();
         return;
