@@ -156,6 +156,87 @@ footer a.cta { animation:pulse-glow 2.5s ease-in-out infinite; }
   0%,100% { box-shadow:0 0 0 rgba(250,208,96,0); }
   50% { box-shadow:0 0 22px rgba(250,208,96,.5); }
 }
+
+.pscene-wrap {
+  font-family: sans-serif;
+  min-height:500px;
+  border-radius:16px;
+  background:
+    radial-gradient(ellipse 700px 500px at 50% 25%, rgba(255,225,170,.16), transparent 65%),
+    radial-gradient(circle at 15% 90%, rgba(0,0,0,.5), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(0,0,0,.4), transparent 40%),
+    repeating-linear-gradient(88deg, rgba(255,255,255,.025) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(89deg, rgba(0,0,0,.06) 0 1px, transparent 1px 5px),
+    radial-gradient(circle at 30% 60%, rgba(60,35,15,.5) 0, transparent 8%),
+    radial-gradient(circle at 75% 30%, rgba(60,35,15,.4) 0, transparent 6%),
+    radial-gradient(circle at 60% 80%, rgba(50,28,12,.4) 0, transparent 7%),
+    linear-gradient(175deg, #6e4527 0%, #5a381f 35%, #4a2f1a 70%, #3d2614 100%);
+  display:flex; align-items:center; justify-content:center;
+  padding:60px; position:relative; overflow:hidden;
+}
+.pvignette { position:absolute; inset:0; box-shadow: inset 0 0 180px 60px rgba(0,0,0,.55); pointer-events:none; }
+.pbokeh { position:absolute; border-radius:50%; filter:blur(2px); pointer-events:none; opacity:.55; }
+.b1 { width:90px; height:90px; background:radial-gradient(circle,rgba(255,210,120,.8),transparent 70%); top:2%; left:4%; }
+.b2 { width:60px; height:60px; background:radial-gradient(circle,rgba(255,180,90,.7),transparent 70%); top:70%; left:88%; }
+.b3 { width:40px; height:40px; background:radial-gradient(circle,rgba(255,230,160,.6),transparent 70%); top:85%; left:10%; }
+.b4 { width:70px; height:70px; background:radial-gradient(circle,rgba(200,160,255,.4),transparent 70%); top:6%; left:85%; }
+.b5 { width:35px; height:35px; background:radial-gradient(circle,rgba(255,200,120,.55),transparent 70%); top:45%; left:94%; }
+.pscene { position:relative; width:680px; height:680px; }
+.pboard {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:440px; padding:16px; border-radius:14px;
+  background: linear-gradient(160deg,#2a2360,#161029);
+  border: 4px solid #C8A020;
+  box-shadow: 0 25px 60px rgba(0,0,0,.55), 0 0 0 6px rgba(0,0,0,.25), 0 0 35px rgba(200,160,32,.2);
+  z-index:5;
+}
+.pgrid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; position:relative; }
+.pcell {
+  aspect-ratio:1; border-radius:7px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:1px;
+  background: var(--cbg); border:1px solid var(--cbd);
+}
+.pcell.free { background:linear-gradient(135deg,rgba(200,160,32,.4),rgba(250,208,96,.22)); border-color:#FAD060; }
+.pcell .em { font-size:1.15rem; }
+.pcell .th { font-size:.38rem; font-weight:800; color:#fff; text-align:center; line-height:1; padding:0 1px; }
+
+.scatter-tile {
+  position:absolute; width:38px; height:38px; background:#F5F0DC; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 3px 8px rgba(0,0,0,.5), inset 0 -2px 2px rgba(0,0,0,.1);
+  font-weight:800; color:#1A1A2E; font-size:1.05rem; z-index:8;
+}
+.scatter-tile span.val { position:absolute; bottom:1px; right:3px; font-size:.42rem; color:#534AB7; }
+.scatter-special {
+  position:absolute; width:64px; height:50px; background:#F5F0DC; border-radius:6px;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  box-shadow: 0 4px 10px rgba(0,0,0,.5); font-weight:800; color:#7a5200; font-size:.5rem;
+  line-height:1.15; padding:4px; z-index:8; border:1px solid #C8A020;
+}
+
+.pavatar {
+  position:absolute; width:60px; height:60px; border-radius:50%; background:#3a3560;
+  border:3px solid #FAD060; display:flex; align-items:center; justify-content:center;
+  font-size:1.7rem; box-shadow:0 6px 16px rgba(0,0,0,.4); z-index:9;
+}
+.pavatar .lbl {
+  position:absolute; top:66px; left:50%; transform:translateX(-50%);
+  font-size:.6rem; color:#C9C6DA; font-weight:700; white-space:nowrap;
+  background:rgba(0,0,0,.4); padding:2px 8px; border-radius:8px;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 25px 60px rgba(0,0,0,.55), 0 0 0 6px rgba(0,0,0,.25), 0 0 25px rgba(200,160,32,.18); }
+  50% { box-shadow: 0 25px 60px rgba(0,0,0,.55), 0 0 0 6px rgba(0,0,0,.25), 0 0 45px rgba(200,160,32,.42); }
+}
+.scatter-tile, .scatter-special { opacity:0; }
+.scatter-tile.dropped, .scatter-special.dropped { animation: drop-in .7s cubic-bezier(.34,1.56,.64,1) forwards; }
+@keyframes drop-in {
+  0% { opacity:0; transform: translateY(-60px) scale(.6) rotate(var(--r,0deg)); }
+  60% { opacity:1; transform: translateY(6px) scale(1.05) rotate(var(--r,0deg)); }
+  80% { transform: translateY(-3px) scale(.98) rotate(var(--r,0deg)); }
+  100% { opacity:1; transform: translateY(0) scale(1) rotate(var(--r,0deg)); }
+}
+
 </style>
 </head>
 <body>
@@ -342,18 +423,18 @@ document.querySelectorAll('section').forEach(function(s) {
     <div><h2>Autour de la table</h2><div class="section-sub">2 à 4 joueurs, en famille, entre amis, ou en ligne</div></div>
   </div>
   <div class="card">
-    <div class="table-scene">
-      <div class="player p-top"><div class="avatar">🧑</div><div class="bubble">« MAMMIFÈRE ? … LOUP ! »</div></div>
-      <div class="player p-left"><div class="avatar">👩</div><div class="bubble">« SPORT → JUDO »</div></div>
-      <div class="player p-right"><div class="avatar">🧔</div><div class="bubble">Super Mot ! +20</div></div>
-      <div class="table-center">
-        <div class="mini-board">
-          <span>🎯</span><span>⭐</span><span>🏆</span>
-          <span>💬</span><span>⭐</span><span>🎵</span>
-          <span>⭐</span><span>🌳</span><span>⚕</span>
+    <div class="pscene-wrap">
+      <div class="pvignette"></div>
+      <div class="pbokeh b1"></div>
+      <div class="pbokeh b2"></div>
+      <div class="pbokeh b3"></div>
+      <div class="pbokeh b4"></div>
+      <div class="pbokeh b5"></div>
+      <div class="pscene">
+        <div class="pboard pglow">
+          <div class="pgrid" id="pgrid"></div>
         </div>
       </div>
-      <div class="player p-bottom"><div class="avatar">🧑‍🦱</div><div class="bubble">« Achat de lettre ? »</div></div>
     </div>
     <p style="margin-top:22px;text-align:center;font-size:.85rem;color:#B8B5CC">Que ce soit autour d'une vraie table ou en ligne via le chat de partie, l'ambiance reste la même&nbsp;: on cherche, on hésite, on trouve&nbsp;!</p>
   </div>
@@ -364,5 +445,108 @@ document.querySelectorAll('section').forEach(function(s) {
   <a class="cta" href="jeu.html">🎮 Lancer une partie</a>
 </footer>
 
+<script>
+let ambianceAudioCtx = null;
+let ambianceDropped = false;
+function unlockAmbianceAudio() {
+  if (!ambianceAudioCtx) {
+    ambianceAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  ambianceAudioCtx.resume();
+}
+['scroll','click','keydown','touchstart'].forEach(function(evt) {
+  document.addEventListener(evt, unlockAmbianceAudio, { once: true, passive: true });
+});
+function playAmbianceClack() {
+  if (!ambianceAudioCtx) return;
+  const now = ambianceAudioCtx.currentTime;
+  const osc = ambianceAudioCtx.createOscillator();
+  const gain = ambianceAudioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(1800 + Math.random()*500, now);
+  osc.frequency.exponentialRampToValueAtTime(180, now + 0.09);
+  gain.gain.setValueAtTime(0.5, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+  osc.connect(gain); gain.connect(ambianceAudioCtx.destination);
+  osc.start(now); osc.stop(now + 0.18);
+}
+function dropAmbianceTiles() {
+  if (ambianceDropped) return;
+  ambianceDropped = true;
+  unlockAmbianceAudio();
+  document.querySelectorAll('.scatter-tile, .scatter-special').forEach(function(el) {
+    const delay = parseFloat(el.dataset.delay || 0);
+    setTimeout(function() {
+      el.classList.add('dropped');
+      playAmbianceClack();
+    }, delay * 1000);
+  });
+}
+const ambianceObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) dropAmbianceTiles();
+  });
+}, { threshold: 0.3 });
+const ambianceSection = document.getElementById('ambiance');
+if (ambianceSection) ambianceObserver.observe(ambianceSection);
+
+
+const cells = [["", "👗", "A1", "VÊTEMENT"], ["", "🎣", "B1", "CHASSE ET …"], [" free", "⭐", "C1", "MOT LIBRE"], ["", "💬", "D1", "LANGUE"], ["", "🦁", "E1", "MAMMIFÈRE"], ["", "🚗", "A2", "TRANSPORT"], ["", "💰", "B2", "ÉCONOMIE"], ["", "⚽", "C2", "SPORT"], ["", "☪", "D2", "RELIGION"], ["", "🏫", "E2", "ÉCOLE"], [" free", "⭐", "A3", "MOT LIBRE"], ["", "🔧", "B3", "OUTIL ET M…"], [" free", "⭐", "C3", "MOT LIBRE"], ["", "🏛", "D3", "POLITIQUE"], [" free", "⭐", "E3", "MOT LIBRE"], ["", "🎵", "A4", "MUSIQUE"], ["", "💎", "B4", "MINÉRAL"], ["", "📏", "C4", "MESURE ET …"], ["", "🏺", "D4", "ARTISANAT"], ["", "🍎", "E4", "FRUIT"], ["", "🌳", "A5", "ARBRE"], ["", "⚕", "B5", "MÉDECINE"], [" free", "⭐", "C5", "MOT LIBRE"], ["", "🏗", "D5", "BÂTIMENT"], ["", "⚛", "E5", "PHYSIQUE"]];
+const palette = [['rgba(83,74,183,.32)','#7F77DD'],['rgba(29,158,117,.32)','#5DCAA5'],['rgba(216,90,48,.3)','#F0997B'],['rgba(212,83,126,.3)','#ED93B1'],['rgba(55,138,221,.3)','#85B7EB'],['rgba(186,117,23,.3)','#EF9F27']];
+const pgrid = document.getElementById('pgrid');
+cells.forEach((c,i) => {
+  const [free, em, id, th] = c;
+  const div = document.createElement('div');
+  div.className = 'pcell' + (free ? ' free' : '');
+  if (!free) { const [bg,bd] = palette[i%6]; div.style.setProperty('--cbg',bg); div.style.setProperty('--cbd',bd); }
+  div.innerHTML = `<span class="em">${em}</span><span class="th">${th}</span>`;
+  pgrid.appendChild(div);
+});
+
+// Scattered letter tiles ON the pboard area + a bit outside on the table
+const pscene = document.querySelector('.pscene');
+const letters = [
+  ['A',2,20,25,-10],['L',6,60,15,12],['K',10,110,32,-18],['A',2,155,10,6],['M',6,200,28,-8],
+  ['O',2,240,48,15],['E',2,55,80,-14],['S',2,130,95,9],['N',6,270,90,-6],['T',6,320,60,18],
+  ['R',6,15,140,10],['I',2,350,140,-12],['C',6,40,200,20],['V',8,330,220,-9],
+  ['A',2,80,260,14],['L',6,290,270,-16],['K',10,180,300,8],['A',2,20,320,-11],['M',6,340,320,13]
+];
+letters.forEach(([let_,val,x,y,rot]) => {
+  const d = document.createElement('div');
+  d.className = 'scatter-tile';
+  d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.setProperty('--r', rot+'deg');
+  d.dataset.delay = (Math.random()*2.2).toFixed(2);
+  d.innerHTML = let_ + '<span class="val">' + val + '</span>';
+  pscene.appendChild(d);
+});
+
+const specials = [
+  {x:-10, y:170, rot:-8, text:'ACHAT\nVENTE'},
+  {x:600, y:200, rot:10, text:'DROIT DE\nPASSE'},
+  {x:610, y:420, rot:-6, text:'SUPER\nMOT'},
+];
+specials.forEach(s => {
+  const d = document.createElement('div');
+  d.className = 'scatter-special';
+  d.style.left = s.x + 'px'; d.style.top = s.y + 'px'; d.style.setProperty('--r', s.rot+'deg');
+  d.dataset.delay = (Math.random()*2.2 + 0.3).toFixed(2);
+  d.innerHTML = s.text.replace('\n','<br>');
+  pscene.appendChild(d);
+});
+
+const avatars = [
+  {emoji:'🧑', x:300, y:-40, label:'Joueur 1'},
+  {emoji:'👩', x:-50, y:560, label:'Joueur 2'},
+  {emoji:'🧔', x:640, y:560, label:'Joueur 3'},
+  {emoji:'👩', x:640, y:-40, label:'Joueur 4'},
+];
+avatars.forEach(a => {
+  const d = document.createElement('div');
+  d.className = 'pavatar';
+  d.style.left = a.x + 'px'; d.style.top = a.y + 'px';
+  d.innerHTML = a.emoji + '<span class="lbl">' + a.label + '</span>';
+  pscene.appendChild(d);
+});
+</script>
 </body>
 </html>
