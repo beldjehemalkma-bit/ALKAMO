@@ -578,6 +578,29 @@ function handleFile(file) {
           totalMots += mots.length;
         });
       }
+      // Fusion automatique des thèmes en double (même nom sur plusieurs maquettes) :
+      // chaque occurrence reçoit l'union de tous les mots des autres occurrences,
+      // afin qu'un ajout sur une maquette se répercute automatiquement sur les autres.
+      const nameToLocations = {};
+      for (const maq in result) {
+        for (const theme in result[maq]) {
+          if (!nameToLocations[theme]) nameToLocations[theme] = [];
+          nameToLocations[theme].push(maq);
+        }
+      }
+      for (const theme in nameToLocations) {
+        const locations = nameToLocations[theme];
+        if (locations.length < 2) continue; // pas un doublon, on ne touche à rien
+        const unionSet = new Set();
+        locations.forEach(maq => result[maq][theme].forEach(w => unionSet.add(w)));
+        const unionWords = Array.from(unionSet).sort();
+        locations.forEach(maq => { result[maq][theme] = unionWords; });
+      }
+      totalMots = 0;
+      for (const maq in result) {
+        for (const theme in result[maq]) totalMots += result[maq][theme].length;
+      }
+
       convJsonData = result;
       showAlert('conv-alert', `✅ Fichier lu — ${totalMots.toLocaleString('fr-FR')} mots`, 'success');
       afficherConvRecap(result, totalMots);
