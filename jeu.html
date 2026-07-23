@@ -3696,7 +3696,93 @@ function ouvrirOnline() {
 }
 function fermerOnline() {
   document.getElementById('online-modal').classList.remove('open');
+  if (window._salonMonUid && window.salonQuitter && !_modeEnLigne) {
+    window.salonQuitter(window._salonMonUid);
+    window._salonMonUid = null;
+  }
 }
+
+window._salonMonUid = null;
+
+function escapeHtmlSalon(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function rejoindreSalonUI() {
+  const nom = document.getElementById('online-nom').value.trim();
+  if (!nom) { alert('Entrez d\'abord votre prénom (juste en dessous) !'); return; }
+  if (!window.salonRejoindre) { alert('Firebase non connecté — vérifiez votre connexion internet'); return; }
+  window._salonMonNom = nom;
+  window._salonMonUid = window.salonRejoindre(nom);
+  document.getElementById('salon-join-btn').style.display = 'none';
+  document.getElementById('salon-status').style.display = 'block';
+}
+
+window._onSalonListUpdate = function(data, monUid) {
+  const container = document.getElementById('salon-list');
+  if (!container) return;
+  const entries = Object.entries(data).filter(([uid]) => uid !== monUid);
+  if (!entries.length) {
+    container.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:.78rem;text-align:center;padding:8px">Aucun autre joueur disponible pour l\'instant…</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([uid, d]) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 10px">' +
+    '<span style="color:#fff;font-size:.85rem">🟢 ' + escapeHtmlSalon(d.nom) + '</span>' +
+    '<button class="btn btn-gold" style="width:auto;padding:5px 14px;font-size:.75rem;margin:0" onclick="inviterDepuisSalon(\'' + uid + '\',\'' + escapeHtmlSalon(d.nom) + '\')">Inviter</button>' +
+    '</div>'
+  ).join('');
+};
+
+function inviterDepuisSalon(targetUid, targetNom) {
+  if (!window._salonMonNom) return;
+  window.salonInviter(window._salonMonNom, targetUid);
+  alert('Invitation envoyée à ' + targetNom + ' — en attente de sa réponse...');
+}
+
+window._onSalonInviteReceived = function(inv) {
+  if (window._inviteHandledCode === inv.code) return;
+  window._inviteHandledCode = inv.code;
+  window._inviteCodeRecu = inv.code;
+  document.getElementById('invite-from-nom').textContent = inv.fromNom;
+  document.getElementById('m-invitation').style.display = 'flex';
+};
+
+function accepterInvitationUI() {
+  const code = window._inviteCodeRecu;
+  const nom = window._salonMonNom || document.getElementById('online-nom').value.trim() || 'Joueur';
+  document.getElementById('m-invitation').style.display = 'none';
+  if (window.salonRefuserInvite && window._salonMonUid) window.salonRefuserInvite(window._salonMonUid);
+  if (window.salonQuitter) window.salonQuitter(window._salonMonUid);
+  window._salonMonUid = null;
+  _modeEnLigne = true;
+  window._nomJoueur = nom;
+  window._idAdverse = 'j1';
+  window.rejoindrePatie(code, nom);
+  fermerOnline();
+  openMaquette(true);
+  setTimeout(() => {
+    const btnJ = document.getElementById('maq-btn-jouer');
+    if (btnJ) btnJ.style.display = 'none';
+    const chatZ = document.getElementById('maq-chat-zone');
+    if (chatZ) { chatZ.style.display = 'block'; chatZ.dataset.code = code; }
+  }, 200);
+}
+
+function refuserInvitationUI() {
+  document.getElementById('m-invitation').style.display = 'none';
+  if (window.salonRefuserInvite && window._salonMonUid) window.salonRefuserInvite(window._salonMonUid);
+  window._inviteHandledCode = null;
+}
+
+window._onSalonInviteAccepted = function(code) {
+  if (window.salonQuitter) window.salonQuitter(window._salonMonUid);
+  window._salonMonUid = null;
+  document.getElementById('online-code-show').textContent = code;
+  fermerOnline();
+  openMaquette(true);
+};
+
 function onlineCreer() {
   const nom = document.getElementById('online-nom').value.trim() || 'Joueur 1';
   if (window.creerPartieEnLigne) {
@@ -4017,7 +4103,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 <!-- ══ FIREBASE ══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push, update, get, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
@@ -4371,14 +4457,92 @@ function _executerFinPartie() {
   if (endW) endW.textContent = '🏆 TEST FIN OK !';
 }
 
+  // ══ SALON PUBLIC (présence + invitations) ══
+  let _salonListListener = null;
+  let _salonInviteListener = null;
+  let _salonAcceptListeners = {};
+
+  window.salonRejoindre = function(nom) {
+    const uid = 'u' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    const myRef = ref(db, 'salon/' + uid);
+    set(myRef, { nom, ts: Date.now() });
+    onDisconnect(myRef).remove();
+
+    _salonListListener = onValue(ref(db, 'salon'), snap => {
+      if (window._onSalonListUpdate) window._onSalonListUpdate(snap.val() || {}, uid);
+    });
+    _salonInviteListener = onValue(ref(db, 'salon_invites/' + uid), snap => {
+      const inv = snap.val();
+      if (inv && window._onSalonInviteReceived) window._onSalonInviteReceived(inv);
+    });
+    return uid;
+  };
+
+  window.salonQuitter = function(uid) {
+    if (!uid) return;
+    remove(ref(db, 'salon/' + uid));
+    remove(ref(db, 'salon_invites/' + uid));
+    if (_salonListListener) { _salonListListener(); _salonListListener = null; }
+    if (_salonInviteListener) { _salonInviteListener(); _salonInviteListener = null; }
+    Object.values(_salonAcceptListeners).forEach(unsub => unsub());
+    _salonAcceptListeners = {};
+  };
+
+  window.salonInviter = function(myNom, targetUid) {
+    const code = window.creerPartieEnLigne(myNom);
+    set(ref(db, 'salon_invites/' + targetUid), { fromNom: myNom, code, ts: Date.now() });
+    const unsub = onValue(ref(db, 'parties/' + code + '/joueurs'), snap => {
+      const joueurs = snap.val() || {};
+      if (Object.keys(joueurs).length > 1) {
+        unsub();
+        delete _salonAcceptListeners[code];
+        if (window._onSalonInviteAccepted) window._onSalonInviteAccepted(code);
+      }
+    });
+    _salonAcceptListeners[code] = unsub;
+    return code;
+  };
+
+  window.salonRefuserInvite = function(uid) {
+    remove(ref(db, 'salon_invites/' + uid));
+  };
+
 </script>
 
+
+<!-- ══ MODAL INVITATION REÇUE ══ -->
+<div class="online-modal" id="m-invitation" style="display:none;z-index:900">
+  <div class="online-card" style="text-align:center">
+    <div style="font-size:1.8rem;margin-bottom:6px">📩</div>
+    <div class="online-title" style="font-size:1rem">INVITATION REÇUE</div>
+    <div style="color:#fff;font-size:.95rem;margin:10px 0 18px">
+      <b id="invite-from-nom" style="color:#FAD060"></b> souhaite jouer avec vous !
+    </div>
+    <button class="btn btn-gold" style="width:100%;margin-bottom:8px" onclick="accepterInvitationUI()">
+      ✅ Accepter
+    </button>
+    <button class="btn btn-out" style="width:100%" onclick="refuserInvitationUI()">
+      ❌ Décliner
+    </button>
+  </div>
+</div>
 
 <!-- ══ MODAL PARTIE EN LIGNE ══ -->
 <div class="online-modal" id="online-modal">
   <div class="online-card">
     <div class="online-title">🌐 JOUER EN LIGNE</div>
     <div class="online-sub">Jouez avec vos amis depuis n'importe où</div>
+
+    <div id="online-salon" style="margin-bottom:14px">
+      <button class="btn btn-gold" id="salon-join-btn" style="width:100%" onclick="rejoindreSalonUI()">
+        🟢 Rejoindre le salon (voir qui est disponible)
+      </button>
+      <div id="salon-status" style="display:none">
+        <div style="color:#4ADE9A;font-size:.78rem;margin-bottom:8px;text-align:center">✅ Vous êtes visible dans le salon</div>
+        <div id="salon-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-bottom:10px"></div>
+      </div>
+    </div>
+    <div class="online-sep">— ou avec un code —</div>
 
     <div id="online-step1">
       <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12">
