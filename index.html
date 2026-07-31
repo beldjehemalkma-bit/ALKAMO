@@ -16,6 +16,7 @@
   --r: 0.75rem;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'DM Sans', sans-serif;
@@ -614,7 +615,7 @@ footer span { color:var(--gl); }
   <div class="hero-btns">
     <a href="jeu.html" class="btn-play" onclick="return checkAuth(event)">🎮 Jouer maintenant</a>
     <a href="dictionnaire.html" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">📚 Dictionnaire</a>
-    <a href="tutoriel.html" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">🎓 Découvrir ALKAMO</a>
+    <a href="#decouvrir-alkamo" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">🎓 Découvrir ALKAMO</a>
   </div>
 
   <div class="hero-stats">
@@ -636,6 +637,35 @@ footer span { color:var(--gl); }
     </div>
   </div>
 </header>
+
+<!-- ══ DÉCOUVRIR ALKAMO ══ -->
+<section class="section" id="decouvrir-alkamo">
+  <div class="section-tag">Aperçu rapide</div>
+  <h2 class="section-title">Envie de jouer ? <span>Voici l'essentiel</span></h2>
+  <p class="section-desc">Pas besoin de tout lire pour vous lancer — voici ce qui rend chaque partie d'ALKAMO unique.</p>
+
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon" style="background:rgba(83,74,183,.2)">🧠</div>
+      <h3>Stimulez votre vocabulaire</h3>
+      <p>Chaque partie enrichit votre culture générale — 105 thèmes à explorer, de la médecine à la mythologie.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon" style="background:rgba(200,160,32,.2)">🎲</div>
+      <h3>Jamais deux parties pareilles</h3>
+      <p>5 maquettes différentes, des cases libres, des bonus surprises — la stratégie change à chaque fois.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon" style="background:rgba(29,158,117,.2)">👥</div>
+      <h3>Entre amis ou en famille</h3>
+      <p>De 2 à 4 joueurs, en ligne ou autour d'une table — un moment convivial et stimulant à partager.</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:32px">
+    <a href="tutoriel.html" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">📖 Voir le tutoriel complet</a>
+  </div>
+</section>
 
 <!-- ══ PRÉSENTATION ══ -->
 <section class="section" id="presentation">
