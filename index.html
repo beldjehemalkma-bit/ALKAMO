@@ -1269,7 +1269,7 @@ function dcvPlayAudio() {
   var audio = document.getElementById('dcv-audio');
   if (!audio) { return; }
   if (!dcvAudioStarted) {
-    audio.volume = 0.6;
+    audio.volume = 0.4;
     audio.play().catch(function() {});
     dcvAudioStarted = true;
     var btn = document.getElementById('dcv-sound-btn');
