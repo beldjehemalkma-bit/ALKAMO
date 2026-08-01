@@ -529,12 +529,35 @@ footer span { color:var(--gl); }
   border-bottom:1px solid rgba(255,255,255,.05); font-size:.95rem;
 }
 
+
+.discover-showcase { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin:28px 0 36px 0; align-items:center; }
+.dcv-stats-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.dcv-board { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; max-width:260px; margin:0 auto; }
+.dcv-cell { aspect-ratio:1; background:rgba(255,255,255,.05); border:2px solid rgba(255,255,255,.1); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:.9rem; transition:all .5s ease; }
+.dcv-cell.lit { background:rgba(83,74,183,.35); border-color:var(--vl); box-shadow:0 0 16px rgba(127,119,221,.5); transform:scale(1.08); }
+.dcv-board-word { text-align:center; margin-top:12px; font-weight:700; color:var(--gl); min-height:1.4em; font-size:.95rem; }
+.dcv-sound-btn {
+  display:inline-flex; align-items:center; gap:6px; margin:0 auto 20px auto;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); color:#fff;
+  padding:8px 16px; border-radius:20px; font-size:.82rem; font-weight:700; cursor:pointer;
+}
+.dcv-carousel-wrap { overflow:hidden; position:relative; border-radius:12px; }
+.dcv-carousel-wrap::before, .dcv-carousel-wrap::after { content:''; position:absolute; top:0; bottom:0; width:40px; z-index:2; pointer-events:none; }
+.dcv-carousel-wrap::before { left:0; background:linear-gradient(90deg, var(--dk2), transparent); }
+.dcv-carousel-wrap::after { right:0; background:linear-gradient(270deg, var(--dk2), transparent); }
+.dcv-carousel-track { display:flex; gap:14px; width:max-content; animation:dcv-scroll 16s linear infinite; }
+.dcv-carousel-track:hover { animation-play-state:paused; }
+@keyframes dcv-scroll { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+.dcv-maq-card { width:120px; height:140px; border-radius:12px; padding:10px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; font-weight:700; font-size:.78rem; border:2px solid var(--tc); background:rgba(255,255,255,.03); }
+.dcv-maq-emoji { font-size:1.6rem; }
+
 /* ══ RESPONSIVE ══ */
 @media(max-width:768px) {
   .nav-links { display:none; }
   .hamburger-btn { display:flex; }
   nav > a[href="admin.html"] { display:none; }
   nav > a.nav-cta { display:none; }
+  .discover-showcase { grid-template-columns:1fr; }
   .hero-tiles .htile { width:48px; height:58px; font-size:1.4rem; }
   .histoire-inner { grid-template-columns:1fr; gap:30px; }
   .galerie-grid { grid-template-columns:1fr 1fr; }
@@ -652,7 +675,7 @@ function toggleMobileMenu() {
   <div class="hero-btns">
     <a href="jeu.html" class="btn-play" onclick="return checkAuth(event)">🎮 Jouer maintenant</a>
     <a href="dictionnaire.html" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">📚 Dictionnaire</a>
-    <a href="#decouvrir-alkamo" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)">🎓 Découvrir ALKAMO</a>
+    <a href="#decouvrir-alkamo" class="btn-rules" style="border-color:rgba(200,160,32,.3);color:var(--gl)" onclick="dcvPlayAudio()">🎓 Découvrir ALKAMO</a>
   </div>
 
   <div class="hero-stats">
@@ -680,6 +703,19 @@ function toggleMobileMenu() {
   <div class="section-tag">Aperçu rapide</div>
   <h2 class="section-title">Envie de jouer ? <span>Voici l'essentiel</span></h2>
   <p class="section-desc">Pas besoin de tout lire pour vous lancer — voici ce qui rend chaque partie d'ALKAMO unique.</p>
+
+  <button class="dcv-sound-btn" id="dcv-sound-btn" onclick="dcvToggleAudio()" aria-label="Couper/activer le son">🔊 Son</button>
+  <audio id="dcv-audio" src="rasputin.mp3" loop preload="none"></audio>
+
+  <div class="discover-showcase">
+    <div class="dcv-carousel-wrap">
+      <div class="dcv-carousel-track" id="dcv-carousel-track"></div>
+    </div>
+    <div class="dcv-board-col">
+      <div class="dcv-board" id="dcv-board"></div>
+      <div class="dcv-board-word" id="dcv-board-word"></div>
+    </div>
+  </div>
 
   <div class="features-grid">
     <div class="feat-card">
@@ -1226,6 +1262,82 @@ fetch("dictionnaire.json")
     ids.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = fmt; });
   })
   .catch(() => {});
+</script>
+<script>
+var dcvAudioStarted = false;
+function dcvPlayAudio() {
+  var audio = document.getElementById('dcv-audio');
+  if (!audio) { return; }
+  if (!dcvAudioStarted) {
+    audio.volume = 0.6;
+    audio.play().catch(function() {});
+    dcvAudioStarted = true;
+    var btn = document.getElementById('dcv-sound-btn');
+    if (btn) { btn.textContent = '🔊 Son'; }
+  }
+}
+function dcvToggleAudio() {
+  var audio = document.getElementById('dcv-audio');
+  var btn = document.getElementById('dcv-sound-btn');
+  if (!audio) { return; }
+  if (!dcvAudioStarted) {
+    dcvPlayAudio();
+    return;
+  }
+  if (audio.paused) {
+    audio.play().catch(function() {});
+    if (btn) { btn.textContent = '🔊 Son'; }
+  } else {
+    audio.pause();
+    if (btn) { btn.textContent = '🔇 Son coupé'; }
+  }
+}
+function dcvBuildCarousel() {
+  var track = document.getElementById('dcv-carousel-track');
+  if (!track) { return; }
+  var maquettes = [
+    {emoji:'🎯', color:'#534AB7', label:'Maquette N°1'},
+    {emoji:'🌟', color:'#1D9E75', label:'Maquette N°2'},
+    {emoji:'🏆', color:'#1565C0', label:'Maquette N°3'},
+    {emoji:'💫', color:'#8B2020', label:'Maquette N°4'},
+    {emoji:'🎓', color:'#5D4037', label:'Maquette Expert'}
+  ];
+  maquettes.concat(maquettes).forEach(function(m) {
+    var card = document.createElement('div');
+    card.className = 'dcv-maq-card';
+    card.style.setProperty('--tc', m.color);
+    card.innerHTML = '<div class="dcv-maq-emoji">' + m.emoji + '</div><div>' + m.label + '</div>';
+    track.appendChild(card);
+  });
+}
+(function() {
+  var dcvBoardEl = document.getElementById('dcv-board');
+  var dcvWordEl = document.getElementById('dcv-board-word');
+  if (dcvBoardEl) {
+    var dcvCells = [];
+    for (var i = 0; i < 25; i++) {
+      var d = document.createElement('div');
+      d.className = 'dcv-cell';
+      dcvBoardEl.appendChild(d);
+      dcvCells.push(d);
+    }
+    var dcvSeq = [2,7,12,17,22,4,10,16,8,14];
+    var dcvWords = ['CHASSEUR','FOOTBALL','ÉTOILE','FRANÇAIS','ORANGE','CHÊNE'];
+    var dcvIdx = 0;
+    function dcvPlayBoard() {
+      dcvCells.forEach(function(c) { c.classList.remove('lit'); c.textContent = ''; });
+      var pos = dcvSeq[dcvIdx % dcvSeq.length];
+      var word = dcvWords[dcvIdx % dcvWords.length];
+      dcvCells[pos].classList.add('lit');
+      dcvCells[pos].textContent = '⭐';
+      if (dcvWordEl) { dcvWordEl.textContent = '✓ ' + word; }
+      dcvIdx++;
+    }
+    dcvPlayBoard();
+    setInterval(dcvPlayBoard, 1800);
+  }
+  dcvBuildCarousel();
+})();
 </script>
 </body>
 </html>
