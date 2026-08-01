@@ -1768,17 +1768,10 @@ function estFormeValide(mot) {
   return { ok: true };
 }
 
-// ─── Chargement dictionnaire universel (dictionnaire.json) ───
-let DICO_UNIV = null;
-fetch('dictionnaire.json')
-  .then(r => r.json())
-  .then(mots => {
-    DICO_UNIV = new Set(mots.map(m => m.toUpperCase()));
-    console.log('Dico universel chargé:', DICO_UNIV.size, 'mots');
-  })
-  .catch(e => console.warn('Dico universel non chargé:', e));
+// ─── Cache des mots déjà vérifiés via Wiktionnaire (évite de re-interroger l'API) ───
+const _dicoUnivCache = {};
 
-// ─── Vérification via dictionnaire.json ───
+// ─── Vérification via Wiktionnaire (dictionnaire général du français, indépendant des thèmes) ───
 function verifierMotUniv() {
   const input = document.getElementById('search-univ');
   const res = document.getElementById('search-result-univ');
@@ -1795,33 +1788,73 @@ function verifierMotUniv() {
     return;
   }
 
-  if (!DICO_UNIV) {
-    res.className = 'search-result';
-    res.style.display = 'block';
-    res.textContent = '⏳ Dictionnaire en cours de chargement...';
+  const cle = val.toUpperCase();
+
+  // Résultat déjà en cache : réponse immédiate, pas de nouvel appel réseau
+  if (_dicoUnivCache[cle] !== undefined) {
+    afficherResultatUniv(cle, _dicoUnivCache[cle]);
     return;
   }
 
-  const motNorm = val.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const trouve = DICO_UNIV.has(val.toUpperCase()) ||
-    [...DICO_UNIV].some(m => m.normalize('NFD').replace(/[\u0300-\u036f]/g,'') === motNorm);
+  res.className = 'search-result';
+  res.style.display = 'block';
+  res.textContent = '⏳ Vérification via Wiktionnaire...';
 
+  const url = 'https://fr.wiktionary.org/w/api.php?action=query&titles=' +
+    encodeURIComponent(val.toLowerCase()) +
+    '&prop=revisions&rvprop=content&rvslots=main&format=json&origin=*';
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      const pages = data.query && data.query.pages;
+      let trouve = false;
+      if (pages) {
+        const page = Object.values(pages)[0];
+        if (page && !page.missing && page.revisions && page.revisions[0]) {
+          const slot = page.revisions[0].slots && page.revisions[0].slots.main;
+          const contenu = (slot && (slot['*'] || slot.content)) || '';
+          // Un mot n'est considéré valide que s'il a une véritable section EN FRANÇAIS
+          // (Wiktionnaire référence aussi des mots d'autres langues sur les mêmes pages)
+          trouve = /\{\{\s*langue\s*\|\s*fr\s*\}\}/i.test(contenu);
+        }
+      }
+      _dicoUnivCache[cle] = trouve;
+      // N'afficher le résultat que si le mot recherché est toujours celui affiché (évite les réponses tardives)
+      if (input.value.trim().toUpperCase() === cle) {
+        afficherResultatUniv(cle, trouve);
+      }
+    })
+    .catch(() => {
+      if (input.value.trim().toUpperCase() === cle) {
+        res.className = 'search-result not-found';
+        res.style.display = 'block';
+        res.textContent = '⚠️ Wiktionnaire est momentanément inaccessible. Réessayez.';
+      }
+    });
+}
+
+function afficherResultatUniv(motMaj, trouve) {
+  const res = document.getElementById('search-result-univ');
   res.style.display = 'block';
   if (trouve) {
     res.className = 'search-result found-th';
-    res.textContent = '✅ "' + val.toUpperCase() + '" — Mot valide dans le dictionnaire universel';
+    res.textContent = '✅ "' + motMaj + '" — Mot valide (vérifié via Wiktionnaire)';
   } else {
     res.className = 'search-result not-found';
-    res.textContent = '❌ "' + val.toUpperCase() + '" — Absent du dictionnaire universel';
+    res.textContent = '❌ "' + motMaj + '" — Absent du Wiktionnaire';
   }
 }
 
+let _liveSearchUnivTimer = null;
 function liveSearchUniv(val) {
   if (val.length < 3) {
     document.getElementById('search-result-univ').style.display = 'none';
+    if (_liveSearchUnivTimer) { clearTimeout(_liveSearchUnivTimer); }
     return;
   }
-  if (val.length >= 3) verifierMotUniv();
+  if (_liveSearchUnivTimer) { clearTimeout(_liveSearchUnivTimer); }
+  _liveSearchUnivTimer = setTimeout(verifierMotUniv, 450);
 }
 
 // Entrée clavier pour dico universel
