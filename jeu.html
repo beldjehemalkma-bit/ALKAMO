@@ -1322,69 +1322,41 @@ function sndDeal(n) {
 // ═══════════════════════════════════════════
 // MUSIQUE DE FOND ADAPTATIVE
 // ═══════════════════════════════════════════
+function getBgAudio() {
+  var el = document.getElementById('bg-music-audio');
+  if (!el) {
+    el = document.createElement('audio');
+    el.id = 'bg-music-audio';
+    el.src = 'design-thinking.mp3';
+    el.loop = true;
+    el.preload = 'none';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
 function startBgMusic() {
   if (!_musicOn) return;
-  stopBgMusic();
   try {
-    const ac = getAC();
-    _bgGain = ac.createGain();
-    _bgGain.gain.value = 0.12;
-    _bgGain.connect(ac.destination);
-    _bgNodes = [];
-
-    // Mélodie douce en boucle (notes pentatoniques)
-    const notes = [261, 294, 330, 392, 440, 392, 330, 294];
-    const BPM = 72, beat = 60 / BPM;
-    let step = 0;
-
-    function playNote() {
-      if (!_bgGain) return;
-      try {
-        const ac2 = getAC();
-        const o = ac2.createOscillator(), g = ac2.createGain();
-        o.type = 'sine';
-        o.frequency.value = notes[step % notes.length];
-        g.gain.setValueAtTime(0, ac2.currentTime);
-        g.gain.linearRampToValueAtTime(0.5, ac2.currentTime + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.001, ac2.currentTime + beat * 0.8);
-        o.connect(g); g.connect(_bgGain);
-        o.start(ac2.currentTime);
-        o.stop(ac2.currentTime + beat * 0.8);
-        step++;
-      } catch(e) {}
-    }
-
-    // Jouer une note toutes les beat secondes
-    playNote();
-    const id = setInterval(() => {
-      if (!_bgGain) { clearInterval(id); return; }
-      playNote();
-    }, beat * 1000);
-    _bgNodes.push(id);
+    const audio = getBgAudio();
+    audio.volume = 0.35;
+    audio.play().catch(function() {});
   } catch(e) {}
 }
 
 function stopBgMusic() {
-  if (_bgNodes) {
-    _bgNodes.forEach(id => clearInterval(id));
-    _bgNodes = null;
-  }
-  if (_bgGain) {
-    try { _bgGain.disconnect(); } catch(e) {}
-    _bgGain = null;
-  }
+  try {
+    const audio = document.getElementById('bg-music-audio');
+    if (audio) { audio.pause(); }
+  } catch(e) {}
 }
 
 function setBgUrgent(urgent) {
-  // Quand timer < 30s, augmenter le volume et la vitesse
-  if (!_bgGain) return;
+  // Quand timer < 30s, augmenter légèrement le volume
   try {
-    const ac = getAC();
-    _bgGain.gain.cancelScheduledValues(ac.currentTime);
-    _bgGain.gain.linearRampToValueAtTime(
-      urgent ? 0.07 : 0.04,
-      ac.currentTime + 0.5
-    );
+    const audio = document.getElementById('bg-music-audio');
+    if (!audio) return;
+    audio.volume = urgent ? 0.55 : 0.35;
   } catch(e) {}
 }
 
@@ -1697,6 +1669,9 @@ function go(id) {
     const chatZone = document.getElementById('maq-chat-zone');
     if (chatZone) chatZone.style.display = 'block';
   }
+  if (id !== 'game') {
+    stopBgMusic();
+  }
 }
 
 function envoyerMsgLobby() {
@@ -1807,6 +1782,7 @@ function startGame() {
   go('game'); showChatBtn();;
   renderAll();
   startTimer();
+  startBgMusic();
   renderHistPanel();
   startPartieTimer();
   log('✦ Partie démarrée ! Bonne chance !', 'inf');
@@ -2791,6 +2767,7 @@ function nextTurn() {
   document.getElementById('tmr-exp').classList.remove('show');
   renderAll();
   startTimer();
+  startBgMusic();
   log('Tour de ' + curP().name, 'inf');
   if (curP().isBot) setTimeout(botPlay, 1500);
 }
@@ -3460,7 +3437,7 @@ function startGameEnLigne() {
   renderHistPanel();
   startPartieTimer();
 
-  if (estMonTour()) { startTimer(); } else { stopTimer(); }
+  if (estMonTour()) { startTimer(); startBgMusic(); } else { stopTimer(); stopBgMusic(); }
   setTimeout(() => afficherIndicateurTour(), 300);
 
   if (estJ1 && G.curCase && window.publierTheme) {
@@ -3898,8 +3875,10 @@ function syncTour(tour, joueurs, scores) {
 
   if (estMonTour()) {
     if (!G.timer) startTimer();
+    startBgMusic();
   } else {
     stopTimer();
+    stopBgMusic();
   }
 
   // Marquer la case jouée par l'adversaire comme utilisée localement
