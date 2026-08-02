@@ -94554,55 +94554,101 @@ function estFormeValideJeu(mot) {
   return { ok: true };
 }
 
+function nettoyerWikitexteJeu(s) {
+  return s
+    .replace(/\{\{[^}]*\}\}/g, '')
+    .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2')
+    .replace(/\[\[([^\]]*)\]\]/g, '$1')
+    .replace(/'''?/g, '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
+function afficherSuccesUnivJeu(wUp, forme) {
+  var res = document.getElementById('dico-check-result-univ');
+  res.className = 'dico-check-result found-libre';
+  res.innerHTML = '✅ "' + wUp + '" — Mot valide dans le dictionnaire français' +
+    '<div style="margin-top:8px">' +
+    '<button onclick="voirDefinitionJeu(\'' + forme.replace(/'/g, "\\'") + '\', this)" ' +
+    'style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;' +
+    'padding:6px 14px;border-radius:16px;font-size:.78rem;font-weight:700;cursor:pointer">' +
+    '📖 Voir la définition</button>' +
+    '<div id="def-jeu-zone" style="margin-top:8px;font-size:.85rem;color:rgba(255,255,255,.75)"></div>' +
+    '</div>';
+}
+
+function voirDefinitionJeu(motForme, btn) {
+  var zone = document.getElementById('def-jeu-zone');
+  if (!zone) return;
+  btn.disabled = true;
+  zone.textContent = '⏳ Recherche de la définition...';
+
+  var url = 'https://fr.wiktionary.org/w/api.php?action=query&titles=' +
+    encodeURIComponent(motForme) +
+    '&prop=revisions&rvprop=content&rvslots=main&format=json&origin=*';
+
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var pages = data.query && data.query.pages;
+      var page = pages && Object.values(pages)[0];
+      var slot = page && page.revisions && page.revisions[0] &&
+        page.revisions[0].slots && page.revisions[0].slots.main;
+      var contenu = (slot && (slot['*'] || slot.content)) || '';
+      if (!contenu) { throw new Error('vide'); }
+
+      var idxFr = contenu.search(/\{\{\s*langue\s*\|\s*fr\s*\}\}/i);
+      if (idxFr === -1) { throw new Error('pas de section française'); }
+      var suite = contenu.slice(idxFr);
+      var finSection = suite.slice(2).search(/\n==[^=]/);
+      var sectionFr = finSection === -1 ? suite : suite.slice(0, finSection + 2);
+
+      var ligneDef = sectionFr.split('\n').find(function(l) { return /^#\s*[^#*:]/.test(l.trim()); });
+      if (!ligneDef) { throw new Error('pas de définition trouvée'); }
+
+      var def = nettoyerWikitexteJeu(ligneDef.replace(/^#\s*/, ''));
+      if (def.length > 140) { def = def.slice(0, 140) + '…'; }
+      if (!def) { throw new Error('définition vide après nettoyage'); }
+
+      zone.textContent = '📖 ' + def;
+      btn.style.display = 'none';
+    })
+    .catch(function() {
+      zone.textContent = '— Définition indisponible pour le moment.';
+      btn.disabled = false;
+    });
+}
+
 function dicoUnivVerifier() {
   var val = document.getElementById('dico-search-univ').value.trim();
   var res = document.getElementById('dico-check-result-univ');
   if (!val) return;
   res.style.display = 'block';
-
-  var forme = estFormeValideJeu(val);
-  if (!forme.ok) {
-    res.className = 'dico-check-result';
-    res.style.color = '#ff6b6b';
-    res.textContent = '❌ "' + val.toUpperCase() + '" — ' + forme.raison;
-    return;
-  }
-
-  // Attendre si DICO_LIBRE pas encore chargé
-  if (DICO_LIBRE.size === 0) {
-    res.className = 'dico-check-result';
-    res.style.color = 'rgba(255,255,255,.6)';
-    res.textContent = '⏳ Dictionnaire en cours de chargement, réessayez dans 2 secondes...';
-    return;
-  }
-
   var wUp = val.toUpperCase();
-  var wN = norm(val);
-  // Chercher avec et sans accents
-  var inLocal = DICO_LIBRE.has(wUp);
-  if (!inLocal) {
-    DICO_LIBRE.forEach(function(m) {
-      if (!inLocal && norm(m) === wN) inLocal = true;
-    });
-  }
-  // Chercher aussi dans DICT
-  if (!inLocal) {
-    Object.values(DICT).forEach(function(arr) {
-      if (!inLocal) arr.forEach(function(m) {
-        if (!inLocal && (m.toUpperCase() === wUp || norm(m) === wN)) inLocal = true;
-      });
-    });
+  res.dataset.motActuel = wUp;
+
+  var enLocal = checkWordLocalHunspell(val);
+  res.style.color = '';
+  if (enLocal === true) {
+    afficherSuccesUnivJeu(wUp, val.toLowerCase());
+    return;
   }
 
-  res.style.color = '';
-  if (inLocal) {
-    res.className = 'dico-check-result found-libre';
-    res.textContent = '✅ "' + wUp + '" — Mot valide dans le dictionnaire universel';
-  } else {
-    res.className = 'dico-check-result';
-    res.style.color = '#ff6b6b';
-    res.textContent = '❌ "' + wUp + '" — Absent du dictionnaire universel';
-  }
+  // Mot absent du dictionnaire local : tenter un secours via Wiktionnaire (mots rares)
+  res.className = 'dico-check-result';
+  res.style.color = 'rgba(255,255,255,.6)';
+  res.textContent = '⏳ Vérification complémentaire (mot rare)...';
+  verifierWiktionnaire(val).then(function(valide) {
+    if (res.dataset.motActuel !== wUp) return; // le champ a changé depuis
+    res.style.color = '';
+    if (valide) {
+      afficherSuccesUnivJeu(wUp, val.toLowerCase());
+    } else {
+      res.className = 'dico-check-result';
+      res.style.color = '#ff6b6b';
+      res.textContent = '❌ "' + wUp + '" — Absent du dictionnaire français';
+    }
+  });
 }
 
 function dicoUnivLive(val) {
@@ -95376,7 +95422,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 
     <!-- Section Universel -->
     <div id="dico-section-universel" style="display:none">
-      <p style="font-size:.8rem;color:rgba(255,255,255,.6);text-align:center;margin:8px 0 12px">Noms (masc/fém/pluriel) et infinitifs uniquement · 3 à 10 lettres</p>
+      <p style="font-size:.8rem;color:rgba(255,255,255,.6);text-align:center;margin:8px 0 12px">Dictionnaire français complet — tous les mots, toutes les formes</p>
       <div class="dico-check-box">
         <input class="dico-search" id="dico-search-univ" type="text" placeholder="🔍 Tapez un mot à vérifier..." style="flex:1;margin:0" oninput="dicoUnivLive(this.value)">
         <button class="dico-check-btn" onclick="dicoUnivVerifier()">✓ Vérifier</button>
