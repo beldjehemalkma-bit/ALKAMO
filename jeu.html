@@ -812,7 +812,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   <div class="hbtns">
     <button class="btn btn-p" onclick="openMaquette()">🎲 Nouvelle Partie</button>
     <button class="btn" style="background:linear-gradient(135deg,rgba(83,74,183,.4),rgba(29,158,117,.3));border:1px solid rgba(200,160,32,.3)" onclick="ouvrirOnline()">🌐 Jouer en Ligne</button>
-    <button class="btn btn-g" onclick="go('tuto')">📖 Comment Jouer</button>
+    <button class="btn btn-g" onclick="_tutoRetourVers='home';go('tuto')">📖 Comment Jouer</button>
   </div>
 </div>
 
@@ -1053,7 +1053,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
       </div>
     </div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="openDico()">📚 Consulter le Dictionnaire</button>
-    <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="go('home')">← Retour</button>
+    <button class="btn btn-p" style="width:100%;margin-top:8px" onclick="go(_tutoRetourVers||'home')">← Retour</button>
   </div>
 </div>
 
@@ -1064,8 +1064,8 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <div class="end-w" id="end-w" style="font-size:1.2rem;font-weight:900;color:#FAD060;margin:12px 0 20px;text-align:center;line-height:1.4"></div>
     <div class="end-scores" id="end-sc"></div>
     <div class="end-btns" style="flex-direction:column;gap:10px;margin-top:8px">
-      <button class="btn btn-p" style="width:100%;padding:14px;font-size:1rem" onclick="window.location.reload()">🎲 Rejouer</button>
-      <button class="btn btn-out" style="width:100%" onclick="window.location.href=window.location.pathname">🏠 Retour à l'accueil</button>
+      <button class="btn btn-p" style="width:100%;padding:14px;font-size:1rem" onclick="stopBgMusic();window.location.reload()">🎲 Rejouer</button>
+      <button class="btn btn-out" style="width:100%" onclick="stopBgMusic();window.location.href=window.location.pathname">🏠 Retour à l'accueil</button>
     </div>
   </div>
 </div>
@@ -1076,7 +1076,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <h2>☰ Menu</h2>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-out" onclick="closeModal('m-menu')">▶ Reprendre</button>
-      <button class="btn btn-gold" onclick="go('tuto');closeModal('m-menu')">📖 Règles</button>
+      <button class="btn btn-gold" onclick="_tutoRetourVers='game';go('tuto');closeModal('m-menu')">📖 Règles</button>
       <button class="btn btn-red" onclick="confirmerFinPartie()">🏁 Fin de partie</button>
     </div>
   </div>
@@ -92402,6 +92402,7 @@ let AC = null;
 let _bgNodes = null; // nœuds musique de fond
 let _bgGain = null;
 let _musicOn = true;
+let _tutoRetourVers = 'home';
 
 function getAC() {
   if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
@@ -95383,6 +95384,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 
     <!-- Section Lexical -->
     <div id="dico-section-lexical">
+      <p style="font-size:.8rem;color:rgba(255,255,255,.6);text-align:center;margin:8px 0 12px">Noms (masc/fém/pluriel) et infinitifs uniquement · 3 à 10 lettres</p>
       <div class="dico-check-box">
         <input class="dico-search" id="dico-search" type="text" placeholder="🔍 Tapez un mot..." oninput="dicoChercher(this.value)" style="flex:1;margin:0">
         <button class="dico-check-btn" onclick="dicoVerifier()">✓ Vérifier</button>
