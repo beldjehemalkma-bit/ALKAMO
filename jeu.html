@@ -281,7 +281,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
   border-color: transparent;
 }
 .dico-modal { max-width: 620px; width: 96%; max-height: 88vh; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
-.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: .9rem; margin-bottom: 10px; box-sizing: border-box; }
+.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
 .dico-search::placeholder { color: rgba(255,255,255,.3); }
 .dico-themes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .dico-btn-th { padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(200,160,32,.3); background: rgba(200,160,32,.08); color: var(--gold-light); font-size: .72rem; cursor: pointer; transition: all .2s; }
@@ -481,7 +481,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   box-shadow:0 0 10px rgba(200,160,32,.25); }
 .duree-input { width:70px; padding:7px 10px; border-radius:10px;
   border:2px solid rgba(200,160,32,.25); background:rgba(255,255,255,.05);
-  color:#fff; font-size:.85rem; font-weight:700; text-align:center; }
+  color:#fff; font-size:16px; font-weight:700; text-align:center; }
 .duree-input:focus { outline:none; border-color:var(--gold); }
 
 /* Compte à rebours global de partie */
@@ -742,7 +742,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   width: 100%; padding: 10px 14px;
   border-radius: 10px; border: 1px solid rgba(200,160,32,.3);
   background: rgba(255,255,255,.05);
-  color: #fff; font-size: .95rem;
+  color: #fff; font-size: 16px;
   margin-bottom: 10px; text-align: center;
   letter-spacing: 2px;
 }
@@ -768,7 +768,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 }
 
 .chat-input-zone{display:flex;gap:6px;padding:8px 10px 4px;border-top:1px solid rgba(255,255,255,.08);}
-.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:.78rem;outline:none;}
+.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:16px;outline:none;}
 .chat-input-field::placeholder{color:rgba(255,255,255,.25);}
 .chat-input-field:focus{border-color:rgba(200,160,32,.5);}
 .chat-send-btn{padding:7px 12px;border-radius:10px;background:linear-gradient(135deg,#534AB7,#1D9E75);border:none;color:#fff;font-size:.85rem;cursor:pointer;font-weight:700;}
@@ -93402,12 +93402,12 @@ function renderWord() {
     const disp = item.letter === '*' ? (item.jokerAs || '?') : item.letter;
     t.innerHTML = disp + '<span class="tv">★</span>';
 
-    // Clic-clic réordonnement — mousedown pour démarrer
+    // Clic simple = retirer la lettre (retour au chevalet). Glisser = réordonner.
     t.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); e.stopPropagation();
 
-      // Si déjà en mode déplacement → déposer ici
+      // Si déjà en mode déplacement (tuile fantôme active) → déposer ici
       if (_fw !== null) {
         if (_fw !== pos) {
           const moved = G.word.splice(_fw, 1)[0];
@@ -93421,44 +93421,64 @@ function renderWord() {
         return;
       }
 
-      // 1er clic : créer tuile fantôme qui suit la souris
-      _fw = pos;
-      _fwEl = t;
-      t.style.opacity = '0.3';
+      const startX = e.clientX, startY = e.clientY;
+      const SEUIL = 6; // pixels de tolérance avant de considérer un vrai glisser
+      let hasMoved = false;
+      let ghost = null;
 
-      // Créer div fantôme
-      const ghost = document.createElement('div');
-      ghost.id = '_fw_ghost';
-      ghost.className = t.className;
-      ghost.innerHTML = t.innerHTML;
-      ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;
-        width:44px;height:52px;opacity:0.95;
-        transform:rotate(-5deg) scale(1.1);
-        box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 12px rgba(200,160,32,.5);
-        border:2px solid #FAD060;border-radius:9px;
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.3rem;font-weight:900;color:#fff;
-        left:${e.clientX - 22}px;top:${e.clientY - 26}px;`;
-      document.body.appendChild(ghost);
-      document.body.style.cursor = 'grabbing';
+      function creerGhost(cx, cy) {
+        _fw = pos;
+        _fwEl = t;
+        t.style.opacity = '0.3';
+        ghost = document.createElement('div');
+        ghost.id = '_fw_ghost';
+        ghost.className = t.className;
+        ghost.innerHTML = t.innerHTML;
+        ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;
+          width:44px;height:52px;opacity:0.95;
+          transform:rotate(-5deg) scale(1.1);
+          box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 12px rgba(200,160,32,.5);
+          border:2px solid #FAD060;border-radius:9px;
+          display:flex;align-items:center;justify-content:center;
+          font-size:1.3rem;font-weight:900;color:#fff;
+          left:${cx - 22}px;top:${cy - 26}px;`;
+        document.body.appendChild(ghost);
+        document.body.style.cursor = 'grabbing';
+      }
 
       // Suivre la souris
       function onMove(ev) {
-        ghost.style.left = (ev.clientX - 22) + 'px';
-        ghost.style.top  = (ev.clientY - 26) + 'px';
+        if (!hasMoved) {
+          const dx = ev.clientX - startX, dy = ev.clientY - startY;
+          if (Math.hypot(dx, dy) < SEUIL) return;
+          hasMoved = true;
+          creerGhost(ev.clientX, ev.clientY);
+        }
+        if (ghost) { ghost.style.left = (ev.clientX - 22) + 'px'; ghost.style.top = (ev.clientY - 26) + 'px'; }
       }
 
-      // Déposer au mouseup
       function onUp(ev) {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        ghost.remove();
+
+        if (!hasMoved) {
+          // Clic simple, sans glisser : retirer la lettre, elle revient au chevalet
+          G.word.splice(pos, 1);
+          if (G.insertPos !== undefined && G.insertPos > pos)
+            G.insertPos = Math.max(0, G.insertPos - 1);
+          snd('remove');
+          renderChevalet();
+          renderWord();
+          return;
+        }
+
+        // Glissé : déposer à la position visée
+        if (ghost) ghost.remove();
         document.body.style.cursor = '';
         if (_fw === null) return;
 
-        // Trouver la tuile la plus proche du point de dépôt
         const tiles = [...document.querySelectorAll('#wdrop .gtile')];
-        let destPos = G.word.length; // par défaut : fin
+        let destPos = G.word.length;
         for (let i = 0; i < tiles.length; i++) {
           const r = tiles[i].getBoundingClientRect();
           const mid = r.left + r.width / 2;
@@ -93481,17 +93501,6 @@ function renderWord() {
 
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
-    });
-
-    // Double-clic = retirer la lettre
-    t.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      _fwCancel();
-      G.word.splice(pos, 1);
-      if (G.insertPos > pos) G.insertPos = Math.max(0, G.insertPos - 1);
-      snd('remove');
-      renderChevalet();
-      renderWord();
     });
 
     // Drag maintenu (inchangé)
@@ -93635,6 +93644,55 @@ function addWheelScroll(el) {
     }
   }, { passive: false });
 }
+function setupChevaletDropZone() {
+  const chev = document.getElementById('chev');
+  if (!chev) return;
+
+  function getChevDropPos(clientX) {
+    const tiles = [...chev.querySelectorAll('.gtile')];
+    for (let i = 0; i < tiles.length; i++) {
+      const r = tiles[i].getBoundingClientRect();
+      if (clientX < r.left + r.width / 2) return i;
+    }
+    return tiles.length;
+  }
+
+  chev.addEventListener('dragover', e => {
+    if (G.changeMode) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  });
+
+  chev.addEventListener('drop', e => {
+    if (G.changeMode) return;
+    e.preventDefault();
+    const src = e.dataTransfer.getData('source');
+    const p = curP();
+
+    if (src === 'chevalet') {
+      // Réorganiser les lettres entre elles, directement sur le chevalet
+      const fromIdx = parseInt(e.dataTransfer.getData('idx'));
+      if (isNaN(fromIdx)) return;
+      const toPos = getChevDropPos(e.clientX);
+      if (fromIdx === toPos || fromIdx === toPos - 1) return;
+      const moved = p.letters.splice(fromIdx, 1)[0];
+      const dest = toPos > fromIdx ? toPos - 1 : toPos;
+      p.letters.splice(dest, 0, moved);
+      // Les positions du chevalet changent : on vide le mot en cours pour éviter tout décalage incorrect
+      if (G.word.length > 0) { G.word = []; G.insertPos = 0; }
+      snd('click'); tapSound();
+      renderChevalet(); renderWord();
+    } else if (src === 'word') {
+      // Une lettre du mot déposée sur le chevalet = elle y retourne
+      const fromPos = parseInt(e.dataTransfer.getData('word-pos'));
+      if (isNaN(fromPos)) return;
+      G.word.splice(fromPos, 1);
+      snd('remove');
+      renderChevalet(); renderWord();
+    }
+  });
+}
+
 function setupDropZone() {
   const drop = document.getElementById('wdrop');
   if (!drop) return;
@@ -94316,6 +94374,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
   setupDropZone();
+  setupChevaletDropZone();
   makeDraggableScroll('chev');
   makeDraggableScroll('wdrop');
   // Débloquer AudioContext au premier clic
