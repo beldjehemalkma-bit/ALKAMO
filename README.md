@@ -1,4 +1,4 @@
-# ALKAMO — Le Jeu des Mots
+dme# ALKAMO — Le Jeu des Mots
 
 <h1 align="center">« Là où les murs enferment,<br>naît le jeu du mot qu'il faut »</h1>
 
@@ -64,7 +64,7 @@ La partie se termine quand :
 - Un joueur n'a plus de lettres
 - Plus de lettres dans la Cagnotte L
 - Tous déclarent ne plus pouvoir jouer
-
+- Le temps de partie convenu à l'unanimité en début de partie (entre 30 minutes et 2 heures) est écoulé.
 ---
 
 ## 📚 CHAMP LEXICAL
