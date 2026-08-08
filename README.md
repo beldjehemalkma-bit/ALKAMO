@@ -31,7 +31,7 @@ Totaliser le plus de points en formant des mots liés aux thèmes du tapis.
 - Former un mot lié au **champ lexical** du thème
 - Pluriel, féminin, même famille : **acceptés !**
 - **Bonus Labourage** : mot exact de la case = score × 2
-- Si impossible : passer son tour
+- Si impossible : passer son tour en usant de son jeton ''droit de passe''
 
 ### 3 — Le Super Mot ⭐
 Composer un mot avec les **10 lettres** du chevalet :
