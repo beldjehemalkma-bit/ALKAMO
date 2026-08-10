@@ -1141,15 +1141,21 @@ onAuthStateChanged(auth, user => {
   _myUid = user.uid;
   _myPseudo = user.displayName || user.email.split('@')[0];
 
+  // Nettoyage des traces d'une session précédente interrompue (ne touche jamais à "parties")
+  remove(ref(db, 'invitations/' + _myUid)).catch(() => {});
+  remove(ref(db, 'reponsesInvitation/' + _myUid)).catch(() => {});
+
   // Afficher le lobby
   document.getElementById('lobby-section').classList.add('visible');
   document.getElementById('lobby-pseudo-label').textContent = 'Connecté en tant que ' + _myPseudo;
 
-  // S'enregistrer dans le lobby
+  // S'enregistrer dans le lobby (statut toujours remis à "disponible" à la connexion)
   const meRef = ref(db, 'lobby/' + _myUid);
   set(meRef, { pseudo: _myPseudo, ts: serverTimestamp(), statut: 'disponible' });
   // Supprimer quand déconnecté
   onDisconnect(meRef).remove();
+  onDisconnect(ref(db, 'invitations/' + _myUid)).remove();
+  onDisconnect(ref(db, 'reponsesInvitation/' + _myUid)).remove();
 
   // Écouter les joueurs en ligne
   onValue(ref(db, 'lobby'), snap => {
@@ -1176,10 +1182,14 @@ onAuthStateChanged(auth, user => {
     }).join('');
   });
 
-  // Écouter les invitations reçues
+  // Écouter les invitations reçues (on ignore toute invitation restée de plus de 60s — signe d'une session interrompue)
   onValue(ref(db, 'invitations/' + _myUid), snap => {
     const inv = snap.val();
     if (!inv) return;
+    if (inv.ts && (Date.now() - inv.ts) > 60000) {
+      remove(ref(db, 'invitations/' + _myUid)).catch(() => {});
+      return;
+    }
     _invitationEnCours = inv;
     document.getElementById('invite-notif-text').textContent =
       '🎮 ' + inv.pseudo + ' vous invite à jouer !';
