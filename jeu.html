@@ -95111,6 +95111,13 @@ function sendChatMsg(type) {
 function ouvrirOnline() {
   document.getElementById('online-modal').classList.add('open');
 }
+function toggleOnlineAvance() {
+  const el = document.getElementById('online-avance');
+  const lbl = document.getElementById('online-avance-toggle');
+  const show = el.style.display === 'none';
+  el.style.display = show ? 'block' : 'none';
+  lbl.textContent = show ? 'Options avancées (rejoindre avec un code) ▴' : 'Options avancées (rejoindre avec un code) ▾';
+}
 function fermerOnline() {
   document.getElementById('online-modal').classList.remove('open');
   if (window._salonMonUid && window.salonQuitter && !_modeEnLigne) {
@@ -95955,6 +95962,8 @@ function _executerFinPartie() {
     <div class="online-title">🌐 JOUER EN LIGNE</div>
     <div class="online-sub">Jouez avec vos amis depuis n'importe où</div>
 
+    <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12" style="margin-bottom:12px">
+
     <div id="online-salon" style="margin-bottom:14px">
       <button class="btn btn-gold" id="salon-join-btn" style="width:100%" onclick="rejoindreSalonUI()">
         🟢 Rejoindre le salon (voir qui est disponible)
@@ -95964,31 +95973,37 @@ function _executerFinPartie() {
         <div id="salon-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-bottom:10px"></div>
       </div>
     </div>
-    <div class="online-sep">— ou avec un code —</div>
 
-    <div id="online-step1">
-      <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12">
-      <button class="btn btn-gold" style="width:100%;margin-bottom:8px" onclick="onlineCreer()">
-        🎮 Créer une partie
-      </button>
-      <div class="online-sep">— ou rejoindre —</div>
-      <input class="online-input" id="online-code-input" placeholder="CODE DE PARTIE" maxlength="6" style="text-transform:uppercase">
-      <button class="btn" style="width:100%;background:rgba(83,74,183,.2);border:1px solid rgba(83,74,183,.4)" onclick="onlineRejoindre()">
-        🔗 Rejoindre
-      </button>
+    <div style="text-align:center;margin-bottom:10px">
+      <span onclick="toggleOnlineAvance()" style="color:rgba(255,255,255,.45);font-size:.75rem;cursor:pointer;text-decoration:underline" id="online-avance-toggle">Options avancées (rejoindre avec un code) ▾</span>
     </div>
 
-    <div id="online-step2" style="display:none">
-      <div style="color:rgba(255,255,255,.6);font-size:.8rem;margin-bottom:8px">
-        Partagez ce code avec vos amis :
+    <div id="online-avance" style="display:none">
+      <div class="online-sep">— avec un code —</div>
+
+      <div id="online-step1">
+        <button class="btn btn-gold" style="width:100%;margin-bottom:8px" onclick="onlineCreer()">
+          🎮 Créer une partie
+        </button>
+        <div class="online-sep">— ou rejoindre —</div>
+        <input class="online-input" id="online-code-input" placeholder="CODE DE PARTIE" maxlength="6" style="text-transform:uppercase">
+        <button class="btn" style="width:100%;background:rgba(83,74,183,.2);border:1px solid rgba(83,74,183,.4)" onclick="onlineRejoindre()">
+          🔗 Rejoindre
+        </button>
       </div>
-      <div class="online-code-display" id="online-code-show"></div>
-      <div style="color:rgba(255,255,255,.4);font-size:.75rem;margin-bottom:14px">
-        En attente des autres joueurs...
+
+      <div id="online-step2" style="display:none">
+        <div style="color:rgba(255,255,255,.6);font-size:.8rem;margin-bottom:8px">
+          Partagez ce code avec vos amis :
+        </div>
+        <div class="online-code-display" id="online-code-show"></div>
+        <div style="color:rgba(255,255,255,.4);font-size:.75rem;margin-bottom:14px">
+          En attente des autres joueurs...
+        </div>
+        <button class="btn btn-gold" style="width:100%" onclick="onlineDemarrer()">
+          ▶ Démarrer la partie
+        </button>
       </div>
-      <button class="btn btn-gold" style="width:100%" onclick="onlineDemarrer()">
-        ▶ Démarrer la partie
-      </button>
     </div>
 
     <button class="btn btn-out" style="width:100%;margin-top:10px" onclick="fermerOnline()">
