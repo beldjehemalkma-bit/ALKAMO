@@ -95110,6 +95110,13 @@ function sendChatMsg(type) {
 // ═══════════════════════════════════════
 function ouvrirOnline() {
   document.getElementById('online-modal').classList.add('open');
+  const nomSauve = localStorage.getItem('alkamo_nom');
+  if (nomSauve) {
+    document.getElementById('online-nom').value = nomSauve;
+    if (!window._salonMonUid) {
+      setTimeout(() => rejoindreSalonUI(), 150);
+    }
+  }
 }
 function toggleOnlineAvance() {
   const el = document.getElementById('online-avance');
@@ -95136,6 +95143,7 @@ function rejoindreSalonUI() {
   const nom = document.getElementById('online-nom').value.trim();
   if (!nom) { alert('Entrez d\'abord votre prénom (juste en dessous) !'); return; }
   if (!window.salonRejoindre) { alert('Firebase non connecté — vérifiez votre connexion internet'); return; }
+  localStorage.setItem('alkamo_nom', nom);
   window._salonMonNom = nom;
   window._salonMonUid = window.salonRejoindre(nom);
   document.getElementById('salon-join-btn').style.display = 'none';
@@ -95962,7 +95970,7 @@ function _executerFinPartie() {
     <div class="online-title">🌐 JOUER EN LIGNE</div>
     <div class="online-sub">Jouez avec vos amis depuis n'importe où</div>
 
-    <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12" style="margin-bottom:12px">
+    <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12" style="margin-bottom:12px" onkeydown="if(event.key==='Enter') rejoindreSalonUI()">
 
     <div id="online-salon" style="margin-bottom:14px">
       <button class="btn btn-gold" id="salon-join-btn" style="width:100%" onclick="rejoindreSalonUI()">
