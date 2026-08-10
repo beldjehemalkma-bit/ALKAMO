@@ -95195,6 +95195,7 @@ function refuserInvitationUI() {
 window._onSalonInviteAccepted = function(code) {
   if (window.salonQuitter) window.salonQuitter(window._salonMonUid);
   window._salonMonUid = null;
+  _modeEnLigne = true;
   document.getElementById('online-code-show').textContent = code;
   fermerOnline();
   openMaquette(true);
@@ -95250,6 +95251,7 @@ function onlineDemarrer() {
 // ════════════════════════════════════════
 // SYNCHRONISATION MULTIJOUEUR
 // ════════════════════════════════════════
+let _modeEnLigne = false;
 let _partieDemar = false;
 
 function estMonTour() {
