@@ -1186,6 +1186,11 @@ onAuthStateChanged(auth, user => {
   onValue(ref(db, 'invitations/' + _myUid), snap => {
     const inv = snap.val();
     if (!inv) return;
+    if (inv.de === _myUid) {
+      // Sécurité : on ne peut pas s'inviter soi-même (résidu de test)
+      remove(ref(db, 'invitations/' + _myUid)).catch(() => {});
+      return;
+    }
     if (inv.ts && (Date.now() - inv.ts) > 60000) {
       remove(ref(db, 'invitations/' + _myUid)).catch(() => {});
       return;

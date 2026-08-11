@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALKAMO — Le Jeu des Mots</title>
+<script>
+// Arrivée directe depuis une invitation (index.html) : masquer l'écran d'accueil
+// avant même qu'il ne s'affiche, pour éviter le flash visuel.
+(function(){
+  var p = new URLSearchParams(location.search);
+  var role = p.get('role');
+  if (role === 'createur' || role === 'invite') {
+    document.documentElement.classList.add('alkamo-direct-online');
+  }
+})();
+</script>
+<style>
+html.alkamo-direct-online #s-home { display: none !important; }
+</style>
 <style>
 :root{
   --purple:#534AB7;--purple-dark:#26215C;--purple-light:#EEEDFE;
