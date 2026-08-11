@@ -95667,12 +95667,38 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.passerAuTourSuivant = function(code, joueurSuivant, numero, lastCaseId) {
-    const data = {
-      joueurActif: joueurSuivant, numero: numero,
-      action: 'attente_theme', theme: null
-    };
-    if (lastCaseId) data.lastCaseId = lastCaseId;
-    update(ref(db, 'parties/' + code + '/tour'), data);
+    // Calcul fiable et autonome du joueur suivant : on relit l'état réel de la
+    // partie dans Firebase au moment même de l'écriture, plutôt que de se fier
+    // uniquement à la valeur transmise par le navigateur (qui peut être absente
+    // ou périmée). "Le suivant" = celui des deux joueurs qui n'est pas actif
+    // actuellement.
+    get(pRef(code)).then(snap => {
+      const d = snap.val() || {};
+      const joueurs = d.joueurs || {};
+      const actifActuel = (d.tour && d.tour.joueurActif) || window._idJoueur;
+      let cible = joueurSuivant;
+      const ids = Object.keys(joueurs);
+      if (ids.length === 2) {
+        const autre = ids.find(id => id !== actifActuel);
+        if (autre) cible = autre;
+      }
+      if (!cible) cible = ids.find(id => id !== window._idJoueur) || joueurSuivant;
+      console.log('[ALKAMO-JEU] passerAuTourSuivant — cible calculée:', cible, '(reçue:', joueurSuivant, ')');
+      const data = {
+        joueurActif: cible, numero: numero,
+        action: 'attente_theme', theme: null
+      };
+      if (lastCaseId) data.lastCaseId = lastCaseId;
+      update(ref(db, 'parties/' + code + '/tour'), data);
+    }).catch(e => {
+      console.log('[ALKAMO-JEU] passerAuTourSuivant — lecture échouée, on utilise la valeur reçue en secours:', e.message);
+      const data = {
+        joueurActif: joueurSuivant, numero: numero,
+        action: 'attente_theme', theme: null
+      };
+      if (lastCaseId) data.lastCaseId = lastCaseId;
+      update(ref(db, 'parties/' + code + '/tour'), data);
+    });
   };
 
   window.majScore = function(code, idJoueur, score) {
