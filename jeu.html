@@ -94043,9 +94043,13 @@ function _confirmerMotFinalize(word, pIdx) {
     if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     // Passer le tour - syncTour gérera le nouveau thème côté J2
     stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
-    }
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant) {
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, caseIdPubLie);
+      } else {
+        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé (validation mot) ! adversaire introuvable.');
+      }
+    });
     return;
   }
 
@@ -94060,6 +94064,38 @@ function quitterPartie() {
   if (mfin) mfin.classList.add('open');
 }
 
+// Filet de sécurité : si _idAdverse n'a pas été détecté par le listener normal
+// (ecouterPartieCreateur), on va le chercher directement dans Firebase.
+// Avec une deuxième tentative automatique si la première échoue (partie qui vient
+// juste de démarrer, données pas encore toutes arrivées).
+function _avecIdAdverse(callback, _tentative) {
+  _tentative = _tentative || 1;
+  if (window._idAdverse) { callback(window._idAdverse); return; }
+  if (!window._codePartie || typeof onValue !== 'function' || typeof ref !== 'function' || typeof db === 'undefined') {
+    console.log('[ALKAMO-JEU] _avecIdAdverse — impossible de chercher (db/ref/onValue indisponible)');
+    callback(null);
+    return;
+  }
+  console.log('[ALKAMO-JEU] _avecIdAdverse — recherche directe (tentative ' + _tentative + ') dans parties/' + window._codePartie + '/joueurs');
+  onValue(ref(db, 'parties/' + window._codePartie + '/joueurs'), snap => {
+    const joueurs = snap.val() || {};
+    const advId = Object.keys(joueurs).find(id => id !== window._idJoueur);
+    if (advId) {
+      window._idAdverse = advId;
+      window._nomAdverse = joueurs[advId].nom;
+      console.log('[ALKAMO-JEU] _avecIdAdverse — trouvé et mémorisé:', advId);
+      callback(advId);
+    } else if (_tentative < 4) {
+      // Nouvelle tentative après une courte pause (jusqu'à 3 fois, ~1.5s au total)
+      console.log('[ALKAMO-JEU] _avecIdAdverse — pas encore trouvé, nouvelle tentative dans 500ms');
+      setTimeout(() => _avecIdAdverse(callback, _tentative + 1), 500);
+    } else {
+      console.log('[ALKAMO-JEU] _avecIdAdverse — ÉCHEC définitif après 4 tentatives:', JSON.stringify(joueurs));
+      callback(null);
+    }
+  }, { onlyOnce: true });
+}
+
 function passerTour() {
   log(curP().name + ' passe son tour', '');
   G.passCount++;
@@ -94071,14 +94107,15 @@ function passerTour() {
     stopTimer();
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      // Inclure l'ID de la case jouée pour éviter les répétitions
-      const lastId = G.curCase ? G.curCase.id : null;
-      console.log('[ALKAMO-JEU] passerAuTourSuivant appelé avec joueurSuivant =', window._idAdverse);
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
-    } else {
-      console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé ! _idAdverse ou la fonction manque.');
-    }
+    const lastId = G.curCase ? G.curCase.id : null;
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant) {
+        console.log('[ALKAMO-JEU] passerAuTourSuivant appelé avec joueurSuivant =', idAdv);
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, lastId);
+      } else {
+        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé ! adversaire introuvable.');
+      }
+    });
     return;
   }
 
@@ -94151,10 +94188,14 @@ function confirmerChange() {
   if (_modeEnLigne && window._codePartie) {
     stopTimer();
     if (window.publierAction) window.publierAction(window._codePartie, 'echanger', {});
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      const lastId = G.curCase ? G.curCase.id : null;
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
-    }
+    const lastId = G.curCase ? G.curCase.id : null;
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant) {
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, lastId);
+      } else {
+        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé (confirmerChange) ! adversaire introuvable.');
+      }
+    });
     return;
   }
 
@@ -94173,9 +94214,10 @@ function nextTurn() {
   // En mode en ligne : Firebase gère le tour, pas nextTurn
   if (_modeEnLigne) {
     stopTimer();
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
-    if (window.passerAuTourSuivant && window._codePartie)
-      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant && window._codePartie)
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1);
+    });
     return;
   }
 
@@ -94183,8 +94225,10 @@ function nextTurn() {
   // Mode en ligne : Firebase gère le tour
   if (_modeEnLigne) {
     stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant && window._codePartie)
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant && window._codePartie)
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1);
+    });
     return;
   }
 
@@ -94920,9 +94964,17 @@ function startGameEnLigne() {
 
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive, _dureePartie);
+    console.log('[ALKAMO-JEU] startGameEnLigne — estJ1:', estJ1, '| appel de ecouterPartieCreateur avec code:', code);
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
+  } else {
+    console.log('[ALKAMO-JEU] startGameEnLigne — ecouterPartieCreateur NON appelé ! estJ1:', estJ1, '| demarrerPartieFirebase existe:', !!window.demarrerPartieFirebase);
   }
+  // Sécurité : s'assurer dès le lancement que l'on connaît bien l'adversaire,
+  // sans attendre qu'une action (passer/changer/valider) en ait besoin.
+  _avecIdAdverse(function(idAdv) {
+    console.log('[ALKAMO-JEU] startGameEnLigne — identifiant adversaire confirmé au démarrage:', idAdv);
+  });
   // Les deux joueurs écoutent la fin de partie
   if (window.ecouterFinPartie) window.ecouterFinPartie(code);
   // Les deux joueurs écoutent les défis (mot non reconnu)
@@ -95353,6 +95405,7 @@ function syncTour(tour, joueurs, scores) {
   const tourChange = ancienActif && ancienActif !== window._idJoueur;
   if (estMonTour() && tourChange && tour.action === 'attente_theme') {
     G.word = []; G.changeSel = []; G.changeMode = false;
+    G.themeChanged = false;
     G.round++;
     document.getElementById('tmr-exp')?.classList.remove('show');
     const p = G.players[0];
@@ -95672,6 +95725,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.ecouterPartieCreateur = function(code) {
     onValue(pRef(code), snap => {
       const d = snap.val();
+      console.log('[ALKAMO-JEU] ecouterPartieCreateur callback — _partieDemar:', window._partieDemar, '| d existe:', !!d, '| joueurs:', d ? JSON.stringify(d.joueurs) : 'n/a');
       if (!d || !window._partieDemar) return;
       // Détecter fin de partie
       if (d.etat === 'terminee' && !window._finPartieRecu) {
@@ -96217,9 +96271,11 @@ function traiterReponseDefi(accepte) {
     }
     if (accepte && window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
-    }
+    _avecIdAdverse(function(idAdv) {
+      if (idAdv && window.passerAuTourSuivant) {
+        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, caseIdPubLie);
+      }
+    });
     return;
   }
 
