@@ -1175,7 +1175,7 @@ onAuthStateChanged(auth, user => {
         <div class="lobby-name">${info.pseudo}</div>
         <div class="lobby-badge">${dispo ? '🟢 Disponible' : '🔴 En partie'}</div>
         <button class="lobby-invite-btn" ${!dispo ? 'disabled' : ''}
-          onclick="window._inviterJoueur('${uid}','${info.pseudo}')">
+          onclick="window._inviterJoueur('${uid}','${info.pseudo}', event)">
           Inviter 🎮
         </button>
       </div>`;
@@ -1197,7 +1197,7 @@ onAuthStateChanged(auth, user => {
   });
 
   // Inviter un joueur
-  window._inviterJoueur = function(uid, pseudo) {
+  window._inviterJoueur = function(uid, pseudo, evt) {
     const code = Math.random().toString(36).substr(2, 6).toUpperCase();
     set(ref(db, 'invitations/' + uid), {
       de: _myUid, pseudo: _myPseudo, code: code, ts: Date.now()
@@ -1210,8 +1210,8 @@ onAuthStateChanged(auth, user => {
     // Mettre à jour le bouton
     const btns = document.querySelectorAll('.lobby-invite-btn');
     btns.forEach(b => { b.disabled = true; });
-    const btn = event.target;
-    btn.textContent = '⏳ En attente...';
+    const btn = evt ? evt.target : null;
+    if (btn) btn.textContent = '⏳ En attente...';
 
     // Écouter la réponse — NE PAS rediriger avant acceptation
     onValue(ref(db, 'reponsesInvitation/' + _myUid), snap => {
@@ -1224,8 +1224,10 @@ onAuthStateChanged(auth, user => {
       } else {
         // Refusé — remettre les boutons
         btns.forEach(b => { b.disabled = false; b.textContent = 'Inviter 🎮'; });
-        btn.textContent = '❌ Refusé';
-        setTimeout(() => { btn.textContent = 'Inviter 🎮'; }, 2000);
+        if (btn) {
+          btn.textContent = '❌ Refusé';
+          setTimeout(() => { btn.textContent = 'Inviter 🎮'; }, 2000);
+        }
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'disponible');
       }
     }, { onlyOnce: true });
@@ -1238,10 +1240,14 @@ window.accepterInvitation = function() {
   document.getElementById('invite-notif').classList.remove('show');
   const inv = _invitationEnCours;
   _invitationEnCours = null;
-  set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: true, uid: _myUid });
-  remove(ref(db, 'invitations/' + _myUid));
-  set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
-  window.location.href = 'jeu.html?role=invite&code=' + inv.code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(inv.pseudo);
+  const allerAuJeu = () => {
+    window.location.href = 'jeu.html?role=invite&code=' + inv.code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(inv.pseudo);
+  };
+  Promise.all([
+    set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: true, uid: _myUid }),
+    remove(ref(db, 'invitations/' + _myUid)),
+    set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie')
+  ]).then(allerAuJeu).catch(allerAuJeu);
 };
 
 window.refuserInvitation = function() {
