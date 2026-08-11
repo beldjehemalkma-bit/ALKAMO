@@ -1217,11 +1217,13 @@ onAuthStateChanged(auth, user => {
 
     console.log('[ALKAMO] Écoute de reponsesInvitation/' + _myUid + ' démarrée');
     // Écouter la réponse — NE PAS rediriger avant acceptation
-    onValue(ref(db, 'reponsesInvitation/' + _myUid), snap => {
+    const repRef = ref(db, 'reponsesInvitation/' + _myUid);
+    const unsubRep = onValue(repRef, snap => {
       const rep = snap.val();
       console.log('[ALKAMO] Callback reponsesInvitation déclenché, contenu reçu:', JSON.stringify(rep));
-      if (!rep) return;
-      remove(ref(db, 'reponsesInvitation/' + _myUid));
+      if (!rep) return; // 1er appel automatique de Firebase, avec rien encore — on continue d'écouter
+      unsubRep(); // une vraie réponse est arrivée : on arrête d'écouter maintenant, pas avant
+      remove(repRef);
       if (rep.accepte) {
         console.log('[ALKAMO] Acceptée ! Redirection vers jeu.html en cours...');
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
@@ -1236,7 +1238,7 @@ onAuthStateChanged(auth, user => {
         }
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'disponible');
       }
-    }, { onlyOnce: true });
+    });
   };
 });
 
