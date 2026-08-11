@@ -1199,9 +1199,11 @@ onAuthStateChanged(auth, user => {
   // Inviter un joueur
   window._inviterJoueur = function(uid, pseudo, evt) {
     const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+    console.log('[ALKAMO] Invitation envoyée à', pseudo, '(uid:', uid, ') avec code', code, '— mon uid:', _myUid);
     set(ref(db, 'invitations/' + uid), {
       de: _myUid, pseudo: _myPseudo, code: code, ts: Date.now()
-    });
+    }).then(() => console.log('[ALKAMO] Écriture invitations/' + uid + ' confirmée par le serveur'))
+      .catch(e => console.log('[ALKAMO] ERREUR écriture invitation:', e.message));
     set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_attente');
     window._codePartieEnAttente = code;
     window._inviteUid = uid;
@@ -1213,15 +1215,19 @@ onAuthStateChanged(auth, user => {
     const btn = evt ? evt.target : null;
     if (btn) btn.textContent = '⏳ En attente...';
 
+    console.log('[ALKAMO] Écoute de reponsesInvitation/' + _myUid + ' démarrée');
     // Écouter la réponse — NE PAS rediriger avant acceptation
     onValue(ref(db, 'reponsesInvitation/' + _myUid), snap => {
       const rep = snap.val();
+      console.log('[ALKAMO] Callback reponsesInvitation déclenché, contenu reçu:', JSON.stringify(rep));
       if (!rep) return;
       remove(ref(db, 'reponsesInvitation/' + _myUid));
       if (rep.accepte) {
+        console.log('[ALKAMO] Acceptée ! Redirection vers jeu.html en cours...');
         set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie');
         window.location.href = 'jeu.html?role=createur&code=' + code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(pseudo);
       } else {
+        console.log('[ALKAMO] Invitation refusée par', pseudo);
         // Refusé — remettre les boutons
         btns.forEach(b => { b.disabled = false; b.textContent = 'Inviter 🎮'; });
         if (btn) {
@@ -1240,14 +1246,16 @@ window.accepterInvitation = function() {
   document.getElementById('invite-notif').classList.remove('show');
   const inv = _invitationEnCours;
   _invitationEnCours = null;
+  console.log('[ALKAMO] Acceptation en cours — écriture vers reponsesInvitation/' + inv.de);
   const allerAuJeu = () => {
+    console.log('[ALKAMO] Écritures confirmées (ou échec géré) — redirection vers jeu.html');
     window.location.href = 'jeu.html?role=invite&code=' + inv.code + '&pseudo=' + encodeURIComponent(_myPseudo) + '&adv=' + encodeURIComponent(inv.pseudo);
   };
   Promise.all([
     set(ref(db, 'reponsesInvitation/' + inv.de), { accepte: true, uid: _myUid }),
     remove(ref(db, 'invitations/' + _myUid)),
     set(ref(db, 'lobby/' + _myUid + '/statut'), 'en_partie')
-  ]).then(allerAuJeu).catch(allerAuJeu);
+  ]).then(allerAuJeu).catch(e => { console.log('[ALKAMO] ERREUR écriture réponse:', e.message); allerAuJeu(); });
 };
 
 window.refuserInvitation = function() {
