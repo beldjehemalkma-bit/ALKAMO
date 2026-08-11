@@ -94064,7 +94064,9 @@ function passerTour() {
   log(curP().name + ' passe son tour', '');
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
-  
+
+  console.log('[ALKAMO-JEU] passerTour() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse, '| _idJoueur:', window._idJoueur, '| _joueurActifId:', window._joueurActifId);
+
   if (_modeEnLigne) {
     stopTimer();
     if (window._codePartie && window.publierAction)
@@ -94072,11 +94074,15 @@ function passerTour() {
     if (window._idAdverse && window.passerAuTourSuivant) {
       // Inclure l'ID de la case jouée pour éviter les répétitions
       const lastId = G.curCase ? G.curCase.id : null;
+      console.log('[ALKAMO-JEU] passerAuTourSuivant appelé avec joueurSuivant =', window._idAdverse);
       window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
+    } else {
+      console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé ! _idAdverse ou la fonction manque.');
     }
     return;
   }
-  
+
+  console.log('[ALKAMO-JEU] ATTENTION — _modeEnLigne est FAUX, on est passé en logique LOCALE au lieu d\'en ligne !');
   // Mode local : règle des 3 passes par joueur
   if (G.passCount >= G.players.length * 3) {
     log('🚫 Partie bloquée — trop de passes !', 'bad');
@@ -94139,6 +94145,19 @@ function confirmerChange() {
   G.changeMode = false; G.changeSel = []; G.word = [];
   snd('ok');
   drawCase(false);
+
+  console.log('[ALKAMO-JEU] confirmerChange() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse);
+
+  if (_modeEnLigne && window._codePartie) {
+    stopTimer();
+    if (window.publierAction) window.publierAction(window._codePartie, 'echanger', {});
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      const lastId = G.curCase ? G.curCase.id : null;
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
+    }
+    return;
+  }
+
   nextTurn();
 }
 
@@ -95310,6 +95329,7 @@ function syncTour(tour, joueurs, scores) {
   if (typeof G === 'undefined' || !G.players) return;
   const ancienActif = window._joueurActifId;
   window._joueurActifId = tour.joueurActif;
+  console.log('[ALKAMO-JEU] syncTour reçu — joueurActif:', tour.joueurActif, '| mon id:', window._idJoueur, '| estMonTour():', (window._idJoueur === tour.joueurActif));
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
   if (scores && window._idAdverse && scores[window._idAdverse] !== undefined)
