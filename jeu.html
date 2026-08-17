@@ -1035,8 +1035,10 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 
     </div>
 
-    <!-- Message timer expiré -->
+    <!-- Message timer expiré (tour) -->
     <div class="tmr-expired" id="tmr-exp">⏰ Temps écoulé — changement non autorisé !</div>
+    <!-- Message temps de partie écoulé (durée globale 30 à 120 min) -->
+    <div class="tmr-expired" id="partie-exp" style="background:rgba(250,208,96,.14);border-color:rgba(250,208,96,.4);color:#FAD060;font-weight:700;">⏱ Temps de partie écoulé — fin de partie après ce coup</div>
   </div>
   <div class="hist-panel" id="hist-panel">
     <div class="hist-hdr"><span>📋 THÈMES JOUÉS</span><span class="hist-count" id="hist-count">0/0</span></div>
@@ -94023,6 +94025,15 @@ function _confirmerMotFinalize(word, pIdx) {
   renderHistPanel();
   log(p.name + ' joue "' + word + '" → ' + (ev.score > 0 ? '+'+ev.score+' pts' : 'score annulé'), ev.valid ? 'ok' : 'bad');
   if (p.letters.length === 0) { endGame(); return; }
+  // Sécurité : temps de partie global écoulé (30 à 120 min, solo ET en ligne) → fin de partie
+  // immédiate au lieu de repasser la main, quel que soit le mode de jeu.
+  if (_tempsEcoule) {
+    if (_modeEnLigne && window.majScore && window._codePartie && window._idJoueur) {
+      window.majScore(window._codePartie, window._idJoueur, p.score);
+    }
+    endGame();
+    return;
+  }
   if (G.letterBag.length === 0 && G.phase === 'normal') {
     G.phase = 'final';
     log('⚠ Cagnotte épuisée — phase finale !', 'inf');
@@ -94181,6 +94192,8 @@ function confirmerChange() {
   log(p.name + ' change [' + old.join(',') + '] → [' + newL.join(',') + ']', 'inf');
   G.changeMode = false; G.changeSel = []; G.word = [];
   snd('ok');
+  // Sécurité : temps de partie global écoulé → fin de partie immédiate (solo ET en ligne)
+  if (_tempsEcoule) { endGame(); return; }
   drawCase(false);
 
   console.log('[ALKAMO-JEU] confirmerChange() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse);
@@ -94333,6 +94346,8 @@ function endGame() {
   stopTimer();
   stopBgMusic();
   stopPartieTimer();
+  var pexpBanner = document.getElementById('partie-exp');
+  if (pexpBanner) pexpBanner.classList.remove('show');
   ['ind-tour','score-adverse'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.remove();
   });
@@ -95101,6 +95116,8 @@ function startPartieTimer() {
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
+  var pexpBanner = document.getElementById('partie-exp');
+  if (pexpBanner) pexpBanner.classList.remove('show');
   if (el) el.style.display = 'flex';
   updatePartieTimer();
   _partieTimer = setInterval(function() {
@@ -95112,6 +95129,8 @@ function startPartieTimer() {
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
       // Attendre la fin du tour en cours
       log('⏱ Temps écoulé ! Fin de partie après ce tour...', 'bad');
+      var pexpBanner = document.getElementById('partie-exp');
+      if (pexpBanner) pexpBanner.classList.add('show');
       snd('urgent');
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
