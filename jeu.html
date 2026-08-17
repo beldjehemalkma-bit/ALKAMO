@@ -163,6 +163,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .tmr-expired{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:7px 12px;font-size:.78rem;color:var(--red);text-align:center;display:none;}
 .tmr-expired.show{display:block;}
 
+/* Bandeau temps de partie écoulé — fixe, en haut, bien visible, clignotant */
+.partie-expired-banner{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;
+  background:rgba(250,208,96,.97);border:2px solid #FAD060;border-radius:10px;padding:11px 24px;
+  font-size:1rem;font-weight:900;color:#1a1400;text-align:center;display:none;
+  box-shadow:0 4px 20px rgba(0,0,0,.55);animation:urgentPulse .9s infinite;max-width:92vw;}
+.partie-expired-banner.show{display:block;}
+
 /* Log */
 .glog{background:rgba(0,0,0,.2);border-radius:10px;padding:10px;max-height:85px;overflow-y:auto;font-size:.78rem;}
 .log-e{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.6);}
@@ -1038,7 +1045,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
     <!-- Message timer expiré (tour) -->
     <div class="tmr-expired" id="tmr-exp">⏰ Temps écoulé — changement non autorisé !</div>
     <!-- Message temps de partie écoulé (durée globale 30 à 120 min) -->
-    <div class="tmr-expired" id="partie-exp" style="background:rgba(250,208,96,.14);border-color:rgba(250,208,96,.4);color:#FAD060;font-weight:700;">⏱ Temps de partie écoulé — fin de partie après ce coup</div>
+    <div class="partie-expired-banner" id="partie-exp">⏱ Temps de partie écoulé — fin de partie après ce coup</div>
   </div>
   <div class="hist-panel" id="hist-panel">
     <div class="hist-hdr"><span>📋 THÈMES JOUÉS</span><span class="hist-count" id="hist-count">0/0</span></div>
