@@ -95135,11 +95135,12 @@ function startPartieTimer() {
       clearInterval(_partieTimer);
       _tempsEcoule = true;
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
-      // Attendre la fin du tour en cours
-      log('⏱ Temps écoulé ! Fin de partie après ce tour...', 'bad');
+      log('⏱ Temps écoulé ! Fin de partie...', 'bad');
       var pexpBanner = document.getElementById('partie-exp');
       if (pexpBanner) pexpBanner.classList.add('show');
       snd('urgent');
+      // Fin de partie immédiate : on n'attend plus la validation du coup en cours.
+      setTimeout(function() { if (_tempsEcoule) endGame(); }, 600);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
