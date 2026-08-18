@@ -965,7 +965,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   <div class="board">
 
     <!-- Temps de partie écoulé -->
-    <div class="partie-expired-banner" id="partie-exp">⏱ Temps de partie écoulé — fin de partie après ce coup</div>
+    <div class="partie-expired-banner" id="partie-exp" onclick="confirmerFinPartie()" style="cursor:pointer;">⏱ Temps de partie écoulé — cliquez ici pour voir les scores finaux</div>
 
     <!-- Thème -->
     <div class="theme-box">
@@ -93881,6 +93881,7 @@ function evalWordSync(word) {
 // ACTIONS JEU
 // ═══════════════════════════════════════════
 function clearWord() {
+  if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
   G.word = [];
   G.insertPos = 0;
   renderChevalet();
@@ -93888,6 +93889,7 @@ function clearWord() {
 }
 
 function validerMot() {
+  if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
   if (G.word.length < 2) { log('⚠ Formez un mot d\'au moins 2 lettres !', 'bad'); return; }
   const word = buildWord();
   const ev = evalWordSync(word);
@@ -94033,15 +94035,6 @@ function _confirmerMotFinalize(word, pIdx) {
   renderHistPanel();
   log(p.name + ' joue "' + word + '" → ' + (ev.score > 0 ? '+'+ev.score+' pts' : 'score annulé'), ev.valid ? 'ok' : 'bad');
   if (p.letters.length === 0) { endGame(); return; }
-  // Sécurité : temps de partie global écoulé (30 à 120 min, solo ET en ligne) → fin de partie
-  // immédiate au lieu de repasser la main, quel que soit le mode de jeu.
-  if (_tempsEcoule) {
-    if (_modeEnLigne && window.majScore && window._codePartie && window._idJoueur) {
-      window.majScore(window._codePartie, window._idJoueur, p.score);
-    }
-    _finPartieAutomatique();
-    return;
-  }
   if (G.letterBag.length === 0 && G.phase === 'normal') {
     G.phase = 'final';
     log('⚠ Cagnotte épuisée — phase finale !', 'inf');
@@ -94116,6 +94109,7 @@ function _avecIdAdverse(callback, _tentative) {
 }
 
 function passerTour() {
+  if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
   log(curP().name + ' passe son tour', '');
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
@@ -94153,6 +94147,7 @@ function passerTour() {
 // CHANGEMENT DE LETTRES
 // ═══════════════════════════════════════════
 function toggleChangeMode() {
+  if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
   if (G.changeMode) {
     // Soit confirmer soit annuler
     if (G.changeSel.length > 0) {
@@ -94200,8 +94195,6 @@ function confirmerChange() {
   log(p.name + ' change [' + old.join(',') + '] → [' + newL.join(',') + ']', 'inf');
   G.changeMode = false; G.changeSel = []; G.word = [];
   snd('ok');
-  // Sécurité : temps de partie global écoulé → fin de partie immédiate (solo ET en ligne)
-  if (_tempsEcoule) { _finPartieAutomatique(); return; }
   drawCase(false);
 
   console.log('[ALKAMO-JEU] confirmerChange() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse);
@@ -94227,7 +94220,7 @@ function confirmerChange() {
 // TOUR SUIVANT
 // ═══════════════════════════════════════════
 function nextTurn() {
-  if (_tempsEcoule) { _finPartieAutomatique(); return; }
+  if (_tempsEcoule) { endGame(); return; }
   G.word = []; G.changeSel = []; G.changeMode = false; G.insertPos = 0;
   G.themeChanged = false;
   setBgUrgent(false);
@@ -94386,58 +94379,6 @@ function endGame() {
   });
   var sorted = G.players.slice().sort(function(a,b) { return b.score - a.score; });
   _afficherEcranFin(sorted);
-}
-
-// Fin de partie automatique déclenchée par l'expiration du temps global.
-// Reprend exactement la logique éprouvée du bouton "Terminer ✓" (fin manuelle),
-// pour garantir un comportement fiable sans dépendre d'endGame().
-function _finPartieAutomatique() {
-  try { stopTimer(); } catch(e) {}
-  try { stopPartieTimer(); } catch(e) {}
-  try { stopBgMusic(); } catch(e) {}
-  var pexpBanner = document.getElementById('partie-exp');
-  if (pexpBanner) pexpBanner.classList.remove('show');
-  document.querySelectorAll('.ov.open').forEach(function(m) {
-    m.classList.remove('open');
-    m.style.display = 'none';
-  });
-
-  if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
-    try { window.signalerFinPartie(window._codePartie, window._nomJoueur || (G.players[0] && G.players[0].name) || 'Joueur'); } catch(e) {}
-  }
-
-  var joueurs = [];
-  if (_modeEnLigne) {
-    var nom = window._nomJoueur || (G.players[0] && G.players[0].name);
-    joueurs = [{ name: nom, score: G.players[0].score }];
-    if (window._nomAdverse) joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0 });
-  } else {
-    G.players.forEach(function(p) { joueurs.push({ name: p.name, score: p.score }); });
-  }
-  joueurs.sort(function(a, b) { return b.score - a.score; });
-
-  go('end');
-
-  var endW = document.getElementById('end-w');
-  var sc = document.getElementById('end-sc');
-  if (endW) {
-    if (joueurs.length > 1 && joueurs[0].score === joueurs[1].score) {
-      endW.textContent = '🤝 Égalité ! ' + joueurs[0].score + ' pts';
-    } else {
-      endW.textContent = '🏆 ' + joueurs[0].name + ' gagne avec ' + joueurs[0].score + ' pts !';
-    }
-  }
-  if (sc) {
-    var medals = ['🥇', '🥈', '🥉', '4️⃣'];
-    sc.innerHTML = joueurs.map(function(p, i) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px;margin:6px 0;background:rgba(255,255,255,.05);border-radius:10px;">' +
-        '<span style="font-size:1.5rem">' + (medals[i]||'') + '</span>' +
-        '<span style="flex:1;font-weight:700;color:#fff">' + p.name + '</span>' +
-        '<span style="font-weight:900;color:#FAD060;font-size:1.1rem">' + p.score + ' pts</span>' +
-        '</div>';
-    }).join('');
-  }
-  try { snd('win'); } catch(e) {}
 }
 
 
@@ -95193,12 +95134,13 @@ function startPartieTimer() {
       clearInterval(_partieTimer);
       _tempsEcoule = true;
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
-      log('⏱ Temps écoulé ! Fin de partie...', 'bad');
+      log('⏱ Temps écoulé ! Cliquez sur le bandeau pour voir les scores finaux.', 'bad');
       var pexpBanner = document.getElementById('partie-exp');
       if (pexpBanner) pexpBanner.classList.add('show');
       snd('urgent');
-      // Fin de partie immédiate : on n'attend plus la validation du coup en cours.
-      setTimeout(function() { if (_tempsEcoule) _finPartieAutomatique(); }, 600);
+      // Ouvre automatiquement la fenêtre de confirmation existante (le joueur
+      // n'a plus qu'à taper sur "Terminer ✓", déjà fiable et testé).
+      setTimeout(function() { if (_tempsEcoule && typeof confirmerFinPartie === 'function') confirmerFinPartie(); }, 400);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
