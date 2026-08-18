@@ -94039,7 +94039,7 @@ function _confirmerMotFinalize(word, pIdx) {
     if (_modeEnLigne && window.majScore && window._codePartie && window._idJoueur) {
       window.majScore(window._codePartie, window._idJoueur, p.score);
     }
-    endGame();
+    _finPartieAutomatique();
     return;
   }
   if (G.letterBag.length === 0 && G.phase === 'normal') {
@@ -94201,7 +94201,7 @@ function confirmerChange() {
   G.changeMode = false; G.changeSel = []; G.word = [];
   snd('ok');
   // Sécurité : temps de partie global écoulé → fin de partie immédiate (solo ET en ligne)
-  if (_tempsEcoule) { endGame(); return; }
+  if (_tempsEcoule) { _finPartieAutomatique(); return; }
   drawCase(false);
 
   console.log('[ALKAMO-JEU] confirmerChange() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse);
@@ -94227,7 +94227,7 @@ function confirmerChange() {
 // TOUR SUIVANT
 // ═══════════════════════════════════════════
 function nextTurn() {
-  if (_tempsEcoule) { endGame(); return; }
+  if (_tempsEcoule) { _finPartieAutomatique(); return; }
   G.word = []; G.changeSel = []; G.changeMode = false; G.insertPos = 0;
   G.themeChanged = false;
   setBgUrgent(false);
@@ -94386,6 +94386,58 @@ function endGame() {
   });
   var sorted = G.players.slice().sort(function(a,b) { return b.score - a.score; });
   _afficherEcranFin(sorted);
+}
+
+// Fin de partie automatique déclenchée par l'expiration du temps global.
+// Reprend exactement la logique éprouvée du bouton "Terminer ✓" (fin manuelle),
+// pour garantir un comportement fiable sans dépendre d'endGame().
+function _finPartieAutomatique() {
+  try { stopTimer(); } catch(e) {}
+  try { stopPartieTimer(); } catch(e) {}
+  try { stopBgMusic(); } catch(e) {}
+  var pexpBanner = document.getElementById('partie-exp');
+  if (pexpBanner) pexpBanner.classList.remove('show');
+  document.querySelectorAll('.ov.open').forEach(function(m) {
+    m.classList.remove('open');
+    m.style.display = 'none';
+  });
+
+  if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    try { window.signalerFinPartie(window._codePartie, window._nomJoueur || (G.players[0] && G.players[0].name) || 'Joueur'); } catch(e) {}
+  }
+
+  var joueurs = [];
+  if (_modeEnLigne) {
+    var nom = window._nomJoueur || (G.players[0] && G.players[0].name);
+    joueurs = [{ name: nom, score: G.players[0].score }];
+    if (window._nomAdverse) joueurs.push({ name: window._nomAdverse, score: window._scoreAdverse || 0 });
+  } else {
+    G.players.forEach(function(p) { joueurs.push({ name: p.name, score: p.score }); });
+  }
+  joueurs.sort(function(a, b) { return b.score - a.score; });
+
+  go('end');
+
+  var endW = document.getElementById('end-w');
+  var sc = document.getElementById('end-sc');
+  if (endW) {
+    if (joueurs.length > 1 && joueurs[0].score === joueurs[1].score) {
+      endW.textContent = '🤝 Égalité ! ' + joueurs[0].score + ' pts';
+    } else {
+      endW.textContent = '🏆 ' + joueurs[0].name + ' gagne avec ' + joueurs[0].score + ' pts !';
+    }
+  }
+  if (sc) {
+    var medals = ['🥇', '🥈', '🥉', '4️⃣'];
+    sc.innerHTML = joueurs.map(function(p, i) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px;margin:6px 0;background:rgba(255,255,255,.05);border-radius:10px;">' +
+        '<span style="font-size:1.5rem">' + (medals[i]||'') + '</span>' +
+        '<span style="flex:1;font-weight:700;color:#fff">' + p.name + '</span>' +
+        '<span style="font-weight:900;color:#FAD060;font-size:1.1rem">' + p.score + ' pts</span>' +
+        '</div>';
+    }).join('');
+  }
+  try { snd('win'); } catch(e) {}
 }
 
 
@@ -95146,7 +95198,7 @@ function startPartieTimer() {
       if (pexpBanner) pexpBanner.classList.add('show');
       snd('urgent');
       // Fin de partie immédiate : on n'attend plus la validation du coup en cours.
-      setTimeout(function() { if (_tempsEcoule) endGame(); }, 600);
+      setTimeout(function() { if (_tempsEcoule) _finPartieAutomatique(); }, 600);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
