@@ -94356,6 +94356,12 @@ function endGame() {
   stopPartieTimer();
   var pexpBanner = document.getElementById('partie-exp');
   if (pexpBanner) pexpBanner.classList.remove('show');
+  // Fermer toute fenêtre modale encore ouverte (ex: "Valider le mot ?") pour
+  // qu'elle ne reste pas active par-dessus l'écran de fin de partie.
+  document.querySelectorAll('.ov.open').forEach(function(m) {
+    m.classList.remove('open');
+    m.style.display = 'none';
+  });
   ['ind-tour','score-adverse'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.remove();
   });
