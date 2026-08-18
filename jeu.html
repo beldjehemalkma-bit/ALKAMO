@@ -95140,7 +95140,7 @@ function startPartieTimer() {
       snd('urgent');
       // Ouvre automatiquement la fenêtre de confirmation existante (le joueur
       // n'a plus qu'à taper sur "Terminer ✓", déjà fiable et testé).
-      setTimeout(function() { if (_tempsEcoule && typeof confirmerFinPartie === 'function') confirmerFinPartie(); }, 3500);
+      setTimeout(function() { if (_tempsEcoule && typeof confirmerFinPartie === 'function') confirmerFinPartie(); }, 1000);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
