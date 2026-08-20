@@ -93893,6 +93893,7 @@ function clearWord() {
 
 function validerMot() {
   if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
+  if (!estMonTour()) { log('⛔ Ce n\'est pas votre tour !', 'bad'); return; }
   if (G.word.length < 2) { log('⚠ Formez un mot d\'au moins 2 lettres !', 'bad'); return; }
   const word = buildWord();
   const ev = evalWordSync(word);
@@ -94112,7 +94113,9 @@ function _avecIdAdverse(callback, _tentative) {
 }
 
 function passerTour() {
+  if (window._codePartie && !_modeEnLigne) { _modeEnLigne = true; }
   if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
+  if (!estMonTour()) { log('⛔ Ce n\'est pas votre tour !', 'bad'); return; }
   log(curP().name + ' passe son tour', '');
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
@@ -94151,6 +94154,7 @@ function passerTour() {
 // ═══════════════════════════════════════════
 function toggleChangeMode() {
   if (_tempsEcoule) { log('⏱ Temps de partie écoulé — cliquez sur le bandeau pour voir les scores.', 'bad'); return; }
+  if (!estMonTour()) { log('⛔ Ce n\'est pas votre tour !', 'bad'); return; }
   if (G.changeMode) {
     // Soit confirmer soit annuler
     if (G.changeSel.length > 0) {
@@ -94179,6 +94183,7 @@ function toggleChangeMode() {
 }
 
 function confirmerChange() {
+  if (window._codePartie && !_modeEnLigne) { _modeEnLigne = true; }
   console.log('[ALKAMO-JEU] confirmerChange() APPELÉE — G.changeSel:', G.changeSel, '| G.letterBag.length:', G.letterBag.length, '| G.timerExpired:', G.timerExpired, '| _tempsEcoule:', _tempsEcoule);
   if (G.timerExpired) {
     document.getElementById('tmr-exp').classList.add('show');
@@ -94225,6 +94230,13 @@ function confirmerChange() {
 // ═══════════════════════════════════════════
 function nextTurn() {
   if (_tempsEcoule) { endGame(); return; }
+  // Sécurité : si un code de partie en ligne est actif, on est forcément en ligne,
+  // même si _modeEnLigne s'était mal positionné — évite de relancer le minuteur
+  // localement par erreur pendant une partie en ligne.
+  if (window._codePartie && !_modeEnLigne) {
+    console.log('[ALKAMO-JEU] nextTurn() — correction : _modeEnLigne remis à true (code partie actif:', window._codePartie, ')');
+    _modeEnLigne = true;
+  }
   G.word = []; G.changeSel = []; G.changeMode = false; G.insertPos = 0;
   G.themeChanged = false;
   setBgUrgent(false);
