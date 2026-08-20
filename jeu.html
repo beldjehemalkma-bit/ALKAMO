@@ -95684,7 +95684,9 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     window._idJoueur = idJ;
     window._estCreateur = false;
     window._idAdverse = 'j1';
-    update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
+    update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } })
+      .then(() => console.log('[ALKAMO-JEU] rejoindrePatie — inscription confirmée dans Firebase, idJ:', idJ, '| code:', code))
+      .catch(e => console.log('[ALKAMO-JEU] rejoindrePatie — ÉCHEC de l\'inscription dans Firebase !', e.message));
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
     _ecouterPartie(code);
     setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
