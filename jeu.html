@@ -93387,9 +93387,12 @@ function renderWord() {
   const evalEl = document.getElementById('weval');
 
   if (G.changeMode) {
-    ph.style.display = 'block';
-    ph.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
-    ph.style.color = 'var(--red)';
+    drop.innerHTML = '';
+    const chp = document.createElement('span');
+    chp.className = 'word-ph'; chp.id = 'wph';
+    chp.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
+    chp.style.color = 'var(--red)';
+    drop.appendChild(chp);
     formed.textContent = '';
     evalEl.textContent = '';
     return;
