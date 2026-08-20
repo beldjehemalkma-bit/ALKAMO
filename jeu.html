@@ -94179,6 +94179,7 @@ function toggleChangeMode() {
 }
 
 function confirmerChange() {
+  console.log('[ALKAMO-JEU] confirmerChange() APPELÉE — G.changeSel:', G.changeSel, '| G.letterBag.length:', G.letterBag.length, '| G.timerExpired:', G.timerExpired, '| _tempsEcoule:', _tempsEcoule);
   if (G.timerExpired) {
     document.getElementById('tmr-exp').classList.add('show');
     log('⏰ Temps écoulé — changement non autorisé !', 'bad');
