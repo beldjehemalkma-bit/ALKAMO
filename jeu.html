@@ -95676,6 +95676,12 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
   window.creerPartieEnLigne = function(nom, codeForce) {
+    // Nettoyage : efface toute trace d'une partie précédente testée dans ce même
+    // navigateur, pour ne jamais mélanger d'anciennes informations avec la nouvelle partie.
+    window._idAdverse = null;
+    window._joueurActifId = null;
+    window._nomJoueurActif = null;
+    window._scoreAdverse = null;
     const code = codeForce || genCode();
     set(pRef(code), {
       code, etat: 'attente', maquette: null,
@@ -95691,6 +95697,9 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.rejoindrePatie = function(code, nom) {
+    window._joueurActifId = null;
+    window._nomJoueurActif = null;
+    window._scoreAdverse = null;
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
     window._idJoueur = idJ;
