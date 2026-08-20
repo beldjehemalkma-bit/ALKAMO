@@ -95820,6 +95820,17 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     onValue(pRef(code), snap => {
       const d = snap.val();
       console.log('[ALKAMO-JEU] ecouterPartieCreateur callback — _partieDemar:', window._partieDemar, '| d existe:', !!d, '| joueurs:', d ? JSON.stringify(d.joueurs) : 'n/a');
+      // Capture fiable de l'adversaire dès qu'il apparaît, via cette écoute continue
+      // (plus fiable que la vérification ponctuelle de _avecIdAdverse qui ne réessaie
+      // que pendant ~2 secondes puis abandonne définitivement).
+      if (d && d.joueurs && !window._idAdverse) {
+        const advId = Object.keys(d.joueurs).find(id => id !== window._idJoueur);
+        if (advId) {
+          window._idAdverse = advId;
+          window._nomAdverse = d.joueurs[advId].nom;
+          console.log('[ALKAMO-JEU] ecouterPartieCreateur — adversaire capturé via écoute continue:', advId);
+        }
+      }
       if (!d || !window._partieDemar) return;
       // Détecter fin de partie
       if (d.etat === 'terminee' && !window._finPartieRecu) {
