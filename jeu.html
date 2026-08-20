@@ -95653,6 +95653,11 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  // Pont vers l'extérieur du module : sans ça, les fonctions comme _avecIdAdverse()
+  // (dans le script principal du jeu) ne peuvent jamais accéder à Firebase.
+  window.db = db;
+  window.ref = ref;
+  window.onValue = onValue;
 
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
