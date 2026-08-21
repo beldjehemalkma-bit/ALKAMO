@@ -95019,9 +95019,15 @@ function startPartieTimer() {
       var pexpBanner2 = document.getElementById('partie-exp');
       if (pexpBanner2) pexpBanner2.classList.add('show');
       snd('urgent');
-      // Ouvre automatiquement la fenêtre de confirmation existante (le joueur
-      // n'a plus qu'à taper sur "Terminer ✓", déjà fiable et testé).
-      setTimeout(function() { if (_tempsEcoule && typeof confirmerFinPartie === 'function') confirmerFinPartie(); }, 1000);
+      // Fin automatique par le temps : pas de question "voulez-vous vraiment terminer ?"
+      // On déclenche directement le bouton "Terminer ✓" (même code fiable), sans
+      // passer par la fenêtre de confirmation.
+      setTimeout(function() {
+        if (_tempsEcoule) {
+          var btnFin = document.getElementById('btn-fin-ok');
+          if (btnFin) btnFin.click();
+        }
+      }, 1000);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
