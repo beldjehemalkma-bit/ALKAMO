@@ -95024,10 +95024,11 @@ function startPartieTimer() {
       // passer par la fenêtre de confirmation.
       setTimeout(function() {
         if (_tempsEcoule) {
+          window._finAutomatiqueParTemps = true;
           var btnFin = document.getElementById('btn-fin-ok');
           if (btnFin) btnFin.click();
         }
-      }, 1000);
+      }, 2500);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
@@ -96080,10 +96081,13 @@ document.addEventListener('DOMContentLoaded', function() {
     try { stopPartieTimer(); } catch(e) {}
     try { stopBgMusic(); } catch(e) {}
 
-    // Signaler la fin aux autres joueurs via Firebase
-    if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    // Signaler la fin aux autres joueurs via Firebase — uniquement si c'est un joueur
+    // qui a choisi manuellement de terminer. Si c'est le temps imparti qui s'est écoulé,
+    // chaque joueur gère sa propre fin de partie de son côté, sans avertir l'autre.
+    if (!window._finAutomatiqueParTemps && _modeEnLigne && window._codePartie && window.signalerFinPartie) {
       try { window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur'); } catch(e) {}
     }
+    window._finAutomatiqueParTemps = false;
 
     var joueurs = [];
     if (_modeEnLigne) {
