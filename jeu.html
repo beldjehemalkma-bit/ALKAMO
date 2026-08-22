@@ -149,6 +149,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .tmr-expired{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:7px 12px;font-size:.78rem;color:var(--red);text-align:center;display:none;}
 .tmr-expired.show{display:block;}
 
+/* Bandeau temps de partie écoulé — en haut de la zone de jeu, bien visible, clignotant */
+.partie-expired-banner{width:100%;box-sizing:border-box;margin-bottom:10px;
+  background:rgba(250,208,96,.97);border:2px solid #FAD060;border-radius:10px;padding:11px 16px;
+  font-size:.95rem;font-weight:900;color:#1a1400;text-align:center;display:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);animation:urgentPulse .9s infinite;}
+.partie-expired-banner.show{display:block;}
+
 /* Log */
 .glog{background:rgba(0,0,0,.2);border-radius:10px;padding:10px;max-height:85px;overflow-y:auto;font-size:.78rem;}
 .log-e{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.6);}
@@ -942,6 +949,9 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   <div class="sbar" id="sbar"></div>
   <div class="game-layout">
   <div class="board">
+
+    <!-- Temps de partie écoulé -->
+    <div class="partie-expired-banner" id="partie-exp">⏱ Temps de partie écoulé — cliquez ici pour voir les scores finaux</div>
 
     <!-- Thème -->
     <div class="theme-box">
@@ -94994,6 +95004,8 @@ function startPartieTimer() {
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
+  var pexpBanner = document.getElementById('partie-exp');
+  if (pexpBanner) pexpBanner.classList.remove('show');
   if (el) el.style.display = 'flex';
   updatePartieTimer();
   _partieTimer = setInterval(function() {
@@ -95003,9 +95015,20 @@ function startPartieTimer() {
       clearInterval(_partieTimer);
       _tempsEcoule = true;
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
-      // Attendre la fin du tour en cours
-      log('⏱ Temps écoulé ! Fin de partie après ce tour...', 'bad');
+      log('⏱ Temps écoulé ! Cliquez sur le bandeau pour voir les scores finaux.', 'bad');
+      var pexpBanner2 = document.getElementById('partie-exp');
+      if (pexpBanner2) pexpBanner2.classList.add('show');
       snd('urgent');
+      // Fin automatique par le temps : pas de question "voulez-vous vraiment terminer ?"
+      // On déclenche directement le bouton "Terminer ✓" (même code fiable), sans
+      // passer par la fenêtre de confirmation.
+      setTimeout(function() {
+        if (_tempsEcoule) {
+          window._finAutomatiqueParTemps = true;
+          var btnFin = document.getElementById('btn-fin-ok');
+          if (btnFin) btnFin.click();
+        }
+      }, 2000);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
@@ -96057,10 +96080,13 @@ document.addEventListener('DOMContentLoaded', function() {
     try { stopPartieTimer(); } catch(e) {}
     try { stopBgMusic(); } catch(e) {}
 
-    // Signaler la fin aux autres joueurs via Firebase
-    if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    // Signaler la fin aux autres joueurs via Firebase — uniquement si c'est un joueur
+    // qui a choisi manuellement de terminer. Si c'est le temps imparti qui s'est écoulé,
+    // chaque joueur gère sa propre fin de partie de son côté, sans avertir l'autre.
+    if (!window._finAutomatiqueParTemps && _modeEnLigne && window._codePartie && window.signalerFinPartie) {
       try { window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur'); } catch(e) {}
     }
+    window._finAutomatiqueParTemps = false;
 
     var joueurs = [];
     if (_modeEnLigne) {
