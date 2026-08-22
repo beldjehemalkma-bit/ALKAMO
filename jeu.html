@@ -281,7 +281,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
   border-color: transparent;
 }
 .dico-modal { max-width: 620px; width: 96%; max-height: 88vh; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
-.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: .9rem; margin-bottom: 10px; box-sizing: border-box; }
+.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
 .dico-search::placeholder { color: rgba(255,255,255,.3); }
 .dico-themes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .dico-btn-th { padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(200,160,32,.3); background: rgba(200,160,32,.08); color: var(--gold-light); font-size: .72rem; cursor: pointer; transition: all .2s; }
@@ -481,7 +481,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   box-shadow:0 0 10px rgba(200,160,32,.25); }
 .duree-input { width:70px; padding:7px 10px; border-radius:10px;
   border:2px solid rgba(200,160,32,.25); background:rgba(255,255,255,.05);
-  color:#fff; font-size:.85rem; font-weight:700; text-align:center; }
+  color:#fff; font-size:16px; font-weight:700; text-align:center; }
 .duree-input:focus { outline:none; border-color:var(--gold); }
 
 /* Compte à rebours global de partie */
@@ -742,7 +742,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   width: 100%; padding: 10px 14px;
   border-radius: 10px; border: 1px solid rgba(200,160,32,.3);
   background: rgba(255,255,255,.05);
-  color: #fff; font-size: .95rem;
+  color: #fff; font-size: 16px;
   margin-bottom: 10px; text-align: center;
   letter-spacing: 2px;
 }
@@ -768,7 +768,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 }
 
 .chat-input-zone{display:flex;gap:6px;padding:8px 10px 4px;border-top:1px solid rgba(255,255,255,.08);}
-.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:.78rem;outline:none;}
+.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:16px;outline:none;}
 .chat-input-field::placeholder{color:rgba(255,255,255,.25);}
 .chat-input-field:focus{border-color:rgba(200,160,32,.5);}
 .chat-send-btn{padding:7px 12px;border-radius:10px;background:linear-gradient(135deg,#534AB7,#1D9E75);border:none;color:#fff;font-size:.85rem;cursor:pointer;font-weight:700;}
@@ -93363,9 +93363,12 @@ function renderWord() {
   const evalEl = document.getElementById('weval');
 
   if (G.changeMode) {
-    ph.style.display = 'block';
-    ph.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
-    ph.style.color = 'var(--red)';
+    drop.innerHTML = '';
+    const chp = document.createElement('span');
+    chp.className = 'word-ph'; chp.id = 'wph';
+    chp.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
+    chp.style.color = 'var(--red)';
+    drop.appendChild(chp);
     formed.textContent = '';
     evalEl.textContent = '';
     return;
@@ -95195,6 +95198,7 @@ function refuserInvitationUI() {
 window._onSalonInviteAccepted = function(code) {
   if (window.salonQuitter) window.salonQuitter(window._salonMonUid);
   window._salonMonUid = null;
+  _modeEnLigne = true;
   document.getElementById('online-code-show').textContent = code;
   fermerOnline();
   openMaquette(true);
@@ -95250,6 +95254,7 @@ function onlineDemarrer() {
 // ════════════════════════════════════════
 // SYNCHRONISATION MULTIJOUEUR
 // ════════════════════════════════════════
+let _modeEnLigne = false;
 let _partieDemar = false;
 
 function estMonTour() {
