@@ -95610,6 +95610,10 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.rejoindrePatie = function(code, nom) {
+    // Réinitialisation : évite qu'une valeur restée d'un test précédent dans ce
+    // même onglet empêche le déclenchement du démarrage de partie côté invité.
+    window._partieDemar = false;
+    window._finPartieRecu = false;
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
     window._idJoueur = idJ;
@@ -95618,6 +95622,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
     _ecouterPartie(code);
+    if (window.ecouterChat) window.ecouterChat(code);
     setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
   };
 
