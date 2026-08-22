@@ -94386,6 +94386,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
+  // Arrivée directe depuis une invitation acceptée sur le site (index.html)
+  const role = urlParams.get('role');
+  if (role === 'createur' || role === 'invite') {
+    const codeUrl = urlParams.get('code');
+    const pseudoUrl = urlParams.get('pseudo') || 'Joueur';
+    const advUrl = urlParams.get('adv') || '';
+    _modeEnLigne = true;
+    window._nomJoueur = pseudoUrl;
+    window._nomAdverse = advUrl;
+    if (role === 'createur') {
+      if (window.creerPartieEnLigne) window.creerPartieEnLigne(pseudoUrl, codeUrl);
+    } else {
+      window._idAdverse = 'j1';
+      if (window.rejoindrePatie) window.rejoindrePatie(codeUrl, pseudoUrl);
+    }
+    openMaquette(true);
+    setTimeout(() => {
+      const chatZ = document.getElementById('maq-chat-zone');
+      if (chatZ) { chatZ.style.display = 'block'; chatZ.dataset.code = codeUrl; }
+      if (role === 'invite') {
+        const btnJ = document.getElementById('maq-btn-jouer');
+        if (btnJ) btnJ.style.display = 'none';
+      }
+    }, 300);
+  }
   setupDropZone();
   setupChevaletDropZone();
   makeDraggableScroll('chev');
