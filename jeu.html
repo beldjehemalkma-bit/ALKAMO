@@ -149,13 +149,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .tmr-expired{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:7px 12px;font-size:.78rem;color:var(--red);text-align:center;display:none;}
 .tmr-expired.show{display:block;}
 
-/* Bandeau temps de partie écoulé — en haut de la zone de jeu, bien visible, clignotant */
-.partie-expired-banner{width:100%;box-sizing:border-box;margin-bottom:10px;
-  background:rgba(250,208,96,.97);border:2px solid #FAD060;border-radius:10px;padding:11px 16px;
-  font-size:.95rem;font-weight:900;color:#1a1400;text-align:center;display:none;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);animation:urgentPulse .9s infinite;}
-.partie-expired-banner.show{display:block;}
-
 /* Log */
 .glog{background:rgba(0,0,0,.2);border-radius:10px;padding:10px;max-height:85px;overflow-y:auto;font-size:.78rem;}
 .log-e{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.6);}
@@ -288,7 +281,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
   border-color: transparent;
 }
 .dico-modal { max-width: 620px; width: 96%; max-height: 88vh; height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
-.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: 16px; margin-bottom: 10px; box-sizing: border-box; }
+.dico-search { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(200,160,32,.3); background: rgba(255,255,255,.05); color: #fff; font-size: .9rem; margin-bottom: 10px; box-sizing: border-box; }
 .dico-search::placeholder { color: rgba(255,255,255,.3); }
 .dico-themes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .dico-btn-th { padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(200,160,32,.3); background: rgba(200,160,32,.08); color: var(--gold-light); font-size: .72rem; cursor: pointer; transition: all .2s; }
@@ -488,7 +481,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   box-shadow:0 0 10px rgba(200,160,32,.25); }
 .duree-input { width:70px; padding:7px 10px; border-radius:10px;
   border:2px solid rgba(200,160,32,.25); background:rgba(255,255,255,.05);
-  color:#fff; font-size:16px; font-weight:700; text-align:center; }
+  color:#fff; font-size:.85rem; font-weight:700; text-align:center; }
 .duree-input:focus { outline:none; border-color:var(--gold); }
 
 /* Compte à rebours global de partie */
@@ -749,7 +742,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   width: 100%; padding: 10px 14px;
   border-radius: 10px; border: 1px solid rgba(200,160,32,.3);
   background: rgba(255,255,255,.05);
-  color: #fff; font-size: 16px;
+  color: #fff; font-size: .95rem;
   margin-bottom: 10px; text-align: center;
   letter-spacing: 2px;
 }
@@ -775,7 +768,7 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 }
 
 .chat-input-zone{display:flex;gap:6px;padding:8px 10px 4px;border-top:1px solid rgba(255,255,255,.08);}
-.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:16px;outline:none;}
+.chat-input-field{flex:1;padding:7px 10px;border-radius:10px;border:1px solid rgba(200,160,32,.25);background:rgba(255,255,255,.06);color:#fff;font-size:.78rem;outline:none;}
 .chat-input-field::placeholder{color:rgba(255,255,255,.25);}
 .chat-input-field:focus{border-color:rgba(200,160,32,.5);}
 .chat-send-btn{padding:7px 12px;border-radius:10px;background:linear-gradient(135deg,#534AB7,#1D9E75);border:none;color:#fff;font-size:.85rem;cursor:pointer;font-weight:700;}
@@ -949,9 +942,6 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   <div class="sbar" id="sbar"></div>
   <div class="game-layout">
   <div class="board">
-
-    <!-- Temps de partie écoulé -->
-    <div class="partie-expired-banner" id="partie-exp" onclick="confirmerFinPartie()" style="cursor:pointer;">⏱ Temps de partie écoulé — cliquez ici pour voir les scores finaux</div>
 
     <!-- Thème -->
     <div class="theme-box">
@@ -93373,12 +93363,9 @@ function renderWord() {
   const evalEl = document.getElementById('weval');
 
   if (G.changeMode) {
-    drop.innerHTML = '';
-    const chp = document.createElement('span');
-    chp.className = 'word-ph'; chp.id = 'wph';
-    chp.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
-    chp.style.color = 'var(--red)';
-    drop.appendChild(chp);
+    ph.style.display = 'block';
+    ph.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
+    ph.style.color = 'var(--red)';
     formed.textContent = '';
     evalEl.textContent = '';
     return;
@@ -94386,31 +94373,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
-  // Arrivée directe depuis une invitation acceptée sur le site (index.html)
-  const role = urlParams.get('role');
-  if (role === 'createur' || role === 'invite') {
-    const codeUrl = urlParams.get('code');
-    const pseudoUrl = urlParams.get('pseudo') || 'Joueur';
-    const advUrl = urlParams.get('adv') || '';
-    _modeEnLigne = true;
-    window._nomJoueur = pseudoUrl;
-    window._nomAdverse = advUrl;
-    if (role === 'createur') {
-      if (window.creerPartieEnLigne) window.creerPartieEnLigne(pseudoUrl, codeUrl);
-    } else {
-      window._idAdverse = 'j1';
-      if (window.rejoindrePatie) window.rejoindrePatie(codeUrl, pseudoUrl);
-    }
-    openMaquette(true);
-    setTimeout(() => {
-      const chatZ = document.getElementById('maq-chat-zone');
-      if (chatZ) { chatZ.style.display = 'block'; chatZ.dataset.code = codeUrl; }
-      if (role === 'invite') {
-        const btnJ = document.getElementById('maq-btn-jouer');
-        if (btnJ) btnJ.style.display = 'none';
-      }
-    }, 300);
-  }
   setupDropZone();
   setupChevaletDropZone();
   makeDraggableScroll('chev');
@@ -95029,8 +94991,6 @@ function startPartieTimer() {
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
-  var pexpBanner = document.getElementById('partie-exp');
-  if (pexpBanner) pexpBanner.classList.remove('show');
   if (el) el.style.display = 'flex';
   updatePartieTimer();
   _partieTimer = setInterval(function() {
@@ -95040,20 +95000,9 @@ function startPartieTimer() {
       clearInterval(_partieTimer);
       _tempsEcoule = true;
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
-      log('⏱ Temps écoulé ! Cliquez sur le bandeau pour voir les scores finaux.', 'bad');
-      var pexpBanner2 = document.getElementById('partie-exp');
-      if (pexpBanner2) pexpBanner2.classList.add('show');
+      // Attendre la fin du tour en cours
+      log('⏱ Temps écoulé ! Fin de partie après ce tour...', 'bad');
       snd('urgent');
-      // Fin automatique par le temps : pas de question "voulez-vous vraiment terminer ?"
-      // On déclenche directement le bouton "Terminer ✓" (même code fiable), sans
-      // passer par la fenêtre de confirmation.
-      setTimeout(function() {
-        if (_tempsEcoule) {
-          window._finAutomatiqueParTemps = true;
-          var btnFin = document.getElementById('btn-fin-ok');
-          if (btnFin) btnFin.click();
-        }
-      }, 2500);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
@@ -95246,7 +95195,6 @@ function refuserInvitationUI() {
 window._onSalonInviteAccepted = function(code) {
   if (window.salonQuitter) window.salonQuitter(window._salonMonUid);
   window._salonMonUid = null;
-  _modeEnLigne = true;
   document.getElementById('online-code-show').textContent = code;
   fermerOnline();
   openMaquette(true);
@@ -95302,7 +95250,6 @@ function onlineDemarrer() {
 // ════════════════════════════════════════
 // SYNCHRONISATION MULTIJOUEUR
 // ════════════════════════════════════════
-let _modeEnLigne = false;
 let _partieDemar = false;
 
 function estMonTour() {
@@ -95610,10 +95557,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.rejoindrePatie = function(code, nom) {
-    // Réinitialisation : évite qu'une valeur restée d'un test précédent dans ce
-    // même onglet empêche le déclenchement du démarrage de partie côté invité.
-    window._partieDemar = false;
-    window._finPartieRecu = false;
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
     window._idJoueur = idJ;
@@ -95622,7 +95565,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
     update(ref(db, 'parties/' + code + '/joueurs'), { [idJ]: { nom, score: 0 } });
     update(ref(db, 'parties/' + code + '/scores'), { [idJ]: 0 });
     _ecouterPartie(code);
-    if (window.ecouterChat) window.ecouterChat(code);
     setTimeout(() => { if (window._ecouterLobbyChat) window._ecouterLobbyChat(code); }, 500);
   };
 
@@ -95926,7 +95868,6 @@ function confirmerFinPartie() {
   const mfin = document.getElementById('m-fin');
   if (mfin) mfin.classList.add('open');
 }
-window.confirmerFinPartie = confirmerFinPartie;
 
 function _executerFinPartie() {
   var mfin = document.getElementById('m-fin');
@@ -96111,13 +96052,10 @@ document.addEventListener('DOMContentLoaded', function() {
     try { stopPartieTimer(); } catch(e) {}
     try { stopBgMusic(); } catch(e) {}
 
-    // Signaler la fin aux autres joueurs via Firebase — uniquement si c'est un joueur
-    // qui a choisi manuellement de terminer. Si c'est le temps imparti qui s'est écoulé,
-    // chaque joueur gère sa propre fin de partie de son côté, sans avertir l'autre.
-    if (!window._finAutomatiqueParTemps && _modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    // Signaler la fin aux autres joueurs via Firebase
+    if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
       try { window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur'); } catch(e) {}
     }
-    window._finAutomatiqueParTemps = false;
 
     var joueurs = [];
     if (_modeEnLigne) {
