@@ -95596,8 +95596,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
-  window.creerPartieEnLigne = function(nom) {
-    const code = genCode();
+  window.creerPartieEnLigne = function(nom, codeForce) {
+    const code = codeForce || genCode();
     set(pRef(code), {
       code, etat: 'attente', maquette: null,
       joueurs: { j1: { nom, score: 0 } },
