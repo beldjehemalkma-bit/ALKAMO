@@ -785,6 +785,16 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 </style>
 </head>
 <body>
+<script>
+// Masque l'écran d'accueil immédiatement si on arrive via une invitation acceptée,
+// pour éviter un flash furtif avant que la bascule vers les maquettes ne s'opère.
+(function() {
+  var p = new URLSearchParams(location.search);
+  if (p.get('role') === 'createur' || p.get('role') === 'invite') {
+    document.write('<style>#s-home{display:none !important;}</style>');
+  }
+})();
+</script>
 
 <!-- ACCUEIL -->
 <div id="s-home" class="screen active">
@@ -94901,6 +94911,7 @@ function startGameEnLigne() {
 
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive, _dureePartie);
+    window._debutPartieServeur = Date.now();
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
@@ -95026,7 +95037,13 @@ function setDureeLibre(val) {
 }
 
 function startPartieTimer() {
-  _partieSecondes = _dureePartie * 60;
+  if (window._debutPartieServeur) {
+    var ecouleMs = Date.now() - window._debutPartieServeur;
+    _partieSecondes = Math.max(0, (_dureePartie * 60) - Math.floor(ecouleMs / 1000));
+    window._debutPartieServeur = null;
+  } else {
+    _partieSecondes = _dureePartie * 60;
+  }
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
@@ -95625,6 +95642,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.demarrerPartieFirebase = function(code, maquette, duree) {
     update(pRef(code), {
       etat: 'en_cours', maquette, duree: duree || 60,
+      debutPartie: Date.now(),
       'tour/joueurActif': 'j1', 'tour/numero': 1,
       'tour/action': 'attente_theme', 'tour/theme': null,
       finPartie: null
@@ -95668,6 +95686,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         window._nomAdverse = d.joueurs && d.joueurs.j1 ? d.joueurs.j1.nom : 'Joueur 1';
         _maqActive = d.maquette;
         if (d.duree) _dureePartie = d.duree;
+        window._debutPartieServeur = d.debutPartie || Date.now();
         if (typeof startGameEnLigne === 'function') startGameEnLigne();
         if (typeof showChatBtn === 'function') showChatBtn();
         return;
