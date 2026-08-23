@@ -94386,33 +94386,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
-  // Arrivée directe depuis une invitation acceptée sur la page d'accueil (index.html)
-  const role = urlParams.get('role');
-  if (role === 'createur' || role === 'invite') {
-    const codeUrl = urlParams.get('code');
-    const pseudoUrl = urlParams.get('pseudo') || 'Joueur';
-    const advUrl = urlParams.get('adv') || '';
-    console.log('[ALKAMO-JEU] Arrivée via URL — role:', role, '| code:', codeUrl, '| pseudo:', pseudoUrl, '| adv:', advUrl);
-    _modeEnLigne = true;
-    window._nomJoueur = pseudoUrl;
-    window._nomAdverse = advUrl;
-    if (role === 'createur') {
-      if (window.creerPartieEnLigne) window.creerPartieEnLigne(pseudoUrl, codeUrl);
-    } else {
-      window._idAdverse = 'j1';
-      if (window.rejoindrePatie) window.rejoindrePatie(codeUrl, pseudoUrl);
-    }
-    openMaquette(true);
-    setTimeout(() => {
-      const chatZ = document.getElementById('maq-chat-zone');
-      if (chatZ) { chatZ.style.display = 'block'; chatZ.dataset.code = codeUrl; }
-      if (role === 'invite') {
-        const btnJ = document.getElementById('maq-btn-jouer');
-        if (btnJ) btnJ.style.display = 'none';
-      }
-      console.log('[ALKAMO-JEU] Après arrivée URL — window._codePartie:', window._codePartie, '| window._idJoueur:', window._idJoueur, '| window._estCreateur:', window._estCreateur);
-    }, 300);
-  }
   setupDropZone();
   setupChevaletDropZone();
   makeDraggableScroll('chev');
@@ -95596,8 +95569,8 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
-  window.creerPartieEnLigne = function(nom, codeForce) {
-    const code = codeForce || genCode();
+  window.creerPartieEnLigne = function(nom) {
+    const code = genCode();
     set(pRef(code), {
       code, etat: 'attente', maquette: null,
       joueurs: { j1: { nom, score: 0 } },
@@ -95660,7 +95633,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   function _ecouterPartie(code) {
     onValue(pRef(code), snap => {
       const d = snap.val();
-      console.log('[ALKAMO-JEU] _ecouterPartie reçu — etat:', d ? d.etat : 'n/a', '| _estCreateur:', window._estCreateur, '| _partieDemar:', window._partieDemar, '| _idJoueur:', window._idJoueur);
       if (!d) return;
       if (d.etat === 'en_cours' && !window._estCreateur && !window._partieDemar) {
         window._partieDemar = true;
