@@ -786,8 +786,6 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 </head>
 <body>
 <script>
-// Masque l'écran d'accueil immédiatement si on arrive via une invitation acceptée,
-// pour éviter un flash furtif avant que la bascule vers les maquettes ne s'opère.
 (function() {
   var p = new URLSearchParams(location.search);
   if (p.get('role') === 'createur' || p.get('role') === 'invite') {
@@ -94396,8 +94394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
-  // Arrivée directe depuis une invitation acceptée sur la page d'accueil (index.html) :
-  // bloc isolé, ne touche à aucune autre fonction du parcours "salon" déjà fiable.
+  // Arrivée directe depuis une invitation acceptée sur la page d'accueil (index.html)
   const role = urlParams.get('role');
   if (role === 'createur' || role === 'invite') {
     const codeUrl = urlParams.get('code');
@@ -94911,7 +94908,6 @@ function startGameEnLigne() {
 
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive, _dureePartie);
-    window._debutPartieServeur = window.heureServeurMaintenant ? window.heureServeurMaintenant() : Date.now();
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
   }
@@ -95037,13 +95033,7 @@ function setDureeLibre(val) {
 }
 
 function startPartieTimer() {
-  if (window._debutPartieServeur) {
-    var ecouleMs = (window.heureServeurMaintenant ? window.heureServeurMaintenant() : Date.now()) - window._debutPartieServeur;
-    _partieSecondes = Math.max(0, (_dureePartie * 60) - Math.floor(ecouleMs / 1000));
-    window._debutPartieServeur = null;
-  } else {
-    _partieSecondes = _dureePartie * 60;
-  }
+  _partieSecondes = _dureePartie * 60;
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
@@ -95594,7 +95584,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 <!-- ══ FIREBASE ══ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update, get, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push, update, get, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyANUNvycyeX7gKEHEzPuZkxsiBaEJ360ps",
@@ -95608,16 +95598,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-
-  // Décalage entre l'horloge de cet ordinateur et celle du serveur, pour que les
-  // deux joueurs calculent le temps écoulé à partir de la même référence fiable.
-  window._decalageHorlogeServeur = 0;
-  onValue(ref(db, '.info/serverTimeOffset'), snap => {
-    window._decalageHorlogeServeur = snap.val() || 0;
-  });
-  window.heureServeurMaintenant = function() {
-    return Date.now() + (window._decalageHorlogeServeur || 0);
-  };
 
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
@@ -95652,7 +95632,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.demarrerPartieFirebase = function(code, maquette, duree) {
     update(pRef(code), {
       etat: 'en_cours', maquette, duree: duree || 60,
-      debutPartie: serverTimestamp(),
       'tour/joueurActif': 'j1', 'tour/numero': 1,
       'tour/action': 'attente_theme', 'tour/theme': null,
       finPartie: null
@@ -95696,7 +95675,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         window._nomAdverse = d.joueurs && d.joueurs.j1 ? d.joueurs.j1.nom : 'Joueur 1';
         _maqActive = d.maquette;
         if (d.duree) _dureePartie = d.duree;
-        window._debutPartieServeur = d.debutPartie || (window.heureServeurMaintenant ? window.heureServeurMaintenant() : Date.now());
         if (typeof startGameEnLigne === 'function') startGameEnLigne();
         if (typeof showChatBtn === 'function') showChatBtn();
         return;
