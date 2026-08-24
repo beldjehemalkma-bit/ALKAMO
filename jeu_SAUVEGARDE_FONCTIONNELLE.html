@@ -4,20 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALKAMO — Le Jeu des Mots</title>
-<script>
-// Arrivée directe depuis une invitation (index.html) : masquer l'écran d'accueil
-// avant même qu'il ne s'affiche, pour éviter le flash visuel.
-(function(){
-  var p = new URLSearchParams(location.search);
-  var role = p.get('role');
-  if (role === 'createur' || role === 'invite') {
-    document.documentElement.classList.add('alkamo-direct-online');
-  }
-})();
-</script>
-<style>
-html.alkamo-direct-online #s-home { display: none !important; }
-</style>
 <style>
 :root{
   --purple:#534AB7;--purple-dark:#26215C;--purple-light:#EEEDFE;
@@ -162,6 +148,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 /* Timer expiré */
 .tmr-expired{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:7px 12px;font-size:.78rem;color:var(--red);text-align:center;display:none;}
 .tmr-expired.show{display:block;}
+
+/* Bandeau temps de partie écoulé — en haut de la zone de jeu, bien visible, clignotant */
+.partie-expired-banner{width:100%;box-sizing:border-box;margin-bottom:10px;
+  background:rgba(250,208,96,.97);border:2px solid #FAD060;border-radius:10px;padding:11px 16px;
+  font-size:.95rem;font-weight:900;color:#1a1400;text-align:center;display:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);animation:urgentPulse .9s infinite;}
+.partie-expired-banner.show{display:block;}
 
 /* Log */
 .glog{background:rgba(0,0,0,.2);border-radius:10px;padding:10px;max-height:85px;overflow-y:auto;font-size:.78rem;}
@@ -792,6 +785,14 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
 </style>
 </head>
 <body>
+<script>
+(function() {
+  var p = new URLSearchParams(location.search);
+  if (p.get('role') === 'createur' || p.get('role') === 'invite') {
+    document.write('<style>#s-home{display:none !important;}</style>');
+  }
+})();
+</script>
 
 <!-- ACCUEIL -->
 <div id="s-home" class="screen active">
@@ -956,6 +957,9 @@ body.theme-gold .hist-panel { background:rgba(5,26,16,.6); border-left-color:rgb
   <div class="sbar" id="sbar"></div>
   <div class="game-layout">
   <div class="board">
+
+    <!-- Temps de partie écoulé -->
+    <div class="partie-expired-banner" id="partie-exp">⏱ Temps de partie écoulé — cliquez ici pour voir les scores finaux</div>
 
     <!-- Thème -->
     <div class="theme-box">
@@ -93377,9 +93381,12 @@ function renderWord() {
   const evalEl = document.getElementById('weval');
 
   if (G.changeMode) {
-    ph.style.display = 'block';
-    ph.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
-    ph.style.color = 'var(--red)';
+    drop.innerHTML = '';
+    const chp = document.createElement('span');
+    chp.className = 'word-ph'; chp.id = 'wph';
+    chp.textContent = '🔄 Mode changement actif — sélectionnez les lettres en rouge sur le chevalet';
+    chp.style.color = 'var(--red)';
+    drop.appendChild(chp);
     formed.textContent = '';
     evalEl.textContent = '';
     return;
@@ -94043,13 +94050,9 @@ function _confirmerMotFinalize(word, pIdx) {
     if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     // Passer le tour - syncTour gérera le nouveau thème côté J2
     stopTimer();
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant) {
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, caseIdPubLie);
-      } else {
-        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé (validation mot) ! adversaire introuvable.');
-      }
-    });
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    }
     return;
   }
 
@@ -94064,62 +94067,23 @@ function quitterPartie() {
   if (mfin) mfin.classList.add('open');
 }
 
-// Filet de sécurité : si _idAdverse n'a pas été détecté par le listener normal
-// (ecouterPartieCreateur), on va le chercher directement dans Firebase.
-// Avec une deuxième tentative automatique si la première échoue (partie qui vient
-// juste de démarrer, données pas encore toutes arrivées).
-function _avecIdAdverse(callback, _tentative) {
-  _tentative = _tentative || 1;
-  if (window._idAdverse) { callback(window._idAdverse); return; }
-  if (!window._codePartie || typeof onValue !== 'function' || typeof ref !== 'function' || typeof db === 'undefined') {
-    console.log('[ALKAMO-JEU] _avecIdAdverse — impossible de chercher (db/ref/onValue indisponible)');
-    callback(null);
-    return;
-  }
-  console.log('[ALKAMO-JEU] _avecIdAdverse — recherche directe (tentative ' + _tentative + ') dans parties/' + window._codePartie + '/joueurs');
-  onValue(ref(db, 'parties/' + window._codePartie + '/joueurs'), snap => {
-    const joueurs = snap.val() || {};
-    const advId = Object.keys(joueurs).find(id => id !== window._idJoueur);
-    if (advId) {
-      window._idAdverse = advId;
-      window._nomAdverse = joueurs[advId].nom;
-      console.log('[ALKAMO-JEU] _avecIdAdverse — trouvé et mémorisé:', advId);
-      callback(advId);
-    } else if (_tentative < 4) {
-      // Nouvelle tentative après une courte pause (jusqu'à 3 fois, ~1.5s au total)
-      console.log('[ALKAMO-JEU] _avecIdAdverse — pas encore trouvé, nouvelle tentative dans 500ms');
-      setTimeout(() => _avecIdAdverse(callback, _tentative + 1), 500);
-    } else {
-      console.log('[ALKAMO-JEU] _avecIdAdverse — ÉCHEC définitif après 4 tentatives:', JSON.stringify(joueurs));
-      callback(null);
-    }
-  }, { onlyOnce: true });
-}
-
 function passerTour() {
   log(curP().name + ' passe son tour', '');
   G.passCount++;
   G.word = []; G.changeSel = []; G.changeMode = false;
-
-  console.log('[ALKAMO-JEU] passerTour() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse, '| _idJoueur:', window._idJoueur, '| _joueurActifId:', window._joueurActifId);
-
+  
   if (_modeEnLigne) {
     stopTimer();
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    const lastId = G.curCase ? G.curCase.id : null;
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant) {
-        console.log('[ALKAMO-JEU] passerAuTourSuivant appelé avec joueurSuivant =', idAdv);
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, lastId);
-      } else {
-        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé ! adversaire introuvable.');
-      }
-    });
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      // Inclure l'ID de la case jouée pour éviter les répétitions
+      const lastId = G.curCase ? G.curCase.id : null;
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
+    }
     return;
   }
-
-  console.log('[ALKAMO-JEU] ATTENTION — _modeEnLigne est FAUX, on est passé en logique LOCALE au lieu d\'en ligne !');
+  
   // Mode local : règle des 3 passes par joueur
   if (G.passCount >= G.players.length * 3) {
     log('🚫 Partie bloquée — trop de passes !', 'bad');
@@ -94182,23 +94146,6 @@ function confirmerChange() {
   G.changeMode = false; G.changeSel = []; G.word = [];
   snd('ok');
   drawCase(false);
-
-  console.log('[ALKAMO-JEU] confirmerChange() — _modeEnLigne:', _modeEnLigne, '| _codePartie:', window._codePartie, '| _idAdverse:', window._idAdverse);
-
-  if (_modeEnLigne && window._codePartie) {
-    stopTimer();
-    if (window.publierAction) window.publierAction(window._codePartie, 'echanger', {});
-    const lastId = G.curCase ? G.curCase.id : null;
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant) {
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, lastId);
-      } else {
-        console.log('[ALKAMO-JEU] ATTENTION — passerAuTourSuivant NON appelé (confirmerChange) ! adversaire introuvable.');
-      }
-    });
-    return;
-  }
-
   nextTurn();
 }
 
@@ -94214,10 +94161,9 @@ function nextTurn() {
   // En mode en ligne : Firebase gère le tour, pas nextTurn
   if (_modeEnLigne) {
     stopTimer();
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant && window._codePartie)
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1);
-    });
+    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
+    if (window.passerAuTourSuivant && window._codePartie)
+      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
     return;
   }
 
@@ -94225,10 +94171,8 @@ function nextTurn() {
   // Mode en ligne : Firebase gère le tour
   if (_modeEnLigne) {
     stopTimer();
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant && window._codePartie)
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1);
-    });
+    if (window._idAdverse && window.passerAuTourSuivant && window._codePartie)
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
     return;
   }
 
@@ -94450,7 +94394,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof renderMaquetteTabs === 'function') renderMaquetteTabs();
     if (typeof renderMaqGrille === 'function') renderMaqGrille(_maqActive);
   }
-  // Arrivée directe depuis une invitation acceptée sur le site (index.html)
+  // Arrivée directe depuis une invitation acceptée sur la page d'accueil (index.html)
   const role = urlParams.get('role');
   if (role === 'createur' || role === 'invite') {
     const codeUrl = urlParams.get('code');
@@ -94964,17 +94908,9 @@ function startGameEnLigne() {
 
   if (estJ1 && window.demarrerPartieFirebase) {
     window.demarrerPartieFirebase(code, _maqActive, _dureePartie);
-    console.log('[ALKAMO-JEU] startGameEnLigne — estJ1:', estJ1, '| appel de ecouterPartieCreateur avec code:', code);
     if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     if (window.ecouterChat) window.ecouterChat(code);
-  } else {
-    console.log('[ALKAMO-JEU] startGameEnLigne — ecouterPartieCreateur NON appelé ! estJ1:', estJ1, '| demarrerPartieFirebase existe:', !!window.demarrerPartieFirebase);
   }
-  // Sécurité : s'assurer dès le lancement que l'on connaît bien l'adversaire,
-  // sans attendre qu'une action (passer/changer/valider) en ait besoin.
-  _avecIdAdverse(function(idAdv) {
-    console.log('[ALKAMO-JEU] startGameEnLigne — identifiant adversaire confirmé au démarrage:', idAdv);
-  });
   // Les deux joueurs écoutent la fin de partie
   if (window.ecouterFinPartie) window.ecouterFinPartie(code);
   // Les deux joueurs écoutent les défis (mot non reconnu)
@@ -95101,6 +95037,8 @@ function startPartieTimer() {
   _tempsEcoule = false;
   var el = document.getElementById('partie-timer');
   var tmr = document.getElementById('partie-tmr');
+  var pexpBanner = document.getElementById('partie-exp');
+  if (pexpBanner) pexpBanner.classList.remove('show');
   if (el) el.style.display = 'flex';
   updatePartieTimer();
   _partieTimer = setInterval(function() {
@@ -95110,9 +95048,20 @@ function startPartieTimer() {
       clearInterval(_partieTimer);
       _tempsEcoule = true;
       if (tmr) { tmr.textContent = '00:00'; tmr.className = 'partie-tmr urgent'; }
-      // Attendre la fin du tour en cours
-      log('⏱ Temps écoulé ! Fin de partie après ce tour...', 'bad');
+      log('⏱ Temps écoulé ! Cliquez sur le bandeau pour voir les scores finaux.', 'bad');
+      var pexpBanner2 = document.getElementById('partie-exp');
+      if (pexpBanner2) pexpBanner2.classList.add('show');
       snd('urgent');
+      // Fin automatique par le temps : pas de question "voulez-vous vraiment terminer ?"
+      // On déclenche directement le bouton "Terminer ✓" (même code fiable), sans
+      // passer par la fenêtre de confirmation.
+      setTimeout(function() {
+        if (_tempsEcoule) {
+          window._finAutomatiqueParTemps = true;
+          var btnFin = document.getElementById('btn-fin-ok');
+          if (btnFin) btnFin.click();
+        }
+      }, 2000);
     } else if (_partieSecondes <= 300) { // 5 min restantes
       if (tmr) tmr.className = 'partie-tmr urgent';
       if (_partieSecondes === 300) {
@@ -95220,13 +95169,6 @@ function sendChatMsg(type) {
 // ═══════════════════════════════════════
 function ouvrirOnline() {
   document.getElementById('online-modal').classList.add('open');
-  const nomSauve = localStorage.getItem('alkamo_nom');
-  if (nomSauve) {
-    document.getElementById('online-nom').value = nomSauve;
-    if (!window._salonMonUid) {
-      setTimeout(() => rejoindreSalonUI(), 150);
-    }
-  }
 }
 function fermerOnline() {
   document.getElementById('online-modal').classList.remove('open');
@@ -95246,7 +95188,6 @@ function rejoindreSalonUI() {
   const nom = document.getElementById('online-nom').value.trim();
   if (!nom) { alert('Entrez d\'abord votre prénom (juste en dessous) !'); return; }
   if (!window.salonRejoindre) { alert('Firebase non connecté — vérifiez votre connexion internet'); return; }
-  localStorage.setItem('alkamo_nom', nom);
   window._salonMonNom = nom;
   window._salonMonUid = window.salonRejoindre(nom);
   document.getElementById('salon-join-btn').style.display = 'none';
@@ -95319,6 +95260,51 @@ window._onSalonInviteAccepted = function(code) {
   openMaquette(true);
 };
 
+function onlineCreer() {
+  const nom = document.getElementById('online-nom').value.trim() || 'Joueur 1';
+  if (window.creerPartieEnLigne) {
+    const code = window.creerPartieEnLigne(nom);
+    document.getElementById('online-code-show').textContent = code;
+    document.getElementById('online-step1').style.display = 'none';
+    document.getElementById('online-step2').style.display = 'block';
+    if (window.ecouterChat) window.ecouterChat(code);
+  } else {
+    alert('Firebase non connecté — vérifiez votre connexion internet');
+  }
+}
+function onlineRejoindre() {
+  const nom = document.getElementById('online-nom').value.trim() || 'Joueur';
+  const code = document.getElementById('online-code-input').value.trim().toUpperCase();
+  if (!code || code.length < 4) { alert('Entrez un code valide !'); return; }
+  if (window.rejoindrePatie) {
+    _modeEnLigne = true;
+    window._nomJoueur = nom;
+    window._idAdverse = 'j1';
+    window.rejoindrePatie(code, nom);
+    fermerOnline();
+    go('maquette');
+    const ma = document.getElementById('m-attente');
+    if (ma) { ma.style.display = 'none'; }
+    const attEl = document.getElementById('attente-joueurs');
+    if (attEl) attEl.textContent = nom + ' connecté — En attente du créateur...';
+    // Cacher bouton jouer pour l'invité
+    setTimeout(() => {
+      const btnJ = document.getElementById('maq-btn-jouer');
+      if (btnJ) btnJ.style.display = 'none';
+      const chatZ = document.getElementById('maq-chat-zone');
+      if (chatZ) { chatZ.style.display = 'block'; chatZ.dataset.code = code; }
+    }, 200);
+    fermerOnline();
+    openMaquette(true);
+  }
+}
+function onlineDemarrer() {
+  _modeEnLigne = true;
+  window._nomJoueur = document.getElementById('online-nom')?.value.trim() || 'Joueur';
+  fermerOnline();
+  openMaquette(true);
+}
+
 
 
 // ════════════════════════════════════════
@@ -95381,7 +95367,6 @@ function syncTour(tour, joueurs, scores) {
   if (typeof G === 'undefined' || !G.players) return;
   const ancienActif = window._joueurActifId;
   window._joueurActifId = tour.joueurActif;
-  console.log('[ALKAMO-JEU] syncTour reçu — joueurActif:', tour.joueurActif, '| mon id:', window._idJoueur, '| estMonTour():', (window._idJoueur === tour.joueurActif));
   if (joueurs && joueurs[tour.joueurActif])
     window._nomJoueurActif = joueurs[tour.joueurActif].nom;
   if (scores && window._idAdverse && scores[window._idAdverse] !== undefined)
@@ -95405,7 +95390,6 @@ function syncTour(tour, joueurs, scores) {
   const tourChange = ancienActif && ancienActif !== window._idJoueur;
   if (estMonTour() && tourChange && tour.action === 'attente_theme') {
     G.word = []; G.changeSel = []; G.changeMode = false;
-    G.themeChanged = false;
     G.round++;
     document.getElementById('tmr-exp')?.classList.remove('show');
     const p = G.players[0];
@@ -95667,38 +95651,12 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.passerAuTourSuivant = function(code, joueurSuivant, numero, lastCaseId) {
-    // Calcul fiable et autonome du joueur suivant : on relit l'état réel de la
-    // partie dans Firebase au moment même de l'écriture, plutôt que de se fier
-    // uniquement à la valeur transmise par le navigateur (qui peut être absente
-    // ou périmée). "Le suivant" = celui des deux joueurs qui n'est pas actif
-    // actuellement.
-    get(pRef(code)).then(snap => {
-      const d = snap.val() || {};
-      const joueurs = d.joueurs || {};
-      const actifActuel = (d.tour && d.tour.joueurActif) || window._idJoueur;
-      let cible = joueurSuivant;
-      const ids = Object.keys(joueurs);
-      if (ids.length === 2) {
-        const autre = ids.find(id => id !== actifActuel);
-        if (autre) cible = autre;
-      }
-      if (!cible) cible = ids.find(id => id !== window._idJoueur) || joueurSuivant;
-      console.log('[ALKAMO-JEU] passerAuTourSuivant — cible calculée:', cible, '(reçue:', joueurSuivant, ')');
-      const data = {
-        joueurActif: cible, numero: numero,
-        action: 'attente_theme', theme: null
-      };
-      if (lastCaseId) data.lastCaseId = lastCaseId;
-      update(ref(db, 'parties/' + code + '/tour'), data);
-    }).catch(e => {
-      console.log('[ALKAMO-JEU] passerAuTourSuivant — lecture échouée, on utilise la valeur reçue en secours:', e.message);
-      const data = {
-        joueurActif: joueurSuivant, numero: numero,
-        action: 'attente_theme', theme: null
-      };
-      if (lastCaseId) data.lastCaseId = lastCaseId;
-      update(ref(db, 'parties/' + code + '/tour'), data);
-    });
+    const data = {
+      joueurActif: joueurSuivant, numero: numero,
+      action: 'attente_theme', theme: null
+    };
+    if (lastCaseId) data.lastCaseId = lastCaseId;
+    update(ref(db, 'parties/' + code + '/tour'), data);
   };
 
   window.majScore = function(code, idJoueur, score) {
@@ -95751,7 +95709,6 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.ecouterPartieCreateur = function(code) {
     onValue(pRef(code), snap => {
       const d = snap.val();
-      console.log('[ALKAMO-JEU] ecouterPartieCreateur callback — _partieDemar:', window._partieDemar, '| d existe:', !!d, '| joueurs:', d ? JSON.stringify(d.joueurs) : 'n/a');
       if (!d || !window._partieDemar) return;
       // Détecter fin de partie
       if (d.etat === 'terminee' && !window._finPartieRecu) {
@@ -96057,8 +96014,6 @@ function _executerFinPartie() {
     <div class="online-title">🌐 JOUER EN LIGNE</div>
     <div class="online-sub">Jouez avec vos amis depuis n'importe où</div>
 
-    <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12" style="margin-bottom:12px" onkeydown="if(event.key==='Enter') rejoindreSalonUI()">
-
     <div id="online-salon" style="margin-bottom:14px">
       <button class="btn btn-gold" id="salon-join-btn" style="width:100%" onclick="rejoindreSalonUI()">
         🟢 Rejoindre le salon (voir qui est disponible)
@@ -96067,6 +96022,32 @@ function _executerFinPartie() {
         <div style="color:#4ADE9A;font-size:.78rem;margin-bottom:8px;text-align:center">✅ Vous êtes visible dans le salon</div>
         <div id="salon-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-bottom:10px"></div>
       </div>
+    </div>
+    <div class="online-sep">— ou avec un code —</div>
+
+    <div id="online-step1">
+      <input class="online-input" id="online-nom" placeholder="Votre prénom" maxlength="12">
+      <button class="btn btn-gold" style="width:100%;margin-bottom:8px" onclick="onlineCreer()">
+        🎮 Créer une partie
+      </button>
+      <div class="online-sep">— ou rejoindre —</div>
+      <input class="online-input" id="online-code-input" placeholder="CODE DE PARTIE" maxlength="6" style="text-transform:uppercase">
+      <button class="btn" style="width:100%;background:rgba(83,74,183,.2);border:1px solid rgba(83,74,183,.4)" onclick="onlineRejoindre()">
+        🔗 Rejoindre
+      </button>
+    </div>
+
+    <div id="online-step2" style="display:none">
+      <div style="color:rgba(255,255,255,.6);font-size:.8rem;margin-bottom:8px">
+        Partagez ce code avec vos amis :
+      </div>
+      <div class="online-code-display" id="online-code-show"></div>
+      <div style="color:rgba(255,255,255,.4);font-size:.75rem;margin-bottom:14px">
+        En attente des autres joueurs...
+      </div>
+      <button class="btn btn-gold" style="width:100%" onclick="onlineDemarrer()">
+        ▶ Démarrer la partie
+      </button>
     </div>
 
     <button class="btn btn-out" style="width:100%;margin-top:10px" onclick="fermerOnline()">
@@ -96132,10 +96113,13 @@ document.addEventListener('DOMContentLoaded', function() {
     try { stopPartieTimer(); } catch(e) {}
     try { stopBgMusic(); } catch(e) {}
 
-    // Signaler la fin aux autres joueurs via Firebase
-    if (_modeEnLigne && window._codePartie && window.signalerFinPartie) {
+    // Signaler la fin aux autres joueurs via Firebase — uniquement si c'est un joueur
+    // qui a choisi manuellement de terminer. Si c'est le temps imparti qui s'est écoulé,
+    // chaque joueur gère sa propre fin de partie de son côté, sans avertir l'autre.
+    if (!window._finAutomatiqueParTemps && _modeEnLigne && window._codePartie && window.signalerFinPartie) {
       try { window.signalerFinPartie(window._codePartie, window._nomJoueur || G.players[0].name || 'Joueur'); } catch(e) {}
     }
+    window._finAutomatiqueParTemps = false;
 
     var joueurs = [];
     if (_modeEnLigne) {
@@ -96297,11 +96281,9 @@ function traiterReponseDefi(accepte) {
     }
     if (accepte && window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     stopTimer();
-    _avecIdAdverse(function(idAdv) {
-      if (idAdv && window.passerAuTourSuivant) {
-        window.passerAuTourSuivant(window._codePartie, idAdv, G.round + 1, caseIdPubLie);
-      }
-    });
+    if (window._idAdverse && window.passerAuTourSuivant) {
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
+    }
     return;
   }
 
