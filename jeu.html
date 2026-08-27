@@ -95513,10 +95513,47 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  // Registre des connexions au serveur ouvertes pendant une partie en ligne,
+  // pour pouvoir toutes les fermer proprement avant d'en démarrer une nouvelle
+  // (évite qu'elles s'accumulent au fil de plusieurs parties dans le même onglet).
+  window._gameListeners = window._gameListeners || [];
+  window._fermerEcoutesJeu = function() {
+    window._gameListeners.forEach(u => { try { u(); } catch(e) {} });
+    window._gameListeners = [];
+  };
+
+  // Surveillance de la connexion réseau : si elle se coupe puis revient
+  // (accroc WiFi, changement de réseau, etc.), on force une remise à niveau
+  // immédiate de l'état de la partie, au lieu d'attendre qu'une action au
+  // hasard débloque la situation.
+  let _etaitDeconnecte = false;
+  onValue(ref(db, '.info/connected'), snap => {
+    const connecte = snap.val() === true;
+    if (!connecte) { _etaitDeconnecte = true; return; }
+    if (!_etaitDeconnecte) return; // rien à faire au tout premier chargement
+    _etaitDeconnecte = false;
+    if (!window._codePartie || !window._partieDemar) return;
+    console.log('[ALKAMO-JEU] Connexion rétablie — resynchronisation de la partie en cours.');
+    get(pRef(window._codePartie)).then(s => {
+      const d = s.val();
+      if (!d) return;
+      if (d.joueurs) {
+        const advId = Object.keys(d.joueurs).find(id => id !== window._idJoueur);
+        if (advId) {
+          window._idAdverse = advId;
+          window._nomAdverse = d.joueurs[advId].nom;
+          if (d.scores && d.scores[advId] !== undefined) window._scoreAdverse = d.scores[advId];
+        }
+      }
+      if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
+    }).catch(() => {});
+  });
+
   function pRef(code) { return ref(db, 'parties/' + code); }
   function genCode() { return Math.random().toString(36).substr(2,6).toUpperCase(); }
 
   window.creerPartieEnLigne = function(nom, codeForce) {
+    window._fermerEcoutesJeu();
     const code = codeForce || genCode();
     set(pRef(code), {
       code, etat: 'attente', maquette: null,
@@ -95532,6 +95569,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.rejoindrePatie = function(code, nom) {
+    window._fermerEcoutesJeu();
     const idJ = 'j' + Date.now().toString().slice(-4);
     window._codePartie = code;
     window._idJoueur = idJ;
@@ -95578,7 +95616,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   function _ecouterPartie(code) {
-    onValue(pRef(code), snap => {
+    window._gameListeners.push(onValue(pRef(code), snap => {
       const d = snap.val();
       if (!d) return;
       if (d.etat === 'en_cours' && !window._estCreateur && !window._partieDemar) {
@@ -95609,19 +95647,19 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       if (d.etat === 'en_cours' && d.tour && window._partieDemar) {
         if (typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
       }
-    });
-    onValue(ref(db, 'parties/' + code + '/actions'), snap => {
+    }));
+    window._gameListeners.push(onValue(ref(db, 'parties/' + code + '/actions'), snap => {
       const actions = snap.val();
       if (!actions || !window._partieDemar) return;
       const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
       const dern = liste[liste.length - 1];
       if (dern && typeof traiterActionDistante === 'function') traiterActionDistante(dern);
-    });
+    }));
     window.ecouterChat(code);
   }
 
   window.ecouterPartieCreateur = function(code) {
-    onValue(pRef(code), snap => {
+    window._gameListeners.push(onValue(pRef(code), snap => {
       const d = snap.val();
       if (!d || !window._partieDemar) return;
       // Détecter fin de partie
@@ -95650,14 +95688,14 @@ function ajouterMsgTexteLocal(who, texte, moi) {
           window._scoreAdverse = d.scores[window._idAdverse];
       }
       if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
-    });
-    onValue(ref(db, 'parties/' + code + '/actions'), snap => {
+    }));
+    window._gameListeners.push(onValue(ref(db, 'parties/' + code + '/actions'), snap => {
       const actions = snap.val();
       if (!actions || !window._partieDemar) return;
       const liste = Object.values(actions).sort((a,b) => a.ts - b.ts);
       const dern = liste[liste.length - 1];
       if (dern && typeof traiterActionDistante === 'function') traiterActionDistante(dern);
-    });
+    }));
   };
 
   window._pushLobbyChat = function(code, data) {
@@ -95682,7 +95720,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.ecouterChat = function(code) {
-    onValue(ref(db, 'parties/' + code + '/chat'), snap => {
+    window._gameListeners.push(onValue(ref(db, 'parties/' + code + '/chat'), snap => {
       const msgs = snap.val();
       const logEl = document.getElementById('chat-log');
       if (!logEl) return;
@@ -95713,7 +95751,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       logEl.scrollTop = logEl.scrollHeight;
       if (!document.getElementById('chat-panel')?.classList.contains('open'))
         document.getElementById('chat-notif')?.classList.add('show');
-    });
+    }));
   };
 
   window.envoyerMsgFirebase = function(type, nom) {
@@ -95754,7 +95792,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.ecouterDefis = function(code) {
-    onValue(ref(db, 'parties/' + code + '/defis'), snap => {
+    window._gameListeners.push(onValue(ref(db, 'parties/' + code + '/defis'), snap => {
       const defis = snap.val();
       if (!defis) return;
       Object.entries(defis).forEach(([key, d]) => {
@@ -95779,7 +95817,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
           }
         }
       });
-    });
+    }));
   };
 
   window.signalerFinPartie = function(code, nom) {
@@ -95794,7 +95832,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   };
 
   window.ecouterFinPartie = function(code) {
-    onValue(ref(db, 'parties/' + code + '/finPartie'), snap => {
+    window._gameListeners.push(onValue(ref(db, 'parties/' + code + '/finPartie'), snap => {
       const d = snap.val();
       if (!d || !d.idJoueur) return;
       // Filtrer par ID joueur (plus fiable que le nom)
@@ -95812,7 +95850,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         notif.remove();
         if (typeof endGame === 'function') endGame();
       }, 10000);
-    });
+    }));
   };
 
     // Exposer get() pour les scores
