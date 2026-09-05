@@ -93227,14 +93227,16 @@ function renderCase() {
 // ═══════════════════════════════════════════
 // TIMER
 // ═══════════════════════════════════════════
-function startTimer() {
+function startTimer(debutTs) {
   stopTimer();
+  G.tourDebut = debutTs || Date.now();
   G.timeLeft = 180;
   G.timerExpired = false;
   document.getElementById('tmr-exp').classList.remove('show');
   updateTimer();
   G.timer = setInterval(() => {
-    G.timeLeft--;
+    const ecoule = Math.floor((Date.now() - G.tourDebut) / 1000);
+    G.timeLeft = Math.max(0, 180 - ecoule);
     updateTimer();
     if (G.timeLeft === 30) snd('alert');
     if (G.timeLeft <= 0) {
@@ -94050,9 +94052,7 @@ function _confirmerMotFinalize(word, pIdx) {
     if (window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     // Passer le tour - syncTour gérera le nouveau thème côté J2
     stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
-    }
+    window.passerTourSecurise(G.round + 1, caseIdPubLie);
     return;
   }
 
@@ -94076,11 +94076,8 @@ function passerTour() {
     stopTimer();
     if (window._codePartie && window.publierAction)
       window.publierAction(window._codePartie, 'passer', {});
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      // Inclure l'ID de la case jouée pour éviter les répétitions
-      const lastId = G.curCase ? G.curCase.id : null;
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, lastId);
-    }
+    const lastId = G.curCase ? G.curCase.id : null;
+    window.passerTourSecurise(G.round + 1, lastId);
     return;
   }
   
@@ -94161,18 +94158,7 @@ function nextTurn() {
   // En mode en ligne : Firebase gère le tour, pas nextTurn
   if (_modeEnLigne) {
     stopTimer();
-    const advId = window._idAdverse || (window._idJoueur === 'j1' ? 'j2' : 'j1');
-    if (window.passerAuTourSuivant && window._codePartie)
-      window.passerAuTourSuivant(window._codePartie, advId, G.round + 1);
-    return;
-  }
-
-  // Mode local uniquement
-  // Mode en ligne : Firebase gère le tour
-  if (_modeEnLigne) {
-    stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant && window._codePartie)
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1);
+    window.passerTourSecurise(G.round + 1, null);
     return;
   }
 
@@ -94405,6 +94391,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window._nomAdverse = advUrl;
     if (role === 'createur') {
       if (window.creerPartieEnLigne) window.creerPartieEnLigne(pseudoUrl, codeUrl);
+      if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(codeUrl);
     } else {
       window._idAdverse = 'j1';
       if (window.rejoindrePatie) window.rejoindrePatie(codeUrl, pseudoUrl);
@@ -94879,10 +94866,29 @@ function validerMaquette() {
       log('⏳ Attendez que le créateur lance la partie.', 'inf');
       return;
     }
-    startGameEnLigne();
+    lancerPartieSecurise();
   } else {
     go('setup');
   }
+}
+
+// Ne lance la partie côté créateur qu'une fois l'adversaire confirmé par
+// Firebase — évite de démarrer avant d'avoir reçu son identifiant, cause
+// racine des blocages de passage de tour observés en début de partie.
+function lancerPartieSecurise(tentative) {
+  tentative = tentative || 0;
+  if (window._idAdverse) {
+    startGameEnLigne();
+    return;
+  }
+  if (tentative === 0) {
+    log('⏳ En attente de la confirmation du 2e joueur...', 'inf');
+  }
+  if (tentative >= 25) {
+    log('⚠ Le 2e joueur ne semble pas connecté — vérifiez qu\'il a bien rejoint, puis réessayez.', 'bad');
+    return;
+  }
+  setTimeout(() => lancerPartieSecurise(tentative + 1), 400);
 }
 
 function startGameEnLigne() {
@@ -94922,6 +94928,7 @@ function startGameEnLigne() {
   renderAll();
   renderHistPanel();
   startPartieTimer();
+  if (window.demarrerPollTourSecours) window.demarrerPollTourSecours(code);
 
   if (estMonTour()) { startTimer(); startBgMusic(); } else { stopTimer(); stopBgMusic(); }
   setTimeout(() => afficherIndicateurTour(), 300);
@@ -95268,6 +95275,7 @@ function onlineCreer() {
     document.getElementById('online-step1').style.display = 'none';
     document.getElementById('online-step2').style.display = 'block';
     if (window.ecouterChat) window.ecouterChat(code);
+    if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
   } else {
     alert('Firebase non connecté — vérifiez votre connexion internet');
   }
@@ -95374,8 +95382,14 @@ function syncTour(tour, joueurs, scores) {
 
   afficherIndicateurTour();
 
+  // Redémarre le minuteur si ce n'est pas déjà mon tour en cours, ou si
+  // l'horodatage de référence a changé (nouveau tour), pour éviter qu'il
+  // reste figé si un état précédent était incohérent.
+  const minuteurDoitDemarrer = estMonTour() && (!G.timer || G.tourDebut !== tour.debutTour);
+  if (minuteurDoitDemarrer) {
+    startTimer(tour.debutTour);
+  }
   if (estMonTour()) {
-    if (!G.timer) startTimer();
     startBgMusic();
   } else {
     stopTimer();
@@ -95634,8 +95648,27 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       etat: 'en_cours', maquette, duree: duree || 60,
       'tour/joueurActif': 'j1', 'tour/numero': 1,
       'tour/action': 'attente_theme', 'tour/theme': null,
+      'tour/debutTour': Date.now(),
       finPartie: null
     });
+  };
+
+  // Filet de sécurité : revérifie périodiquement l'état réel du tour dans
+  // Firebase, au cas où une mise à jour "en direct" ne serait pas arrivée.
+  window.demarrerPollTourSecours = function(code) {
+    if (window._pollTourInterval) clearInterval(window._pollTourInterval);
+    window._pollTourInterval = setInterval(() => {
+      if (!window._partieDemar || !code) return;
+      get(pRef(code)).then(snap => {
+        const d = snap.val();
+        if (d && d.tour && typeof window.syncTour === 'function') {
+          window.syncTour(d.tour, d.joueurs, d.scores);
+        }
+      }).catch(() => {});
+    }, 4000);
+  };
+  window.arreterPollTourSecours = function() {
+    if (window._pollTourInterval) { clearInterval(window._pollTourInterval); window._pollTourInterval = null; }
   };
 
   window.publierTheme = function(code, t) {
@@ -95653,10 +95686,33 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   window.passerAuTourSuivant = function(code, joueurSuivant, numero, lastCaseId) {
     const data = {
       joueurActif: joueurSuivant, numero: numero,
-      action: 'attente_theme', theme: null
+      action: 'attente_theme', theme: null,
+      debutTour: Date.now()
     };
     if (lastCaseId) data.lastCaseId = lastCaseId;
     update(ref(db, 'parties/' + code + '/tour'), data);
+  };
+
+  // Passage de tour sécurisé : si l'identifiant de l'adversaire n'est pas
+  // encore connu (course de vitesse au tout début de partie), on ne perd
+  // jamais l'action — on la retente automatiquement pendant quelques
+  // secondes, avec un message clair, au lieu de l'ignorer silencieusement.
+  window.passerTourSecurise = function(numero, lastCaseId, tentative) {
+    tentative = tentative || 0;
+    if (window._idAdverse && window._codePartie) {
+      window.passerAuTourSuivant(window._codePartie, window._idAdverse, numero, lastCaseId);
+      return;
+    }
+    if (tentative === 0 && typeof log === 'function') {
+      log('⏳ Connexion en cours, transmission du tour...', 'inf');
+    }
+    if (tentative >= 15) {
+      if (typeof log === 'function') {
+        log('⚠ Impossible de transmettre le tour — vérifiez votre connexion et réessayez.', 'bad');
+      }
+      return;
+    }
+    setTimeout(() => window.passerTourSecurise(numero, lastCaseId, tentative + 1), 400);
   };
 
   window.majScore = function(code, idJoueur, score) {
@@ -95684,7 +95740,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         if (el) el.textContent = Object.values(d.joueurs).map(j => j.nom).join(', ');
       }
       if (d.etat === 'terminee' && window._partieDemar && !window._finPartieRecu) {
-        window._finPartieRecu = true;
+        window._finPartieRecu = true; if (window.arreterPollTourSecours) window.arreterPollTourSecours();
         if (typeof stopTimer === 'function') stopTimer();
         const fp = d.finPartie || {};
         if (fp.idJoueur && fp.idJoueur !== window._idJoueur) {
@@ -95707,20 +95763,12 @@ function ajouterMsgTexteLocal(who, texte, moi) {
   }
 
   window.ecouterPartieCreateur = function(code) {
+    if (window._creListenerActif === code) return; // éviter un double abonnement
+    window._creListenerActif = code;
     onValue(pRef(code), snap => {
       const d = snap.val();
-      if (!d || !window._partieDemar) return;
-      // Détecter fin de partie
-      if (d.etat === 'terminee' && !window._finPartieRecu) {
-        window._finPartieRecu = true;
-        if (typeof stopTimer === 'function') stopTimer();
-        const fp = d.finPartie || {};
-        // Afficher notification seulement si c'est l'adversaire qui a fini
-        if (fp.idJoueur && fp.idJoueur !== window._idJoueur) {
-          _afficherNotifFin(fp.par || '?');
-        }
-        return;
-      }
+      if (!d) return;
+      // Détecter l'adversaire dès qu'il rejoint, même avant le lancement de la partie
       if (d.joueurs) {
         const advId = Object.keys(d.joueurs).find(id => id !== window._idJoueur);
         if (advId && d.joueurs[advId]) {
@@ -95734,6 +95782,18 @@ function ajouterMsgTexteLocal(who, texte, moi) {
         }
         if (window._idAdverse && d.scores && d.scores[window._idAdverse] !== undefined)
           window._scoreAdverse = d.scores[window._idAdverse];
+      }
+      if (!window._partieDemar) return;
+      // Détecter fin de partie
+      if (d.etat === 'terminee' && !window._finPartieRecu) {
+        window._finPartieRecu = true; if (window.arreterPollTourSecours) window.arreterPollTourSecours();
+        if (typeof stopTimer === 'function') stopTimer();
+        const fp = d.finPartie || {};
+        // Afficher notification seulement si c'est l'adversaire qui a fini
+        if (fp.idJoueur && fp.idJoueur !== window._idJoueur) {
+          _afficherNotifFin(fp.par || '?');
+        }
+        return;
       }
       if (d.tour && typeof syncTour === 'function') syncTour(d.tour, d.joueurs, d.scores);
     });
@@ -95886,7 +95946,7 @@ function ajouterMsgTexteLocal(who, texte, moi) {
       // Filtrer par ID joueur (plus fiable que le nom)
       if (d.idJoueur === window._idJoueur) return;
       if (window._finPartieRecu) return;
-      window._finPartieRecu = true;
+      window._finPartieRecu = true; if (window.arreterPollTourSecours) window.arreterPollTourSecours();
       if (typeof stopTimer === 'function') stopTimer();
       if (typeof stopPartieTimer === 'function') stopPartieTimer();
       if (typeof stopBgMusic === 'function') stopBgMusic();
@@ -95971,6 +96031,7 @@ function _executerFinPartie() {
 
   window.salonInviter = function(myNom, targetUid) {
     const code = window.creerPartieEnLigne(myNom);
+    if (window.ecouterPartieCreateur) window.ecouterPartieCreateur(code);
     set(ref(db, 'salon_invites/' + targetUid), { fromNom: myNom, code, ts: Date.now() });
     const unsub = onValue(ref(db, 'parties/' + code + '/joueurs'), snap => {
       const joueurs = snap.val() || {};
@@ -96281,9 +96342,7 @@ function traiterReponseDefi(accepte) {
     }
     if (accepte && window.majScore) window.majScore(window._codePartie, window._idJoueur, p.score);
     stopTimer();
-    if (window._idAdverse && window.passerAuTourSuivant) {
-      window.passerAuTourSuivant(window._codePartie, window._idAdverse, G.round + 1, caseIdPubLie);
-    }
+    window.passerTourSecurise(G.round + 1, caseIdPubLie);
     return;
   }
 
